@@ -25,6 +25,7 @@ export function IngredientScanner() {
   const [scannedIngredients, setScannedIngredients] = useState<Ingredient[]>([])
   const [confirmedIngredients, setConfirmedIngredients] = useState<Set<string>>(new Set())
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -67,30 +68,55 @@ export function IngredientScanner() {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid File",
-          description: "Please select an image file",
-          variant: "destructive"
-        })
-        return
-      }
-
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast({
-          title: "File Too Large", 
-          description: "Please select an image smaller than 10MB",
-          variant: "destructive"
-        })
-        return
-      }
-
-      scanMutation.mutate(file)
+      processFile(file)
     }
   }
 
   const handleScan = () => {
     fileInputRef.current?.click()
+  }
+
+  const processFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file",
+        variant: "destructive"
+      })
+      return false
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      toast({
+        title: "File Too Large", 
+        description: "Please select an image smaller than 10MB",
+        variant: "destructive"
+      })
+      return false
+    }
+
+    scanMutation.mutate(file)
+    return true
+  }
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(false)
+    
+    const files = Array.from(event.dataTransfer.files)
+    if (files.length > 0) {
+      processFile(files[0])
+    }
+  }
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(false)
   }
 
   const handleIngredientConfirm = (ingredient: string) => {
@@ -113,7 +139,12 @@ export function IngredientScanner() {
             AI Ingredient Recognition
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent 
+          className={`space-y-4 ${isDragging ? 'bg-primary/5 border-primary border-dashed' : ''}`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           {!scanMutation.isPending && scannedIngredients.length === 0 && (
             <div className="text-center">
               <img 
@@ -121,9 +152,14 @@ export function IngredientScanner() {
                 alt="Camera scanning interface" 
                 className="w-full h-48 object-cover rounded-md mb-4"
               />
-              <p className="text-muted-foreground mb-4">
-                Upload an image of ingredients to identify them with AI
-              </p>
+              <div className="space-y-2 mb-4">
+                <p className="text-muted-foreground">
+                  Upload an image of ingredients to identify them with AI
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Supports JPG, PNG, and other image formats up to 10MB
+                </p>
+              </div>
             </div>
           )}
 
@@ -189,25 +225,26 @@ export function IngredientScanner() {
               className="hidden"
             />
             
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <Button 
-                className="flex-1" 
+                className="w-full" 
                 onClick={handleScan}
                 disabled={scanMutation.isPending}
-                data-testid="button-scan-camera"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {scanMutation.isPending ? "Scanning..." : "Upload Image"}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleScan}
-                disabled={scanMutation.isPending}
+                size="lg"
                 data-testid="button-upload-image"
               >
-                <Camera className="h-4 w-4" />
+                <Upload className="h-4 w-4 mr-2" />
+                {scanMutation.isPending ? "Analyzing Image..." : "Choose Image File"}
               </Button>
+              
+              <div className="text-center space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  Click the button above to select an image from your device
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  or drag and drop an image anywhere in this area
+                </p>
+              </div>
             </div>
 
             {scannedIngredients.length > 0 && (
