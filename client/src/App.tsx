@@ -7,7 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Pages
 import Dashboard from "@/pages/dashboard";
@@ -20,6 +20,9 @@ import NotFound from "@/pages/not-found";
 import { ChatInterface } from "@/components/chat-interface";
 import { InstallPrompt } from "@/components/install-prompt";
 import { OfflineIndicator } from "@/components/offline-indicator";
+import { VoiceIndicator } from "@/components/voice-indicator";
+import { PermissionBanner } from "@/components/permission-banner";
+import { VoiceProvider, useVoice } from "@/contexts/voice-context";
 
 function Router() {
   return (
@@ -35,43 +38,65 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
   const [isChatMinimized, setIsChatMinimized] = useState(true);
+  const { isListening, speaking, setOnVoiceMessage } = useVoice();
   
   const sidebarStyle = {
     "--sidebar-width": "20rem",
     "--sidebar-width-icon": "4rem",
   };
 
+  // Handle voice messages from voice commands
+  const handleVoiceMessage = (message: string) => {
+    // Voice message will be handled by chat interface
+    console.log('Voice message received:', message);
+  };
+
+  // Register voice message handler
+  useEffect(() => {
+    setOnVoiceMessage(handleVoiceMessage);
+  }, [setOnVoiceMessage]);
+
+  return (
+    <SidebarProvider style={sidebarStyle as React.CSSProperties}>
+      <div className="flex h-screen w-full">
+        <AppSidebar />
+        <div className="flex flex-col flex-1">
+          <header className="flex items-center justify-between p-4 border-b">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <ThemeToggle />
+          </header>
+          <main className="flex-1 overflow-auto p-6 bg-background">
+            <Router />
+          </main>
+        </div>
+      </div>
+      
+      {/* AI Chat Assistant - Floating interface */}
+      <ChatInterface 
+        isMinimized={isChatMinimized}
+        onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
+      />
+      
+      {/* PWA Features */}
+      <InstallPrompt />
+      <OfflineIndicator />
+      <VoiceIndicator isListening={isListening} isSpeaking={speaking} />
+      <PermissionBanner />
+      <Toaster />
+    </SidebarProvider>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ThemeProvider defaultTheme="light">
-          <SidebarProvider style={sidebarStyle as React.CSSProperties}>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <header className="flex items-center justify-between p-4 border-b">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" />
-                  <ThemeToggle />
-                </header>
-                <main className="flex-1 overflow-auto p-6 bg-background">
-                  <Router />
-                </main>
-              </div>
-            </div>
-            
-            {/* AI Chat Assistant - Floating interface */}
-            <ChatInterface 
-              isMinimized={isChatMinimized}
-              onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
-            />
-            
-            {/* PWA Features */}
-            <InstallPrompt />
-            <OfflineIndicator />
-            <Toaster />
-          </SidebarProvider>
+          <VoiceProvider>
+            <AppContent />
+          </VoiceProvider>
         </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>

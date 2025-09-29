@@ -5,6 +5,7 @@ import { RecipeCard } from "@/components/recipe-card"
 import { Camera, Calendar, ShoppingCart, Sparkles, TrendingUp } from "lucide-react"
 import { ProactiveSuggestions } from "@/components/proactive-suggestions"
 import { RecipeCards } from "@/components/recipe-cards"
+import { VoiceCommands } from "@/components/voice-commands"
 import { useQuery } from "@tanstack/react-query"
 import healthyMealImage from '@assets/generated_images/Healthy_balanced_meal_plating_25acb6fe.png'
 import pastaImage from '@assets/generated_images/Appetizing_pasta_dish_photo_6cb6d75b.png'
@@ -53,6 +54,9 @@ export default function Dashboard() {
 
       {/* AI Assistant Suggestions - Proactive agent feature */}
       <ProactiveSuggestions />
+
+      {/* Voice Commands - Hands-free cooking assistant */}
+      <VoiceCommands className="md:max-w-md" />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

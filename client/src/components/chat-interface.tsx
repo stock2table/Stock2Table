@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,7 @@ import { Send, Bot, User, Mic, MicOff } from "lucide-react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
+import { useVoice } from "@/contexts/voice-context"
 
 interface ChatMessage {
   id: string
@@ -33,9 +34,20 @@ export function ChatInterface({ isMinimized = false, onToggleMinimize }: ChatInt
     }
   ])
   const [inputValue, setInputValue] = useState("")
-  const [isListening, setIsListening] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
+
+  // Use centralized voice context
+  const {
+    isListening,
+    isSupported: voiceSupported,
+    startListening,
+    stopListening,
+    speak,
+    speaking,
+    setOnVoiceMessage,
+    hasPermission
+  } = useVoice()
 
   // Get user's pantry for context
   const { data: pantryData } = useQuery({
@@ -93,39 +105,43 @@ export function ChatInterface({ isMinimized = false, onToggleMinimize }: ChatInt
     handleSendMessage()
   }
 
-  const startVoiceRecognition = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      toast({
-        title: "Voice Recognition Unavailable",
-        description: "Your browser doesn't support voice recognition.",
-        variant: "destructive"
-      })
+  // Handle voice messages from voice commands or voice input
+  const handleVoiceMessage = useCallback((message: string) => {
+    // Only process non-empty messages
+    if (!message || !message.trim()) {
       return
     }
-
-    const recognition = new (window as any).webkitSpeechRecognition()
-    recognition.continuous = false
-    recognition.interimResults = false
-
-    recognition.onstart = () => setIsListening(true)
-    recognition.onend = () => setIsListening(false)
     
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript
-      setInputValue(transcript)
-    }
+    const trimmedMessage = message.trim()
+    setInputValue(trimmedMessage)
+    
+    // Auto-send voice messages for hands-free experience
+    setTimeout(() => {
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: trimmedMessage,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, userMessage])
+      chatMutation.mutate(trimmedMessage)
+      setInputValue("")
+    }, 100)
+  }, [chatMutation])
 
-    recognition.onerror = () => {
-      toast({
-        title: "Voice Recognition Error",
-        description: "Could not recognize speech. Please try again.",
-        variant: "destructive"
-      })
-      setIsListening(false)
-    }
+  // Register voice message handler with context
+  useEffect(() => {
+    setOnVoiceMessage(handleVoiceMessage)
+  }, [setOnVoiceMessage, handleVoiceMessage])
 
-    recognition.start()
-  }
+  // Auto-speak AI responses for hands-free experience  
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage?.role === 'assistant' && !speaking) {
+      // Optional: speak AI responses (could be user setting)
+      // speak(lastMessage.content)
+    }
+  }, [messages, speak, speaking])
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -242,11 +258,15 @@ export function ChatInterface({ isMinimized = false, onToggleMinimize }: ChatInt
             <Button
               variant="ghost"
               size="icon"
-              onClick={startVoiceRecognition}
-              disabled={isListening}
+              onClick={isListening ? stopListening : startListening}
+              disabled={!voiceSupported}
               data-testid="button-voice-input"
+              title={voiceSupported ? 
+                (isListening ? "Stop voice input" : "Start voice input") : 
+                "Voice input not supported"
+              }
             >
-              {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              {isListening ? <MicOff className="h-4 w-4 text-red-500" /> : <Mic className="h-4 w-4" />}
             </Button>
             <Button
               onClick={handleSendMessage}
