@@ -18,6 +18,8 @@ import StandardListsPage from "@/pages/standard-lists";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { ChatInterface } from "@/components/chat-interface";
+import { InstallPrompt } from "@/components/install-prompt";
+import { OfflineIndicator } from "@/components/offline-indicator";
 
 function Router() {
   return (
@@ -64,6 +66,10 @@ function App() {
               isMinimized={isChatMinimized}
               onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
             />
+            
+            {/* PWA Features */}
+            <InstallPrompt />
+            <OfflineIndicator />
             <Toaster />
           </SidebarProvider>
         </ThemeProvider>

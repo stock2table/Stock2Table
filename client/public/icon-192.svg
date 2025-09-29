@@ -1,0 +1,9 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="#10b981"/>
+  <g transform="translate(32, 32)">
+    <path d="M64 20C75.05 20 84 28.95 84 40V44H92C95.31 44 98 46.69 98 50V118C98 121.31 95.31 124 92 124H36C32.69 124 30 121.31 30 118V50C30 46.69 32.69 44 36 44H44V40C44 28.95 52.95 20 64 20ZM64 28C57.37 28 52 33.37 52 40V44H76V40C76 33.37 70.63 28 64 28ZM64 64C58.48 64 54 68.48 54 74S58.48 84 64 84S74 79.52 74 74S69.52 64 64 64Z" fill="white"/>
+    <circle cx="48" cy="96" r="6" fill="white"/>
+    <circle cx="64" cy="96" r="6" fill="white"/>
+    <circle cx="80" cy="96" r="6" fill="white"/>
+  </g>
+</svg>

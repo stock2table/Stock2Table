@@ -327,3 +327,105 @@
     inset: -1px;
   }
 }
+
+/* PWA and Mobile Optimizations */
+body {
+  /* Mobile touch optimizations */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+/* PWA specific styles */
+@media (display-mode: standalone) {
+  body {
+    /* Additional styling when app is installed as PWA */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Hide browser UI elements in standalone mode */
+  .pwa-only {
+    display: block;
+  }
+}
+
+/* Mobile touch targets - iOS accessibility guidelines */
+button, 
+a, 
+[role="button"],
+.clickable {
+  min-height: 44px;
+  min-width: 44px;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive typography for mobile */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+  
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Mobile-first utility classes */
+.mobile-padding {
+  @apply px-4 md:px-6;
+}
+
+.mobile-spacing {
+  @apply space-y-4 md:space-y-6;
+}
+
+.mobile-text {
+  @apply text-sm md:text-base;
+}
+
+/* Optimized chat interface for mobile */
+@media (max-width: 768px) {
+  .chat-interface {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    max-height: 70vh;
+  }
+  
+  .chat-minimized {
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Mobile sidebar optimizations */
+@media (max-width: 768px) {
+  .sidebar-mobile {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+  
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+}
