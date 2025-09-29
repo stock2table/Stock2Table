@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { identifyIngredientsFromImage, generateRecipeRecommendations, enhanceRecipeRecommendations, generateChatResponse, generateSuggestions } from "./ai";
+import { identifyIngredientsFromImage, generateRecipeRecommendations, enhanceRecipeRecommendations, generateChatResponse, generateSuggestions, generateProactiveSuggestions, generateSmartSuggestions, generateQuickRecipe } from "./ai";
 import multer from "multer";
 import { z } from "zod";
 
@@ -302,6 +302,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to process chat message' })
     }
   })
+
+  // Proactive suggestions endpoints
+  app.get('/api/suggestions/proactive/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Get user's pantry and context
+      const pantryItems = await storage.getPantryItems(userId);
+      const userPreferences = await storage.getUserPreferences(userId);
+      
+      // Generate proactive suggestions based on pantry, time, and patterns
+      const suggestions = await generateProactiveSuggestions(pantryItems, userPreferences);
+      
+      res.json(suggestions);
+    } catch (error) {
+      console.error('Proactive suggestions error:', error);
+      res.status(500).json({ error: 'Failed to generate suggestions' });
+    }
+  });
+
+  app.post('/api/suggestions/generate', async (req, res) => {
+    try {
+      const { userId, context } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+
+      // Get comprehensive user context
+      const pantryItems = await storage.getPantryItems(userId);
+      const familyMembers = await storage.getFamilyMembers(userId);
+      const userPreferences = await storage.getUserPreferences(userId);
+      
+      // Generate AI-powered suggestions
+      const suggestions = await generateSmartSuggestions({
+        userId,
+        pantryItems,
+        familyMembers,
+        userPreferences,
+        context
+      });
+      
+      res.json({ suggestions });
+    } catch (error) {
+      console.error('Generate suggestions error:', error);
+      res.status(500).json({ error: 'Failed to generate suggestions' });
+    }
+  });
+
+  app.post('/api/suggestions/dismiss', async (req, res) => {
+    try {
+      const { suggestionId } = req.body;
+      
+      if (!suggestionId) {
+        return res.status(400).json({ error: 'Suggestion ID is required' });
+      }
+
+      // Store dismissed suggestion to avoid re-showing
+      // For now, just return success - in production, store in database
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Dismiss suggestion error:', error);
+      res.status(500).json({ error: 'Failed to dismiss suggestion' });
+    }
+  });
+
+  app.post('/api/recipes/quick-generate', async (req, res) => {
+    try {
+      const { ingredients, preferences } = req.body;
+      
+      // Generate quick recipe based on available ingredients
+      const recipe = await generateQuickRecipe(ingredients, preferences);
+      
+      res.json(recipe);
+    } catch (error) {
+      console.error('Quick recipe generation error:', error);
+      res.status(500).json({ error: 'Failed to generate recipe' });
+    }
+  });
+
+  // Get pantry items endpoint
+  app.get('/api/pantry/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const pantryItems = await storage.getPantryItems(userId);
+      res.json(pantryItems);
+    } catch (error) {
+      console.error('Get pantry error:', error);
+      res.status(500).json({ error: 'Failed to get pantry items' });
+    }
+  });
+
+  // Meal plan endpoints
+  app.post('/api/meal-plans', async (req, res) => {
+    try {
+      const { userId, startDate, meals } = req.body;
+      
+      // For now, return success - in production would create meal plan
+      res.json({ 
+        id: `meal-plan-${Date.now()}`,
+        userId,
+        startDate,
+        message: 'Meal plan created successfully' 
+      });
+    } catch (error) {
+      console.error('Create meal plan error:', error);
+      res.status(500).json({ error: 'Failed to create meal plan' });
+    }
+  });
+
+  app.post('/api/meal-plans/add-recipe', async (req, res) => {
+    try {
+      const { userId, recipeId, date } = req.body;
+      
+      // For now, return success - in production would add recipe to meal plan
+      res.json({ 
+        message: 'Recipe added to meal plan',
+        recipeId,
+        date 
+      });
+    } catch (error) {
+      console.error('Add recipe to meal plan error:', error);
+      res.status(500).json({ error: 'Failed to add recipe to meal plan' });
+    }
+  });
+
+  // Shopping list endpoint
+  app.post('/api/shopping/generate', async (req, res) => {
+    try {
+      const { userId, mealPlanId } = req.body;
+      
+      // For now, return mock shopping list - in production would generate from meal plan
+      res.json({ 
+        id: `shopping-${Date.now()}`,
+        items: [
+          { name: 'Tomatoes', quantity: '2', unit: 'pieces' },
+          { name: 'Onions', quantity: '1', unit: 'pieces' },
+          { name: 'Garlic', quantity: '3', unit: 'cloves' }
+        ],
+        message: 'Shopping list generated' 
+      });
+    } catch (error) {
+      console.error('Generate shopping list error:', error);
+      res.status(500).json({ error: 'Failed to generate shopping list' });
+    }
+  });
+
+  // Recipe favorite endpoint
+  app.post('/api/recipes/:id/favorite', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId, isFavorite } = req.body;
+      
+      // For now, return success - in production would store favorite status
+      res.json({ 
+        recipeId: id,
+        isFavorite,
+        message: isFavorite ? 'Added to favorites' : 'Removed from favorites'
+      });
+    } catch (error) {
+      console.error('Toggle favorite error:', error);
+      res.status(500).json({ error: 'Failed to toggle favorite' });
+    }
+  });
 
   const httpServer = createServer(app);
 

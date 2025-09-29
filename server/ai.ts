@@ -390,3 +390,176 @@ function getFallbackChatResponse(userMessage: string): string {
   
   return "I'm your meal planning assistant! I can help you find recipes, plan meals, and create shopping lists. What would you like to work on?";
 }
+
+// Generate proactive suggestions based on user context
+export async function generateProactiveSuggestions(pantryItems: any[], userPreferences?: any): Promise<any[]> {
+  try {
+    const currentTime = new Date();
+    const suggestions = [];
+
+    // Check for expiring ingredients
+    const expiringItems = pantryItems.filter(item => {
+      if (!item.expiryDate) return false;
+      const expiryDate = new Date(item.expiryDate);
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntilExpiry <= 3 && daysUntilExpiry > 0;
+    });
+
+    if (expiringItems.length > 0) {
+      suggestions.push({
+        id: `expiry-${Date.now()}`,
+        type: 'expiry_warning',
+        title: 'Ingredients Expiring Soon',
+        description: `You have ${expiringItems.length} ingredients that expire within 3 days. Use them before they go bad!`,
+        action: 'Find Quick Recipes',
+        priority: 'high',
+        data: {
+          expiringItems: expiringItems.map(item => item.ingredient?.name || item.name)
+        },
+        createdAt: currentTime
+      });
+    }
+
+    // Suggest recipes based on available ingredients
+    if (pantryItems.length >= 3) {
+      const ingredientNames = pantryItems.map(item => item.ingredient?.name || item.name);
+      suggestions.push({
+        id: `recipe-${Date.now()}`,
+        type: 'recipe',
+        title: 'Cook with Your Ingredients',
+        description: `You have ${pantryItems.length} ingredients ready to use. Let me suggest some delicious recipes!`,
+        action: 'Generate Recipe',
+        priority: 'medium',
+        data: {
+          ingredients: ingredientNames,
+          matchPercentage: 85
+        },
+        createdAt: currentTime
+      });
+    }
+
+    // Suggest meal planning for the week
+    const dayOfWeek = currentTime.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 1) { // Sunday or Monday
+      suggestions.push({
+        id: `meal-plan-${Date.now()}`,
+        type: 'meal_plan',
+        title: 'Plan Your Week',
+        description: 'Start your week right with a organized meal plan. Save time and reduce food waste!',
+        action: 'Create Meal Plan',
+        priority: 'medium',
+        data: {
+          startDate: currentTime.toISOString(),
+          pantryItems: pantryItems.length
+        },
+        createdAt: currentTime
+      });
+    }
+
+    return suggestions;
+  } catch (error) {
+    console.error('Error generating proactive suggestions:', error);
+    return getFallbackSuggestions();
+  }
+}
+
+// Generate smart AI-powered suggestions
+export async function generateSmartSuggestions(context: any): Promise<any[]> {
+  try {
+    const { pantryItems, familyMembers, userPreferences } = context;
+    
+    const systemPrompt = `You are a proactive meal planning assistant. Generate 2-3 helpful suggestions based on the user's context.
+
+Available ingredients: ${pantryItems.map((item: any) => item.ingredient?.name || item.name).join(', ')}
+Family size: ${familyMembers?.length || 1}
+User preferences: ${JSON.stringify(userPreferences)}
+
+Generate suggestions for:
+- Recipe recommendations using available ingredients
+- Meal planning opportunities
+- Shopping list optimizations
+- Cooking tips based on family needs
+
+Return JSON with array of suggestions, each having: id, type, title, description, action, priority, data`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [{ role: "system", content: systemPrompt }],
+      response_format: { type: "json_object" },
+      max_tokens: 1000,
+    });
+
+    const result = JSON.parse(completion.choices[0]?.message?.content || '{"suggestions": []}');
+    return result.suggestions || [];
+  } catch (error) {
+    console.error('Error generating smart suggestions:', error);
+    return getFallbackSuggestions();
+  }
+}
+
+// Generate quick recipe from available ingredients
+export async function generateQuickRecipe(ingredients: string[], preferences?: any): Promise<any> {
+  try {
+    const systemPrompt = `Create a quick, delicious recipe using these ingredients: ${ingredients.join(', ')}.
+
+Make it:
+- Easy to prepare (30 minutes or less)
+- Family-friendly
+- Uses common cooking techniques
+- Provides clear instructions
+
+Return JSON with: title, description, cookTime, servings, difficulty, ingredients, instructions, tags`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [{ role: "system", content: systemPrompt }],
+      response_format: { type: "json_object" },
+      max_tokens: 1500,
+    });
+
+    const recipe = JSON.parse(completion.choices[0]?.message?.content || '{}');
+    return {
+      id: `quick-${Date.now()}`,
+      ...recipe,
+      createdAt: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error generating quick recipe:', error);
+    return getFallbackQuickRecipe(ingredients);
+  }
+}
+
+// Fallback suggestions when AI is unavailable
+function getFallbackSuggestions(): any[] {
+  return [
+    {
+      id: `fallback-${Date.now()}`,
+      type: 'cooking_tip',
+      title: 'Meal Planning Tip',
+      description: 'Plan your meals for the week to save time and reduce food waste. Start with what you have in your pantry!',
+      priority: 'low',
+      data: {},
+      createdAt: new Date()
+    }
+  ];
+}
+
+function getFallbackQuickRecipe(ingredients: string[]): any {
+  return {
+    id: `fallback-recipe-${Date.now()}`,
+    title: `Quick ${ingredients[0]} Recipe`,
+    description: `A simple recipe using ${ingredients.slice(0, 3).join(', ')}`,
+    cookTime: 20,
+    servings: 4,
+    difficulty: 'Easy',
+    ingredients: ingredients.concat(['salt', 'pepper', 'oil']),
+    instructions: [
+      'Prepare all ingredients',
+      'Cook main ingredients in a pan with oil',
+      'Season with salt and pepper',
+      'Serve hot'
+    ],
+    tags: ['Quick', 'Easy', 'Pantry-friendly'],
+    createdAt: new Date().toISOString()
+  };
+}

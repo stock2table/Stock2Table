@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RecipeCard } from "@/components/recipe-card"
 import { Camera, Calendar, ShoppingCart, Sparkles, TrendingUp } from "lucide-react"
+import { ProactiveSuggestions } from "@/components/proactive-suggestions"
+import { RecipeCards } from "@/components/recipe-cards"
+import { useQuery } from "@tanstack/react-query"
 import healthyMealImage from '@assets/generated_images/Healthy_balanced_meal_plating_25acb6fe.png'
 import pastaImage from '@assets/generated_images/Appetizing_pasta_dish_photo_6cb6d75b.png'
 import ingredientsImage from '@assets/generated_images/Fresh_cooking_ingredients_display_7238e8ad.png'
@@ -32,6 +35,12 @@ const todayRecommendations = [
 ]
 
 export default function Dashboard() {
+  // Get AI-generated recipe recommendations
+  const { data: aiRecipes = [] } = useQuery({
+    queryKey: ['/api/recipes/recommendations', 'default-user-id'],
+    enabled: false // Only fetch when user has pantry items
+  })
+
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
@@ -41,6 +50,9 @@ export default function Dashboard() {
           Ready to plan some delicious meals? Here's what we recommend for your family today.
         </p>
       </div>
+
+      {/* AI Assistant Suggestions - Proactive agent feature */}
+      <ProactiveSuggestions />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
