@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Mic, MicOff, Volume2, VolumeX, Command, Clock, Navigation, ChefHat } from "lucide-react"
-import { useVoiceCommands } from "@/hooks/use-voice-commands"
+import { useVoice } from "@/contexts/voice-context"
 import { useLocation } from "wouter"
 import { useToast } from "@/hooks/use-toast"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -224,22 +224,51 @@ export function VoiceCommands({ onChatMessage, className }: VoiceCommandsProps) 
     }
   ]
 
+  // Use centralized voice context to prevent multiple recognition instances
   const {
     isListening,
     isSupported,
     transcript,
     interimTranscript,
+    confidence,
     startListening,
     stopListening,
     toggleListening,
-    lastCommand,
-    confidence,
-    speaking
-  } = useVoiceCommands(voiceCommands, {
-    enabled: true,
-    language: 'en-US',
-    voiceResponse: true
-  })
+    speaking,
+    setOnVoiceMessage
+  } = useVoice()
+
+  const [lastCommand, setLastCommand] = useState<string>('')
+
+  // Process voice commands from centralized context
+  const processVoiceCommand = useCallback((message: string) => {
+    if (!message || !message.trim()) return
+
+    // Try to match against voice commands
+    for (const command of voiceCommands) {
+      for (const pattern of command.patterns) {
+        const regex = new RegExp(`^${pattern}$`, 'i')
+        const match = message.match(regex)
+        
+        if (match) {
+          setLastCommand(message)
+          const params = match.slice(1) // Extract captured groups
+          command.action(params)
+          return // Command found and executed
+        }
+      }
+    }
+    
+    // If no command matched, send to chat
+    if (onChatMessage) {
+      onChatMessage(message)
+    }
+  }, [voiceCommands, onChatMessage])
+
+  // Register command processor with voice context
+  useEffect(() => {
+    setOnVoiceMessage(processVoiceCommand)
+  }, [setOnVoiceMessage, processVoiceCommand])
 
   const getCommandsByCategory = useCallback(() => {
     const categories = {

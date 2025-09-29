@@ -78,13 +78,21 @@ export function VoiceProvider({ children }: VoiceProviderProps) {
     speakText(text)
   }
 
-  // Resume listening after speech ends
+  // Resume listening after speech ends for hands-free experience
+  const [wasListeningBeforeSpeech, setWasListeningBeforeSpeech] = useState(false)
+  
   useEffect(() => {
-    if (!speaking && hasPermission && !isListening) {
-      // Auto-resume listening after TTS if it was active before
-      // This could be enhanced with user preferences
+    if (speaking && isListening) {
+      // Remember we were listening before speech started
+      setWasListeningBeforeSpeech(true)
+    } else if (!speaking && wasListeningBeforeSpeech && hasPermission) {
+      // Auto-resume listening after TTS ends
+      setTimeout(() => {
+        start()
+        setWasListeningBeforeSpeech(false)
+      }, 1000) // Small delay to ensure speech fully ended
     }
-  }, [speaking, hasPermission, isListening])
+  }, [speaking, isListening, wasListeningBeforeSpeech, hasPermission, start])
 
   const startListening = () => {
     if (!isSupported) return

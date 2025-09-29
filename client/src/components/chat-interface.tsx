@@ -101,8 +101,17 @@ export function ChatInterface({ isMinimized = false, onToggleMinimize }: ChatInt
   }
 
   const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion)
-    handleSendMessage()
+    // Send suggestion directly to avoid stale state issues
+    if (!suggestion.trim()) return
+    
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: suggestion.trim(),
+      timestamp: new Date()
+    }
+    setMessages(prev => [...prev, userMessage])
+    chatMutation.mutate(suggestion.trim())
   }
 
   // Handle voice messages from voice commands or voice input
@@ -137,11 +146,12 @@ export function ChatInterface({ isMinimized = false, onToggleMinimize }: ChatInt
   // Auto-speak AI responses for hands-free experience  
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
-    if (lastMessage?.role === 'assistant' && !speaking) {
-      // Optional: speak AI responses (could be user setting)
-      // speak(lastMessage.content)
+    if (lastMessage?.role === 'assistant' && !speaking && hasPermission) {
+      // Enable TTS for hands-free cooking experience
+      // TODO: Add user setting to toggle this
+      speak(lastMessage.content)
     }
-  }, [messages, speak, speaking])
+  }, [messages, speak, speaking, hasPermission])
 
   useEffect(() => {
     if (scrollAreaRef.current) {
