@@ -200,6 +200,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add ingredients to pantry endpoint
+  const addToPantrySchema = z.object({
+    userId: z.string().min(1, "User ID is required"),
+    ingredients: z.array(z.object({
+      name: z.string().min(1, "Ingredient name is required"),
+      quantity: z.string().optional(),
+      unit: z.string().optional()
+    })).min(1, "At least one ingredient is required")
+  });
+
+  app.post('/api/pantry/add', async (req, res) => {
+    try {
+      // Validate request body
+      const validation = addToPantrySchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request data',
+          details: validation.error.issues
+        });
+      }
+
+      const { userId, ingredients } = validation.data;
+      const addedItems = [];
+
+      for (const ingredientData of ingredients) {
+        // Find or create ingredient
+        let ingredient = (await storage.searchIngredients(ingredientData.name)).find(
+          ing => ing.name.toLowerCase() === ingredientData.name.toLowerCase()
+        );
+
+        if (!ingredient) {
+          // Create new ingredient if it doesn't exist
+          ingredient = await storage.createIngredient({
+            name: ingredientData.name,
+            category: "Other", // Default category
+            nutritionalInfo: null
+          });
+        }
+
+        // Add to pantry
+        const pantryItem = await storage.createPantryItem({
+          userId,
+          ingredientId: ingredient.id,
+          quantity: ingredientData.quantity || "1",
+          unit: ingredientData.unit || "piece",
+          expiryDate: null
+        });
+
+        addedItems.push(pantryItem);
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Added ${addedItems.length} ingredients to pantry`,
+        items: addedItems 
+      });
+    } catch (error) {
+      console.error('Add to pantry error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to add ingredients to pantry' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

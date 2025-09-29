@@ -13,6 +13,7 @@ import Dashboard from "@/pages/dashboard";
 import ScannerPage from "@/pages/scanner";
 import PlannerPage from "@/pages/planner";
 import ShoppingPage from "@/pages/shopping";
+import StandardListsPage from "@/pages/standard-lists";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/scanner" component={ScannerPage} />
       <Route path="/planner" component={PlannerPage} />
       <Route path="/shopping" component={ShoppingPage} />
+      <Route path="/lists" component={StandardListsPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route component={NotFound} />
     </Switch>

@@ -11,7 +11,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChefHat, Camera, Calendar, ShoppingCart, Users, Settings } from "lucide-react"
+import { ChefHat, Camera, Calendar, ShoppingCart, Users, Settings, List } from "lucide-react"
 import { useLocation } from "wouter"
 
 const menuItems = [
@@ -38,6 +38,12 @@ const menuItems = [
     url: "/shopping",
     icon: ShoppingCart,
     description: "Smart grocery lists"
+  },
+  {
+    title: "Standard Lists",
+    url: "/lists",
+    icon: List,
+    description: "Curated ingredient collections"
   },
   {
     title: "Family Profile",

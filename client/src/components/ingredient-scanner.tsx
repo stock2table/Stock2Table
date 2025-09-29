@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Camera, Upload, Scan, Check, X } from "lucide-react"
 import { useState, useRef } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
+import { apiRequest } from "@/lib/queryClient"
 import scanningImage from '@assets/generated_images/AI_ingredient_scanning_interface_164d3552.png'
 
 interface Ingredient {
@@ -21,6 +22,62 @@ interface ScanResult {
   suggestions?: string[]
 }
 
+interface AddToPantryButtonProps {
+  selectedIngredients: string[]
+  scannedIngredients: Ingredient[]
+  onSuccess: () => void
+}
+
+function AddToPantryButton({ selectedIngredients, scannedIngredients, onSuccess }: AddToPantryButtonProps) {
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+
+  const addToPantryMutation = useMutation({
+    mutationFn: async (ingredients: string[]) => {
+      const ingredientData = ingredients.map(name => {
+        const scannedIngredient = scannedIngredients.find(ing => ing.name === name)
+        return {
+          name,
+          quantity: scannedIngredient?.quantity || "1",
+          unit: scannedIngredient?.unit || "piece"
+        }
+      })
+
+      return apiRequest('POST', '/api/pantry/add', {
+        userId: 'default-user-id', // TODO: Get from auth context
+        ingredients: ingredientData
+      })
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Added to Pantry",
+        description: `${selectedIngredients.length} ingredients added to your pantry`,
+      })
+      queryClient.invalidateQueries({ queryKey: ['/api/pantry'] })
+      onSuccess()
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to Add",
+        description: error instanceof Error ? error.message : "Failed to add ingredients to pantry",
+        variant: "destructive"
+      })
+    }
+  })
+
+  return (
+    <Button 
+      className="w-full" 
+      variant="default"
+      onClick={() => addToPantryMutation.mutate(selectedIngredients)}
+      disabled={selectedIngredients.length === 0 || addToPantryMutation.isPending}
+      data-testid="button-add-to-pantry"
+    >
+      {addToPantryMutation.isPending ? "Adding..." : `Add ${selectedIngredients.length} to Pantry`}
+    </Button>
+  )
+}
+
 export function IngredientScanner() {
   const [scannedIngredients, setScannedIngredients] = useState<Ingredient[]>([])
   const [confirmedIngredients, setConfirmedIngredients] = useState<Set<string>>(new Set())
@@ -28,6 +85,7 @@ export function IngredientScanner() {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   // Mutation for scanning ingredients from uploaded image
   const scanMutation = useMutation({
@@ -248,25 +306,11 @@ export function IngredientScanner() {
             </div>
 
             {scannedIngredients.length > 0 && (
-              <Button 
-                className="w-full" 
-                variant="default"
-                onClick={() => {
-                  const confirmed = Array.from(confirmedIngredients)
-                  if (confirmed.length > 0) {
-                    toast({
-                      title: "Added to Pantry",
-                      description: `${confirmed.length} ingredients added to your pantry`,
-                    })
-                    // TODO: Actually add to pantry via API
-                    console.log("Adding confirmed ingredients to pantry:", confirmed)
-                  }
-                }}
-                disabled={confirmedIngredients.size === 0}
-                data-testid="button-add-to-pantry"
-              >
-                Add {confirmedIngredients.size} to Pantry
-              </Button>
+              <AddToPantryButton 
+                selectedIngredients={Array.from(confirmedIngredients)}
+                scannedIngredients={scannedIngredients}
+                onSuccess={() => setConfirmedIngredients(new Set())}
+              />
             )}
           </div>
         </CardContent>
