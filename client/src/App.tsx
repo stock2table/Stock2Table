@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useState } from "react";
 
 // Pages
 import Dashboard from "@/pages/dashboard";
@@ -16,6 +17,7 @@ import ShoppingPage from "@/pages/shopping";
 import StandardListsPage from "@/pages/standard-lists";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
+import { ChatInterface } from "@/components/chat-interface";
 
 function Router() {
   return (
@@ -32,6 +34,8 @@ function Router() {
 }
 
 function App() {
+  const [isChatMinimized, setIsChatMinimized] = useState(true);
+  
   const sidebarStyle = {
     "--sidebar-width": "20rem",
     "--sidebar-width-icon": "4rem",
@@ -54,6 +58,12 @@ function App() {
                 </main>
               </div>
             </div>
+            
+            {/* AI Chat Assistant - Floating interface */}
+            <ChatInterface 
+              isMinimized={isChatMinimized}
+              onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
+            />
             <Toaster />
           </SidebarProvider>
         </ThemeProvider>

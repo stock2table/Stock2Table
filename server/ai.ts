@@ -312,3 +312,81 @@ Please provide enhanced versions that better suit this specific family's needs.`
     return baseRecipes;
   }
 }
+
+// Chat response generation for the AI agent
+export async function generateChatResponse(
+  userMessage: string, 
+  systemPrompt: string, 
+  previousMessages: Array<{role: string, content: string}> = []
+): Promise<string> {
+  try {
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...previousMessages.slice(-4).map(msg => ({ role: msg.role, content: msg.content })),
+      { role: "user", content: userMessage }
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: messages as any,
+      max_tokens: 200,
+      temperature: 0.7,
+    });
+
+    return completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that request. Please try again.";
+  } catch (error) {
+    console.error('Chat generation error:', error);
+    return getFallbackChatResponse(userMessage);
+  }
+}
+
+// Generate contextual suggestions based on user message and pantry
+export function generateSuggestions(userMessage: string, pantryItems: any[]): string[] {
+  const message = userMessage.toLowerCase();
+  
+  if (message.includes('recipe') || message.includes('cook') || message.includes('make')) {
+    return ["Show quick recipes", "Find healthy options", "Use my pantry items"];
+  }
+  
+  if (message.includes('plan') || message.includes('week') || message.includes('meal')) {
+    return ["Plan this week", "Suggest breakfast", "Dinner ideas", "Prep meals"];
+  }
+  
+  if (message.includes('shop') || message.includes('buy') || message.includes('list')) {
+    return ["Generate shopping list", "Find missing ingredients", "Weekly groceries"];
+  }
+  
+  if (message.includes('healthy') || message.includes('diet') || message.includes('nutrition')) {
+    return ["Healthy recipes", "Low calorie options", "High protein meals"];
+  }
+  
+  // Default suggestions based on pantry
+  if (pantryItems.length > 0) {
+    return ["What can I cook?", "Quick meal ideas", "Use expiring items", "Meal planning"];
+  }
+  
+  return ["Add ingredients", "Browse recipes", "Plan meals", "Get cooking tips"];
+}
+
+// Fallback chat responses when AI is unavailable
+function getFallbackChatResponse(userMessage: string): string {
+  const message = userMessage.toLowerCase();
+  
+  if (message.includes('recipe') || message.includes('cook')) {
+    return "I can help you find recipes! Try scanning some ingredients or browsing our curated lists to get started.";
+  }
+  
+  if (message.includes('plan') || message.includes('meal')) {
+    return "Great idea to plan ahead! Add some ingredients to your pantry and I'll suggest meal combinations for the week.";
+  }
+  
+  if (message.includes('shop') || message.includes('buy')) {
+    return "I can help generate shopping lists based on your meal plans. Start by planning some meals first!";
+  }
+  
+  if (message.includes('healthy') || message.includes('diet')) {
+    return "I'd love to help with healthy eating! Share your dietary preferences and I'll suggest nutritious meal options.";
+  }
+  
+  return "I'm your meal planning assistant! I can help you find recipes, plan meals, and create shopping lists. What would you like to work on?";
+}

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { identifyIngredientsFromImage, generateRecipeRecommendations, enhanceRecipeRecommendations } from "./ai";
+import { identifyIngredientsFromImage, generateRecipeRecommendations, enhanceRecipeRecommendations, generateChatResponse, generateSuggestions } from "./ai";
 import multer from "multer";
 import { z } from "zod";
 
@@ -263,6 +263,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Chat endpoint for conversational AI agent
+  app.post('/api/chat', async (req, res) => {
+    try {
+      const { message, context } = req.body
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: 'Message is required' })
+      }
+
+      // Build context for the AI agent
+      const pantryItems = context?.pantryItems || []
+      const previousMessages = context?.previousMessages || []
+      
+      const systemPrompt = `You are a helpful meal planning assistant for Stock2Table. You help users:
+      - Create recipes from their pantry ingredients
+      - Plan weekly meals
+      - Generate shopping lists
+      - Suggest healthy options
+      - Answer cooking questions
+      
+      User's current pantry: ${pantryItems.map((item: any) => `${item.name} (${item.quantity} ${item.unit})`).join(', ') || 'No ingredients in pantry'}
+      
+      Keep responses conversational, helpful, and under 150 words. Provide actionable suggestions.`
+
+      const response = await generateChatResponse(message, systemPrompt, previousMessages)
+      
+      // Generate contextual suggestions based on the conversation
+      const suggestions = generateSuggestions(message, pantryItems)
+      
+      res.json({
+        message: response,
+        suggestions: suggestions
+      })
+    } catch (error) {
+      console.error('Chat error:', error)
+      res.status(500).json({ error: 'Failed to process chat message' })
+    }
+  })
 
   const httpServer = createServer(app);
 
