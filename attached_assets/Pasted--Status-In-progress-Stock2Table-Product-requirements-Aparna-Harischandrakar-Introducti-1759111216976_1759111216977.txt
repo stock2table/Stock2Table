@@ -1,0 +1,108 @@
+
+Status In progress
+Stock2Table 
+Product requirements
+
+
+Aparna Harischandrakar
+
+
+Introduction
+Purpose
+The purpose of the "Stock2Table?" app is to simplify and enrich everyday meal planning for families and individuals by providing a seamless, AI-powered platform that transforms ingredient discovery, personalized recipe recommendations, and meal preparation into an effortless, healthier, and more enjoyable experience. By reducing daily meal-related stress and supporting healthier eating habits, the app empowers users to plan, shop, and cook with confidence, ultimately improving quality of life and family well-being
+Problem statement
+The "Stock2Table" app addresses several interconnected problems faced by families and individuals around the world in their daily meal planning and preparation.
+Problems the Product Intends to Solve
+Daily Meal Planning Stress
+Many people experience significant stress and decision fatigue from having to plan meals every day, leading to last-minute decisions or repetitive meals that may not be healthy or enjoyable.
+Lack of Personalization in Existing Solutions
+Current recipe and meal planning apps often lack true personalization and do not fully utilize available ingredients, user preferences, and family needs.
+Most solutions only partially address parts of the meal planning problem, failing to provide an integrated, end-to-end experience—from ingredient identification to meal execution and feedback.
+Unhealthy Eating Habits Due to Poor Planning
+Inadequate meal planning results in unhealthy eating habits, over-reliance on takeout, wasted groceries, and missed nutritional targets for families and individuals.
+Inefficient Grocery Shopping
+Users frequently waste time and money due to inefficient grocery shopping: forgetting items, overbuying, or failing to use ingredients already available at home.
+Lack of automated, smart shopping lists and ingredient tracking increases the risk of food waste.
+Low Engagement and Family Involvement
+Existing tools do not facilitate family collaboration or engagement in meal planning, leaving the burden on a single member and missing opportunities for collective decision-making and excitement.
+Limited Support for Diverse Dietary Needs
+There is insufficient support for dietary restrictions, allergies, and nutritional goals within typical meal planning apps, making it challenging for users to plan balanced and suitable meals.
+Fragmented User Experience
+Users must switch between multiple apps or services for recipes, grocery ordering, nutritional guidance, and meal prep instructions, creating a fragmented experience and inefficiency.
+By solving these problems, “Stock2Table” aims to deliver a holistic, convenient, and health-focused meal planning solution that simplifies daily routines, fosters better eating habits, and brings families together around food.
+Target audience
+The ideal users of the Stock2Pile app are everyone around the world, and all share common pain points and needs related to meal planning, healthy eating, and managing busy lifestyles.
+Demographics
+Families with Children: Parents and caregivers responsible for daily meal planning and preparation for the household.
+Working Professionals: Busy individuals or couples who value convenience, health, and efficiency in their meal routines.
+Students (especially in dorms): Young adults navigating independent living, limited cooking skills, and constrained pantry space.
+Health-Conscious Individuals: Users seeking to meet dietary goals, manage allergies, or follow specific nutrition plans (e.g., vegetarian, gluten-free, low-carb).
+Pain Points
+Daily Decision Fatigue: Struggling to decide “what’s for dinner” every day, leading to stress and unhealthy last-minute choices.
+Lack of Inspiration and Variety: Cooking the same meals repeatedly due to lack of new ideas or confidence trying new recipes.
+Time Constraints: Limited time for planning, shopping, and cooking meals from scratch.
+Food Waste and Inefficient Shopping: Difficulty keeping track of pantry inventory, resulting in wasted ingredients, overbuying, or missing key items.
+Dietary Restrictions: Need for tailored recipes and shopping lists that accommodate food allergies, budget limitations, or specific health goals.
+Fragmented Family Involvement: Desire for tools that make it easy to include family members or housemates in meal decisions and preparation.
+User Needs
+Initial User preferences for the family to base the suggestions on like favorite cuisines, family traditions etc
+Personalized Recipe Suggestions: Recommendations based on available ingredients, personal preferences, and dietary needs.
+End-to-End Meal Planning: Intuitive tools for weekly menu planning, automated grocery list creation, and integration with grocery delivery or pick-up services.
+Minimized Effort: Minimal manual data entry—using AI (image recognition, voice input) and automation to reduce cognitive load.
+Health Support: Nutritional information, portion guidance, and suggestions that promote healthier eating habits.
+Community and Engagement: Opportunities for reviews, sharing feedback, and participating in challenges—fostering a sense of community and engagement with healthy cooking.
+Creation of weekly shopping list based on the plan for the upcoming week
+Handy lists for special occasions
+The product is designed for anyone seeking to streamline and improve their home cooking experience, but is especially valuable for busy households, students, and health-minded users who want to eat better with less effort and stress.
+
+Objectives
+Goals
+Reduce daily stress around meal decisions by streamlining the planning and preparation process for families and individuals.
+Enable healthier eating habits by providing personalized recipe suggestions based on pantry ingredients, preferences, and dietary needs.
+Automate grocery shopping and ingredient management, minimizing food waste and saving time and money.
+Deliver an intuitive, AI-driven app experience with minimal effort required from users—most tasks handled in the background.
+User Experience Goals
+Personalize meal recommendations and plans for each user or family, adjusting to tastes, restrictions, and locally available foods.
+Support full meal planning flows: from identifying ingredients (via image recognition or manual entry) to weekly menu generation, shopping lists, and meal prep guides
+Foster family and community involvement through shared accounts, recipe reviews, cooking challenges, and collaborative menu approval.
+Business Goals
+Drive app downloads and retention, with a target to increase monthly active users 100% beyond initial friends and family within 6–12 months.
+Maintain a high retention rate (80%+) and competitive advantage by continuously evolving features and simplifying the user experience with advanced AI.
+Grow revenue by offering tiered pricing and integrating with grocery delivery and food ordering platforms.
+Collect valuable usage, preference, and ingredient data to refine recommendations, improve AI accuracy, and support business development.
+Long-Term Vision
+Become the ultimate platform for staying healthy with home-cooked meals by integrating nutrition tracking, grocery ordering, and future partnerships with retailers and health apps.
+These goals guide both product development and business strategy to ensure the app delivers real value for users and achieves sustainable growth.
+Non-goals
+List objectives that will not be addressed by this product requirements document
+
+
+Metrics
+Define quantitative and qualitative metrics to measure success
+(Example: increased user signups, improved retention, positive customer feedback)
+Success for the “Stock2Table” app can be measured with a mix of quantitative and qualitative metrics, as outlined in your business case.
+Quantitative Metrics
+User Signups: Number of new users registered over time.
+Daily Active Users (DAU) / Monthly Active Users (MAU): Measures ongoing user engagement and growth.
+Retention Rate: Percentage of users who continue using the app after a set period (target 80% retention).
+Churn Rate: Percentage of users who stop using the app.
+Conversion Rate: Portion of users upgrading from free/basic to paid features or completing desired actions (e.g., meal planning, ordering groceries).
+Average Revenue per User (ARPU): Financial returns per active user.
+Customer Lifetime Value (CLV): Predicted net profit per user over their lifespan as a customer.
+Cost Per Acquisition (CPA): Marketing spend required to acquire a new user.
+Recipe Views, Meal Plan Creation, Ingredient Clicks: Feature-specific usage stats to track engagement and popular functions.
+App Load Rate, Crash Rate, Error Rate: Technical performance indicators reflecting user experience and reliability.
+Frequency of Use: Average number of sessions or actions per user per week or month.
+Growth in App Downloads: Tracking expansion, especially 100% MAU increase in 6–12 months (business goal).
+Qualitative Metrics
+Customer Feedback & Reviews: User ratings and comments in-app or on stores, measuring satisfaction and areas for improvement.
+Survey Results: Regular user surveys on app usability, feature value, and experience.
+Customization & Personalization Satisfaction: Feedback and analytics on the success of personalized recommendations and automated flows.
+Community Engagement: Participation in cooking challenges, reviews, sharing recipes, indicating community and social value.
+A/B Testing Insights: Response to new features, guided by experiment results and feature preference trends.
+Family/Group Engagement: Metrics and feedback on shared accounts, menu approval, or collaborative features.
+These metrics ensure both user delight and business success are tracked, helping to guide further product development and investment.
+
+
+
+
