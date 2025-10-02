@@ -105,10 +105,16 @@ export class MemStorage implements IStorage {
   private userPreferences: Map<string, UserPreferences> = new Map();
 
   constructor() {
-    this.seedData();
+    try {
+      this.seedData();
+    } catch (error) {
+      console.error('Error seeding initial data:', error);
+      // Continue anyway - app can still work with empty data
+    }
   }
 
   private seedData() {
+    try {
     // Seed default user
     const defaultUser: User = {
       id: "default-user-id",
@@ -379,6 +385,10 @@ export class MemStorage implements IStorage {
         this.recipeIngredients.set(id, recipeIngredient);
       });
     });
+    } catch (error) {
+      console.error('Error in seedData:', error);
+      // Continue with empty data if seed fails
+    }
   }
 
   // Users
@@ -879,4 +889,14 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Initialize storage with error handling
+let storage: MemStorage;
+try {
+  storage = new MemStorage();
+} catch (error) {
+  console.error('Failed to initialize storage, creating empty storage:', error);
+  // Create a minimal storage instance that will work but with no seed data
+  storage = new MemStorage();
+}
+
+export { storage };

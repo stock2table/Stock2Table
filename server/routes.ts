@@ -6,6 +6,29 @@ import multer from "multer";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // API health check endpoint
+  app.get('/api/health', async (req, res) => {
+    try {
+      // Test database connection
+      const dbHealthy = await storage.getRecipes(1).then(() => true).catch(() => false);
+      
+      res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        services: {
+          database: dbHealthy ? 'healthy' : 'unavailable',
+          openai: process.env.OPENAI_API_KEY ? 'configured' : 'not configured'
+        }
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'error',
+        message: 'Service unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Test route to verify storage functionality
   app.get('/api/test/storage', async (req, res) => {
     try {

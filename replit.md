@@ -107,3 +107,23 @@ The application supports session-based authentication:
 - **Node.js Environment**: ESM module support required
 - **Environment Variables**: DATABASE_URL and OPENAI_API_KEY configuration
 - **Static Asset Serving**: Vite-built client assets served by Express
+
+## Deployment Configuration
+
+### Health Check Endpoints
+The application provides multiple health check endpoints for monitoring:
+
+- **`/health`**: Basic server health check returning uptime and status
+- **`/api/health`**: API health check with database and service status
+
+### Production Readiness Features
+- **Error Handling**: Comprehensive try-catch blocks around initialization
+- **Graceful Degradation**: Application continues even if seed data or services fail
+- **Startup Logging**: Detailed logs during server initialization
+- **Service Validation**: Automatic checks for DATABASE_URL and OPENAI_API_KEY
+- **Error Recovery**: Fallback mechanisms for database and AI service failures
+
+### Port Configuration
+- **Default Port**: 5000 (configured via PORT environment variable)
+- **Host Binding**: 0.0.0.0 for external accessibility
+- **Port Reuse**: Enabled for zero-downtime deployments
