@@ -97,9 +97,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get pantry items endpoint
-  app.get('/api/pantry/:userId', async (req, res) => {
+  app.get('/api/pantry', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId } = req.params;
+      const userId = req.user.claims.sub;
       const pantryItems = await storage.getPantryItems(userId);
       res.json(pantryItems);
     } catch (error) {
@@ -109,7 +109,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Validation schemas
   const recipeRecommendationSchema = z.object({
-    userId: z.string().min(1, "User ID is required"),
     availableIngredients: z.array(z.string()).min(1, "At least one ingredient is required")
   });
 
@@ -150,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI recipe recommendations endpoint  
-  app.post('/api/recipes/recommendations', async (req, res) => {
+  app.post('/api/recipes/recommendations', isAuthenticated, async (req: any, res) => {
     try {
       // Validate request body
       const validation = recipeRecommendationSchema.safeParse(req.body);
@@ -161,7 +160,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { userId, availableIngredients } = validation.data;
+      const userId = req.user.claims.sub;
+      const { availableIngredients } = validation.data;
 
       // Get user preferences and family data for enhanced recommendations
       const preferences = await storage.getUserPreferences(userId);
@@ -229,9 +229,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get family members endpoint
-  app.get('/api/family/:userId', async (req, res) => {
+  app.get('/api/family', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId } = req.params;
+      const userId = req.user.claims.sub;
       const familyMembers = await storage.getFamilyMembers(userId);
       res.json(familyMembers);
     } catch (error) {
@@ -241,7 +241,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Add ingredients to pantry endpoint
   const addToPantrySchema = z.object({
-    userId: z.string().min(1, "User ID is required"),
     ingredients: z.array(z.object({
       name: z.string().min(1, "Ingredient name is required"),
       quantity: z.string().optional(),
@@ -249,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })).min(1, "At least one ingredient is required")
   });
 
-  app.post('/api/pantry/add', async (req, res) => {
+  app.post('/api/pantry/add', isAuthenticated, async (req: any, res) => {
     try {
       // Validate request body
       const validation = addToPantrySchema.safeParse(req.body);
@@ -260,7 +259,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { userId, ingredients } = validation.data;
+      const userId = req.user.claims.sub;
+      const { ingredients } = validation.data;
       const addedItems = [];
 
       for (const ingredientData of ingredients) {
@@ -343,9 +343,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   })
 
   // Proactive suggestions endpoints
-  app.get('/api/suggestions/proactive/:userId', async (req, res) => {
+  app.get('/api/suggestions/proactive', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId } = req.params;
+      const userId = req.user.claims.sub;
       
       // Get user's pantry and context
       const pantryItems = await storage.getPantryItems(userId);
@@ -361,13 +361,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/suggestions/generate', async (req, res) => {
+  app.post('/api/suggestions/generate', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId, context } = req.body;
-      
-      if (!userId) {
-        return res.status(400).json({ error: 'User ID is required' });
-      }
+      const userId = req.user.claims.sub;
+      const { context } = req.body;
 
       // Get comprehensive user context
       const pantryItems = await storage.getPantryItems(userId);
@@ -421,23 +418,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get pantry items endpoint
-  app.get('/api/pantry/:userId', async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const pantryItems = await storage.getPantryItems(userId);
-      res.json(pantryItems);
-    } catch (error) {
-      console.error('Get pantry error:', error);
-      res.status(500).json({ error: 'Failed to get pantry items' });
-    }
-  });
-
   // Meal plan endpoints
   // Generate AI-powered weekly meal plan
-  app.post('/api/meal-plans/generate', async (req, res) => {
+  app.post('/api/meal-plans/generate', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId } = req.body;
+      const userId = req.user.claims.sub;
       
       // Get user preferences and family data
       const preferences = await storage.getUserPreferences(userId);
@@ -472,9 +457,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/meal-plans', async (req, res) => {
+  app.post('/api/meal-plans', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId, weekStarting } = req.body;
+      const userId = req.user.claims.sub;
+      const { weekStarting } = req.body;
       
       // Create meal plan
       const mealPlan = await storage.createMealPlan({
@@ -489,9 +475,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/meal-plans/add-recipe', async (req, res) => {
+  app.post('/api/meal-plans/add-recipe', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId, recipeId, date } = req.body;
+      const userId = req.user.claims.sub;
+      const { recipeId, date } = req.body;
       
       // For now, return success - in production would add recipe to meal plan
       res.json({ 
@@ -506,13 +493,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shopping list endpoint
-  app.post('/api/shopping/generate', async (req, res) => {
+  app.post('/api/shopping/generate', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId, mealPlanId } = req.body;
-      
-      if (!userId) {
-        return res.status(400).json({ error: 'userId is required' });
-      }
+      const userId = req.user.claims.sub;
+      const { mealPlanId } = req.body;
       
       if (!mealPlanId) {
         return res.status(400).json({ error: 'mealPlanId is required' });
@@ -534,10 +518,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recipe favorite endpoint
-  app.post('/api/recipes/:id/favorite', async (req, res) => {
+  app.post('/api/recipes/:id/favorite', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const { id } = req.params;
-      const { userId, isFavorite } = req.body;
+      const { isFavorite } = req.body;
       
       // For now, return success - in production would store favorite status
       res.json({ 
