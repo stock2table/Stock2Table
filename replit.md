@@ -66,11 +66,23 @@ Client-side state is managed through multiple patterns:
 - **Form State**: React Hook Form for complex form interactions
 
 ### Authentication & Sessions
-The application supports session-based authentication:
+The application implements secure session-based authentication with Replit Auth (OIDC):
 
-- **Express Sessions**: Server-side session management
-- **PostgreSQL Session Store**: Persistent session storage using connect-pg-simple
-- **Family Account System**: Multi-user support within family units
+- **Replit Auth (OIDC)**: OAuth 2.0 / OpenID Connect authentication supporting Google, GitHub, X (Twitter), Apple, and email/password
+- **Express Sessions**: Server-side session management with secure cookie configuration
+- **PostgreSQL Session Store**: Persistent session storage using connect-pg-simple for session persistence across server restarts
+- **Protected Routes**: All user-specific API endpoints require authentication via isAuthenticated middleware
+- **Session-Based User Identity**: User ID derived from authenticated session (req.user.claims.sub) rather than client requests
+- **Security Architecture**: Zero-trust model where client cannot spoof user identity - all user-specific operations validate authentication server-side
+
+### API Security
+All user-specific routes are protected with authentication middleware:
+
+- **Protected Endpoints**: `/api/pantry/*`, `/api/family`, `/api/suggestions/*`, `/api/meal-plans/*`, `/api/shopping/*`, `/api/recipes/*/favorite`
+- **Authentication Flow**: Unauthenticated requests to protected routes return 401 Unauthorized
+- **User Scoping**: All data operations automatically scoped to authenticated user's ID
+- **Session Validation**: Each request validates session against PostgreSQL session store
+- **CSRF Protection**: Session cookies configured with httpOnly and sameSite flags
 
 ## External Dependencies
 
