@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { identifyIngredientsFromImage, generateRecipeRecommendations, enhanceRecipeRecommendations, generateChatResponse, generateSuggestions, generateProactiveSuggestions, generateSmartSuggestions, generateQuickRecipe } from "./ai";
+import { identifyIngredientsFromImage, generateRecipeRecommendations, enhanceRecipeRecommendations, generateChatResponse, generateSuggestions, generateProactiveSuggestions, generateSmartSuggestions, generateQuickRecipe, generateWeeklyMealPlan } from "./ai";
 import multer from "multer";
 import { z } from "zod";
 
@@ -418,17 +418,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Meal plan endpoints
+  // Generate AI-powered weekly meal plan
+  app.post('/api/meal-plans/generate', async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      // Get user preferences and family data
+      const preferences = await storage.getUserPreferences(userId);
+      const familyMembers = await storage.getFamilyMembers(userId);
+      const pantryItems = await storage.getPantryItems(userId);
+      
+      // Extract dietary restrictions and preferences
+      const dietaryRestrictions: string[] = [];
+      familyMembers.forEach(member => {
+        dietaryRestrictions.push(...member.dietary);
+      });
+      
+      // Get available ingredients
+      const availableIngredients = pantryItems.map(item => item.ingredient.name);
+      
+      // Generate weekly meal plan using AI
+      const weeklyPlan = await generateWeeklyMealPlan(
+        preferences?.familySize || 4,
+        Array.from(new Set(dietaryRestrictions)),
+        preferences?.cuisinePreferences || [],
+        preferences?.cookingSkill || 'Intermediate',
+        preferences?.budget || 'Medium',
+        availableIngredients
+      );
+      
+      res.json(weeklyPlan);
+    } catch (error) {
+      console.error('Generate meal plan error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to generate meal plan' 
+      });
+    }
+  });
+
   app.post('/api/meal-plans', async (req, res) => {
     try {
-      const { userId, startDate, meals } = req.body;
+      const { userId, weekStarting } = req.body;
       
-      // For now, return success - in production would create meal plan
-      res.json({ 
-        id: `meal-plan-${Date.now()}`,
+      // Create meal plan
+      const mealPlan = await storage.createMealPlan({
         userId,
-        startDate,
-        message: 'Meal plan created successfully' 
+        weekStarting: new Date(weekStarting)
       });
+      
+      res.json(mealPlan);
     } catch (error) {
       console.error('Create meal plan error:', error);
       res.status(500).json({ error: 'Failed to create meal plan' });
@@ -456,19 +494,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId, mealPlanId } = req.body;
       
-      // For now, return mock shopping list - in production would generate from meal plan
-      res.json({ 
-        id: `shopping-${Date.now()}`,
-        items: [
-          { name: 'Tomatoes', quantity: '2', unit: 'pieces' },
-          { name: 'Onions', quantity: '1', unit: 'pieces' },
-          { name: 'Garlic', quantity: '3', unit: 'cloves' }
-        ],
-        message: 'Shopping list generated' 
-      });
+      if (!userId) {
+        return res.status(400).json({ error: 'userId is required' });
+      }
+      
+      if (!mealPlanId) {
+        return res.status(400).json({ error: 'mealPlanId is required' });
+      }
+      
+      // Generate shopping list from meal plan using storage function
+      const shoppingList = await storage.generateShoppingListFromMealPlan(userId, mealPlanId);
+      
+      // Get full shopping list with items
+      const fullList = await storage.getShoppingListWithItems(shoppingList.id);
+      
+      res.json(fullList);
     } catch (error) {
       console.error('Generate shopping list error:', error);
-      res.status(500).json({ error: 'Failed to generate shopping list' });
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to generate shopping list' 
+      });
     }
   });
 

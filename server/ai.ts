@@ -563,3 +563,177 @@ function getFallbackQuickRecipe(ingredients: string[]): any {
     createdAt: new Date().toISOString()
   };
 }
+
+export interface WeeklyMealPlan {
+  days: DailyMealPlan[];
+  shoppingList: {
+    ingredients: string[];
+    categories: Record<string, string[]>;
+  };
+  nutritionSummary?: {
+    averageCalories: number;
+    proteinBalance: string;
+    varietyScore: number;
+  };
+}
+
+export interface DailyMealPlan {
+  day: string;
+  date: string;
+  meals: {
+    breakfast?: MealSuggestion;
+    lunch?: MealSuggestion;
+    dinner?: MealSuggestion;
+  };
+}
+
+export interface MealSuggestion {
+  title: string;
+  description: string;
+  cookTime: number;
+  ingredients: string[];
+  instructions?: string[];
+  tags?: string[];
+}
+
+export async function generateWeeklyMealPlan(
+  familySize: number,
+  dietaryRestrictions: string[],
+  cuisinePreferences: string[],
+  cookingSkill: string,
+  budget: string,
+  availableIngredients: string[] = []
+): Promise<WeeklyMealPlan> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert meal planning nutritionist and chef. Generate a complete 7-day meal plan that is:
+- Nutritionally balanced with variety in proteins, vegetables, and grains
+- Appropriate for the family size and cooking skill level
+- Respectful of dietary restrictions and preferences
+- Budget-conscious with smart ingredient reuse across meals
+- Time-efficient with a mix of quick weekday meals and slightly more involved weekend cooking
+
+Provide breakfast, lunch, and dinner for each day. Consider:
+- Meal prep opportunities (e.g., cook once, eat twice)
+- Ingredient overlap to minimize shopping and waste
+- Balanced cuisines throughout the week
+- Age-appropriate meals for families
+- Seasonal and fresh ingredients
+
+Respond with JSON in this format:
+{
+  "days": [
+    {
+      "day": "Monday",
+      "date": "current_date",
+      "meals": {
+        "breakfast": {
+          "title": "meal name",
+          "description": "brief description",
+          "cookTime": 15,
+          "ingredients": ["ingredient1", "ingredient2"],
+          "instructions": ["step1", "step2"],
+          "tags": ["Quick", "Healthy"]
+        },
+        "lunch": { ... },
+        "dinner": { ... }
+      }
+    }
+  ],
+  "shoppingList": {
+    "ingredients": ["ingredient1", "ingredient2"],
+    "categories": {
+      "Produce": ["tomatoes", "lettuce"],
+      "Protein": ["chicken", "eggs"],
+      "Dairy": ["milk", "cheese"],
+      "Pantry": ["rice", "pasta"]
+    }
+  },
+  "nutritionSummary": {
+    "averageCalories": 2000,
+    "proteinBalance": "Well balanced with variety",
+    "varietyScore": 8.5
+  }
+}`
+        },
+        {
+          role: "user",
+          content: `Create a 7-day meal plan for:
+Family size: ${familySize} people
+Dietary restrictions: ${dietaryRestrictions.length > 0 ? dietaryRestrictions.join(', ') : 'None'}
+Cuisine preferences: ${cuisinePreferences.length > 0 ? cuisinePreferences.join(', ') : 'Variety'}
+Cooking skill: ${cookingSkill}
+Budget: ${budget}
+Available ingredients to use: ${availableIngredients.length > 0 ? availableIngredients.join(', ') : 'None specified'}
+
+Focus on practical, family-friendly meals that save time and reduce food waste.`
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 4000,
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('No response content from OpenAI');
+    }
+    
+    return JSON.parse(content);
+  } catch (error) {
+    console.warn('OpenAI API unavailable for meal plan generation, using fallback:', error instanceof Error ? error.message : 'Unknown error');
+    return getMockWeeklyMealPlan(familySize, dietaryRestrictions);
+  }
+}
+
+function getMockWeeklyMealPlan(familySize: number, dietaryRestrictions: string[]): WeeklyMealPlan {
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const currentDate = new Date();
+  
+  return {
+    days: days.map((day, index) => ({
+      day,
+      date: new Date(currentDate.getTime() + index * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      meals: {
+        breakfast: {
+          title: index % 3 === 0 ? 'Overnight Oats' : index % 3 === 1 ? 'Scrambled Eggs & Toast' : 'Greek Yogurt Parfait',
+          description: 'Nutritious breakfast to start the day',
+          cookTime: 10,
+          ingredients: ['oats', 'milk', 'berries'],
+          tags: ['Quick', 'Healthy']
+        },
+        lunch: {
+          title: index % 2 === 0 ? 'Turkey Sandwich' : 'Caesar Salad',
+          description: 'Quick and satisfying lunch',
+          cookTime: 15,
+          ingredients: ['bread', 'turkey', 'lettuce'],
+          tags: ['Quick', 'Easy']
+        },
+        dinner: {
+          title: index % 4 === 0 ? 'Grilled Chicken with Vegetables' : index % 4 === 1 ? 'Pasta Marinara' : index % 4 === 2 ? 'Stir Fry' : 'Baked Salmon',
+          description: `Family dinner for ${familySize} people`,
+          cookTime: 30,
+          ingredients: ['main protein', 'vegetables', 'seasoning'],
+          tags: ['Family-friendly', 'Balanced']
+        }
+      }
+    })),
+    shoppingList: {
+      ingredients: ['chicken', 'pasta', 'vegetables', 'eggs', 'milk', 'bread', 'salmon', 'rice'],
+      categories: {
+        'Produce': ['tomatoes', 'lettuce', 'broccoli', 'carrots', 'onions'],
+        'Protein': ['chicken breast', 'ground beef', 'salmon', 'eggs'],
+        'Dairy': ['milk', 'cheese', 'yogurt'],
+        'Pantry': ['pasta', 'rice', 'bread', 'oats']
+      }
+    },
+    nutritionSummary: {
+      averageCalories: 2000,
+      proteinBalance: 'Well balanced variety',
+      varietyScore: 7.5
+    }
+  };
+}
