@@ -19,6 +19,7 @@ import PlannerPage from "@/pages/planner";
 import ShoppingPage from "@/pages/shopping";
 import StandardListsPage from "@/pages/standard-lists";
 import ProfilePage from "@/pages/profile";
+import FamilyPreferencesPage from "@/pages/family-preferences";
 import NotFound from "@/pages/not-found";
 import { ChatInterface } from "@/components/chat-interface";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -42,6 +43,7 @@ function Router() {
           <Route path="/planner" component={PlannerPage} />
           <Route path="/shopping" component={ShoppingPage} />
           <Route path="/lists" component={StandardListsPage} />
+          <Route path="/family" component={FamilyPreferencesPage} />
           <Route path="/profile" component={ProfilePage} />
         </>
       )}

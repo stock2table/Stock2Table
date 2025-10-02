@@ -46,10 +46,10 @@ const menuItems = [
     description: "Curated ingredient collections"
   },
   {
-    title: "Family Profile",
-    url: "/profile",
+    title: "Family Preferences",
+    url: "/family",
     icon: Users,
-    description: "Manage family preferences"
+    description: "Manage family & preferences"
   }
 ]
 

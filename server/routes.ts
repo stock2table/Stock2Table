@@ -246,6 +246,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { name, age, dietary, allergies, preferences } = req.body;
       
+      // Ensure user exists in database (may not exist on first request after OIDC login)
+      let user = await storage.getUser(userId);
+      if (!user) {
+        user = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email,
+          firstName: req.user.claims.first_name,
+          lastName: req.user.claims.last_name,
+          profileImageUrl: req.user.claims.profile_image_url,
+        });
+      }
+      
       const familyMember = await storage.createFamilyMember({
         userId,
         name,
@@ -258,6 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(familyMember);
     } catch (error) {
+      console.error('Error creating family member:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to create family member' });
     }
   });
@@ -317,6 +330,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mealVariety
       } = req.body;
       
+      // Ensure user exists in database (may not exist on first request after OIDC login)
+      let user = await storage.getUser(userId);
+      if (!user) {
+        user = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email,
+          firstName: req.user.claims.first_name,
+          lastName: req.user.claims.last_name,
+          profileImageUrl: req.user.claims.profile_image_url,
+        });
+      }
+      
       // Check if preferences already exist
       const existing = await storage.getUserPreferences(userId);
       
@@ -349,6 +374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(created);
       }
     } catch (error) {
+      console.error('Error saving preferences:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to save preferences' });
     }
   });
