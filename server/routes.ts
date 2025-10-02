@@ -230,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get family members endpoint
+  // Family members endpoints
   app.get('/api/family', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -238,6 +238,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(familyMembers);
     } catch (error) {
       res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.post('/api/family', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { name, age, dietary, allergies, preferences } = req.body;
+      
+      const familyMember = await storage.createFamilyMember({
+        userId,
+        name,
+        age,
+        dietary: dietary || [],
+        allergies: allergies || [],
+        preferences: preferences || [],
+        isActive: true
+      });
+      
+      res.json(familyMember);
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to create family member' });
+    }
+  });
+
+  app.put('/api/family/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { name, age, dietary, allergies, preferences, isActive } = req.body;
+      
+      const updated = await storage.updateFamilyMember(id, {
+        name,
+        age,
+        dietary,
+        allergies,
+        preferences,
+        isActive
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to update family member' });
+    }
+  });
+
+  app.delete('/api/family/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteFamilyMember(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to delete family member' });
+    }
+  });
+
+  // User preferences endpoints
+  app.get('/api/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getUserPreferences(userId);
+      res.json(preferences || null);
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get preferences' });
+    }
+  });
+
+  app.post('/api/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { 
+        familySize, 
+        cookingSkill, 
+        budget, 
+        cookingTime, 
+        cuisinePreferences,
+        healthyAlternatives,
+        seasonalIngredients,
+        mealVariety
+      } = req.body;
+      
+      // Check if preferences already exist
+      const existing = await storage.getUserPreferences(userId);
+      
+      if (existing) {
+        // Update existing preferences
+        const updated = await storage.updateUserPreferences(userId, {
+          familySize,
+          cookingSkill,
+          budget,
+          cookingTime,
+          cuisinePreferences,
+          healthyAlternatives,
+          seasonalIngredients,
+          mealVariety
+        });
+        res.json(updated);
+      } else {
+        // Create new preferences
+        const created = await storage.createUserPreferences({
+          userId,
+          familySize,
+          cookingSkill,
+          budget,
+          cookingTime,
+          cuisinePreferences,
+          healthyAlternatives,
+          seasonalIngredients,
+          mealVariety
+        });
+        res.json(created);
+      }
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to save preferences' });
     }
   });
 
