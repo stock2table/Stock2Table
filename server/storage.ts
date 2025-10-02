@@ -1,6 +1,7 @@
 import { 
   type User, 
   type InsertUser,
+  type UpsertUser,
   type FamilyMember,
   type InsertFamilyMember,
   type Ingredient,
@@ -30,6 +31,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
   // Family Members
   getFamilyMembers(userId: string): Promise<FamilyMember[]>;
@@ -118,10 +120,14 @@ export class MemStorage implements IStorage {
     // Seed default user
     const defaultUser: User = {
       id: "default-user-id",
+      email: "sarah@example.com",
+      firstName: "Sarah",
+      lastName: "Johnson",
+      profileImageUrl: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       username: "sarah_mom",
-      email: "sarah@example.com", 
       name: "Sarah",
-      createdAt: new Date()
     };
     this.users.set(defaultUser.id, defaultUser);
 
@@ -407,12 +413,51 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = { 
-      ...insertUser, 
+      ...insertUser,
+      email: insertUser.email ?? null,
+      firstName: insertUser.firstName ?? null,
+      lastName: insertUser.lastName ?? null,
+      profileImageUrl: insertUser.profileImageUrl ?? null,
+      username: insertUser.username ?? null,
+      name: insertUser.name ?? null,
       id, 
-      createdAt: new Date() 
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async upsertUser(upsertData: UpsertUser): Promise<User> {
+    const existingUser = upsertData.id ? this.users.get(upsertData.id) : undefined;
+    
+    if (existingUser) {
+      const updatedUser: User = {
+        ...existingUser,
+        email: upsertData.email ?? existingUser.email,
+        firstName: upsertData.firstName ?? existingUser.firstName,
+        lastName: upsertData.lastName ?? existingUser.lastName,
+        profileImageUrl: upsertData.profileImageUrl ?? existingUser.profileImageUrl,
+        updatedAt: new Date(),
+      };
+      this.users.set(existingUser.id, updatedUser);
+      return updatedUser;
+    } else {
+      const id = upsertData.id || randomUUID();
+      const newUser: User = {
+        id,
+        email: upsertData.email ?? null,
+        firstName: upsertData.firstName ?? null,
+        lastName: upsertData.lastName ?? null,
+        profileImageUrl: upsertData.profileImageUrl ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        username: null,
+        name: null,
+      };
+      this.users.set(id, newUser);
+      return newUser;
+    }
   }
 
   // Family Members
