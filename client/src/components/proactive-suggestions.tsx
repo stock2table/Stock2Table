@@ -45,12 +45,12 @@ export function ProactiveSuggestions() {
 
   // Get user's pantry for context
   const { data: pantryItems = [] } = useQuery<PantryItem[]>({
-    queryKey: ['/api/pantry/default-user-id']
+    queryKey: ['/api/pantry']
   })
 
   // Get proactive suggestions from AI
   const { data: suggestions = [], isLoading } = useQuery<ProactiveSuggestion[]>({
-    queryKey: ['/api/suggestions/proactive/default-user-id'],
+    queryKey: ['/api/suggestions/proactive'],
     enabled: pantryItems.length > 0,
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   })
@@ -61,7 +61,7 @@ export function ProactiveSuggestions() {
     },
     onSuccess: (_, suggestionId) => {
       setDismissedSuggestions(prev => new Set([...Array.from(prev), suggestionId]))
-      queryClient.invalidateQueries({ queryKey: ['/api/suggestions/proactive/default-user-id'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/suggestions/proactive'] })
     }
   })
 
@@ -83,7 +83,7 @@ export function ProactiveSuggestions() {
         title: "Action Completed",
         description: getSuccessMessage(action.type),
       })
-      queryClient.invalidateQueries({ queryKey: ['/api/suggestions/proactive/default-user-id'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/suggestions/proactive'] })
     },
     onError: (error) => {
       toast({
@@ -243,13 +243,12 @@ export function ProactiveSuggestions() {
 // Hook for generating proactive suggestions based on pantry
 export function useProactiveSuggestions() {
   const { data: pantryItems = [] } = useQuery<PantryItem[]>({
-    queryKey: ['/api/pantry/default-user-id']
+    queryKey: ['/api/pantry']
   })
 
   const generateSuggestionsMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', '/api/suggestions/generate', {
-        userId: 'default-user-id',
         context: {
           pantryItems,
           currentTime: new Date().toISOString()

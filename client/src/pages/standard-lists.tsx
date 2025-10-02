@@ -183,7 +183,6 @@ export default function StandardListsPage() {
       }))
 
       return apiRequest('POST', '/api/pantry/add', {
-        userId: 'default-user-id', // TODO: Get from auth context
         ingredients: ingredientData
       })
     },

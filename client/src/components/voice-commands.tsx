@@ -26,7 +26,7 @@ export function VoiceCommands({ onChatMessage, className }: VoiceCommandsProps) 
   // Recipe search mutation
   const searchRecipesMutation = useMutation({
     mutationFn: async (query: string) => {
-      return apiRequest('POST', '/api/recipes/search', { query, userId: 'default-user-id' })
+      return apiRequest('POST', '/api/recipes/search', { query })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/recipes'] })
@@ -110,7 +110,6 @@ export function VoiceCommands({ onChatMessage, className }: VoiceCommandsProps) 
       action: async () => {
         try {
           await apiRequest('POST', '/api/shopping/generate', { 
-            userId: 'default-user-id',
             mealPlanId: 'current'
           })
           toast({

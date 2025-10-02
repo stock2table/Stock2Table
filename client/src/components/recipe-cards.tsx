@@ -49,7 +49,6 @@ export function RecipeCards({
   const addToMealPlanMutation = useMutation({
     mutationFn: async (recipeId: string) => {
       return apiRequest('POST', '/api/meal-plans/add-recipe', {
-        userId: 'default-user-id',
         recipeId,
         date: new Date().toISOString()
       })
@@ -73,7 +72,6 @@ export function RecipeCards({
   const toggleFavoriteMutation = useMutation({
     mutationFn: async ({ recipeId, isFavorite }: { recipeId: string, isFavorite: boolean }) => {
       return apiRequest('POST', `/api/recipes/${recipeId}/favorite`, {
-        userId: 'default-user-id',
         isFavorite: !isFavorite
       })
     },

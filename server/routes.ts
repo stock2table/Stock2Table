@@ -46,13 +46,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test route to verify storage functionality
-  app.get('/api/test/storage', async (req, res) => {
+  app.get('/api/test/storage', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      
       // Test basic functionality
       const recipes = await storage.getRecipes(5);
-      const user = await storage.getUser('default-user-id');
-      const pantryItems = await storage.getPantryItems('default-user-id');
-      const familyMembers = await storage.getFamilyMembers('default-user-id');
+      const user = await storage.getUser(userId);
+      const pantryItems = await storage.getPantryItems(userId);
+      const familyMembers = await storage.getFamilyMembers(userId);
       
       // Test recipe with ingredients
       const recipeWithIngredients = recipes.length > 0 
@@ -61,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       // Test recommendations
       const availableIngredients = pantryItems.map(item => item.ingredient.name);
-      const recommendations = await storage.getRecommendedRecipes('default-user-id', availableIngredients);
+      const recommendations = await storage.getRecommendedRecipes(userId, availableIngredients);
 
       res.json({
         success: true,
@@ -387,8 +389,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/suggestions/dismiss', async (req, res) => {
+  app.post('/api/suggestions/dismiss', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const { suggestionId } = req.body;
       
       if (!suggestionId) {
@@ -396,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Store dismissed suggestion to avoid re-showing
-      // For now, just return success - in production, store in database
+      // For now, just return success - in production, store in database keyed by userId
       res.json({ success: true });
     } catch (error) {
       console.error('Dismiss suggestion error:', error);

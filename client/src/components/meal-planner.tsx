@@ -48,9 +48,7 @@ export function MealPlanner() {
 
   const generateMealPlanMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/meal-plans/generate', {
-        userId: 'default-user-id'
-      })
+      const response = await apiRequest('POST', '/api/meal-plans/generate', {})
       return await response.json() as WeeklyMealPlan
     },
     onSuccess: (data) => {
