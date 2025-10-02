@@ -16,7 +16,10 @@ export default function Home() {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
     }
-    return user?.email?.[0]?.toUpperCase() || "U";
+    if (user?.email) {
+      return user.email[0]?.toUpperCase() || "U";
+    }
+    return "U";
   };
 
   return (

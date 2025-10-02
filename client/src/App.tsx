@@ -8,8 +8,11 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 // Pages
+import Landing from "@/pages/landing";
+import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import ScannerPage from "@/pages/scanner";
 import PlannerPage from "@/pages/planner";
@@ -25,14 +28,23 @@ import { PermissionBanner } from "@/components/permission-banner";
 import { VoiceProvider, useVoice } from "@/contexts/voice-context";
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/scanner" component={ScannerPage} />
-      <Route path="/planner" component={PlannerPage} />
-      <Route path="/shopping" component={ShoppingPage} />
-      <Route path="/lists" component={StandardListsPage} />
-      <Route path="/profile" component={ProfilePage} />
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <>
+          <Route path="/" component={Home} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/scanner" component={ScannerPage} />
+          <Route path="/planner" component={PlannerPage} />
+          <Route path="/shopping" component={ShoppingPage} />
+          <Route path="/lists" component={StandardListsPage} />
+          <Route path="/profile" component={ProfilePage} />
+        </>
+      )}
       <Route component={NotFound} />
     </Switch>
   );
@@ -41,6 +53,7 @@ function Router() {
 function AppContent() {
   const [isChatMinimized, setIsChatMinimized] = useState(true);
   const { isListening, speaking, setOnVoiceMessage } = useVoice();
+  const { isAuthenticated, isLoading } = useAuth();
   
   const sidebarStyle = {
     "--sidebar-width": "20rem",
@@ -57,6 +70,16 @@ function AppContent() {
   useEffect(() => {
     setOnVoiceMessage(handleVoiceMessage);
   }, [setOnVoiceMessage]);
+
+  // Show landing page without sidebar when not authenticated or loading
+  if (isLoading || !isAuthenticated) {
+    return (
+      <>
+        <Router />
+        <Toaster />
+      </>
+    );
+  }
 
   return (
     <SidebarProvider style={sidebarStyle as React.CSSProperties}>
