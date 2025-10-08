@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { identifyIngredientsFromImage, generateRecipeRecommendations, enhanceRecipeRecommendations, generateChatResponse, generateSuggestions, generateProactiveSuggestions, generateSmartSuggestions, generateQuickRecipe, generateWeeklyMealPlan } from "./ai";
 import multer from "multer";
 import { z } from "zod";
+import { NotFoundError, UnauthorizedError } from "./errors";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -241,10 +242,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const createFamilyMemberSchema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    age: z.coerce.number().int().positive().optional(),
+    dietary: z.array(z.string()).optional(),
+    allergies: z.array(z.string()).optional(),
+    preferences: z.array(z.string()).optional(),
+  });
+
   app.post('/api/family', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { name, age, dietary, allergies, preferences } = req.body;
+      
+      // Validate request body
+      const validation = createFamilyMemberSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request data',
+          details: validation.error.issues
+        });
+      }
+      
+      const { name, age, dietary, allergies, preferences } = validation.data;
       
       // Ensure user exists in database (may not exist on first request after OIDC login)
       let user = await storage.getUser(userId);
@@ -275,32 +294,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const updateFamilyMemberSchema = z.object({
+    name: z.string().min(1).optional(),
+    age: z.coerce.number().int().positive().optional(),
+    dietary: z.array(z.string()).optional(),
+    allergies: z.array(z.string()).optional(),
+    preferences: z.array(z.string()).optional(),
+    isActive: z.boolean().optional(),
+  });
+
   app.put('/api/family/:id', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const { id } = req.params;
-      const { name, age, dietary, allergies, preferences, isActive } = req.body;
       
-      const updated = await storage.updateFamilyMember(id, {
-        name,
-        age,
-        dietary,
-        allergies,
-        preferences,
-        isActive
-      });
+      // Validate request body
+      const validation = updateFamilyMemberSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request data',
+          details: validation.error.issues
+        });
+      }
+      
+      const updated = await storage.updateFamilyMember(userId, id, validation.data);
       
       res.json(updated);
     } catch (error) {
+      console.error('Error updating family member:', error);
+      if (error instanceof NotFoundError) {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error instanceof UnauthorizedError) {
+        return res.status(403).json({ error: error.message });
+      }
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to update family member' });
     }
   });
 
   app.delete('/api/family/:id', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const { id } = req.params;
-      await storage.deleteFamilyMember(id);
+      
+      await storage.deleteFamilyMember(userId, id);
       res.json({ success: true });
     } catch (error) {
+      console.error('Error deleting family member:', error);
+      if (error instanceof NotFoundError) {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error instanceof UnauthorizedError) {
+        return res.status(403).json({ error: error.message });
+      }
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to delete family member' });
     }
   });
@@ -316,19 +362,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const savePreferencesSchema = z.object({
+    familySize: z.number().int().positive(),
+    cookingSkill: z.enum(['Beginner', 'Intermediate', 'Advanced']),
+    budget: z.enum(['Low', 'Medium', 'High']),
+    cookingTime: z.string(),
+    cuisinePreferences: z.array(z.string()),
+    healthyAlternatives: z.boolean(),
+    seasonalIngredients: z.boolean(),
+    mealVariety: z.boolean(),
+  });
+
   app.post('/api/preferences', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { 
-        familySize, 
-        cookingSkill, 
-        budget, 
-        cookingTime, 
-        cuisinePreferences,
-        healthyAlternatives,
-        seasonalIngredients,
-        mealVariety
-      } = req.body;
+      
+      // Validate request body
+      const validation = savePreferencesSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request data',
+          details: validation.error.issues
+        });
+      }
+      
+      const data = validation.data;
       
       // Ensure user exists in database (may not exist on first request after OIDC login)
       let user = await storage.getUser(userId);
@@ -347,29 +405,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (existing) {
         // Update existing preferences
-        const updated = await storage.updateUserPreferences(userId, {
-          familySize,
-          cookingSkill,
-          budget,
-          cookingTime,
-          cuisinePreferences,
-          healthyAlternatives,
-          seasonalIngredients,
-          mealVariety
-        });
+        const updated = await storage.updateUserPreferences(userId, data);
         res.json(updated);
       } else {
         // Create new preferences
         const created = await storage.createUserPreferences({
           userId,
-          familySize,
-          cookingSkill,
-          budget,
-          cookingTime,
-          cuisinePreferences,
-          healthyAlternatives,
-          seasonalIngredients,
-          mealVariety
+          ...data
         });
         res.json(created);
       }

@@ -24,6 +24,7 @@ import {
   type InsertUserPreferences
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { NotFoundError, UnauthorizedError } from "./errors";
 
 export interface IStorage {
   // Users
@@ -37,8 +38,8 @@ export interface IStorage {
   getFamilyMembers(userId: string): Promise<FamilyMember[]>;
   getFamilyMember(id: string): Promise<FamilyMember | undefined>;
   createFamilyMember(member: InsertFamilyMember): Promise<FamilyMember>;
-  updateFamilyMember(id: string, updates: Partial<FamilyMember>): Promise<FamilyMember>;
-  deleteFamilyMember(id: string): Promise<void>;
+  updateFamilyMember(userId: string, id: string, updates: Partial<FamilyMember>): Promise<FamilyMember>;
+  deleteFamilyMember(userId: string, id: string): Promise<void>;
   
   // Ingredients
   getIngredients(): Promise<Ingredient[]>;
@@ -486,16 +487,21 @@ export class MemStorage implements IStorage {
     return familyMember;
   }
 
-  async updateFamilyMember(id: string, updates: Partial<FamilyMember>): Promise<FamilyMember> {
+  async updateFamilyMember(userId: string, id: string, updates: Partial<FamilyMember>): Promise<FamilyMember> {
     const member = this.familyMembers.get(id);
-    if (!member) throw new Error('Family member not found');
+    if (!member) throw new NotFoundError('Family member not found');
+    if (member.userId !== userId) throw new UnauthorizedError('Unauthorized to update this family member');
     
     const updated = { ...member, ...updates };
     this.familyMembers.set(id, updated);
     return updated;
   }
 
-  async deleteFamilyMember(id: string): Promise<void> {
+  async deleteFamilyMember(userId: string, id: string): Promise<void> {
+    const member = this.familyMembers.get(id);
+    if (!member) throw new NotFoundError('Family member not found');
+    if (member.userId !== userId) throw new UnauthorizedError('Unauthorized to delete this family member');
+    
     this.familyMembers.delete(id);
   }
 
