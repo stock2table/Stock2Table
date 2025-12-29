@@ -386,7 +386,7 @@ export default function PantryScreen() {
                   <View key={item.item_id} style={styles.pantryCard}>
                     <TouchableOpacity 
                       style={styles.pantryCardInner}
-                      activeOpacity={0.9} 
+                      activeOpacity={0.7} 
                       onLongPress={() => openEditModal(item)}
                     >
                       <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
@@ -411,22 +411,22 @@ export default function PantryScreen() {
                     </TouchableOpacity>
                     <View style={styles.itemActions}>
                       <TouchableOpacity 
-                        onPress={(e) => {
-                          e.stopPropagation();
+                        onPress={() => {
+                          console.log('Edit pressed for:', item.name);
                           openEditModal(item);
                         }} 
                         style={styles.actionIcon}
-                        activeOpacity={0.7}
+                        activeOpacity={0.6}
                       >
                         <Ionicons name="create-outline" size={22} color="#8b5cf6" />
                       </TouchableOpacity>
                       <TouchableOpacity 
-                        onPress={(e) => {
-                          e.stopPropagation();
+                        onPress={() => {
+                          console.log('Delete pressed for:', item.name);
                           handleDeleteItem(item);
                         }} 
                         style={styles.actionIcon}
-                        activeOpacity={0.7}
+                        activeOpacity={0.6}
                       >
                         <Ionicons name="trash-outline" size={22} color="#ef4444" />
                       </TouchableOpacity>
