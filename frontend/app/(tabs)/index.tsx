@@ -163,6 +163,7 @@ export default function PantryScreen() {
   };
 
   const handleDeleteItem = (item: any) => {
+    console.log('Delete button pressed for item:', item.name, 'ID:', item.item_id);
     Alert.alert(
       'Delete Ingredient',
       `Remove "${item.name}" from your pantry?`,
@@ -173,9 +174,13 @@ export default function PantryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Deleting item with ID:', item.item_id);
               await deletePantryItem(sessionToken!, item.item_id);
+              console.log('Item deleted successfully');
+              Alert.alert('Success', `${item.name} removed from pantry!`);
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete ingredient');
+              console.error('Delete error:', error);
+              Alert.alert('Error', 'Failed to delete ingredient. Please try again.');
             }
           }
         }
