@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
-import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
+import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
@@ -11,9 +12,11 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 export default function PantryScreen() {
   const router = useRouter();
   const { sessionToken } = useAuth();
-  const { pantryItems, fetchPantry } = useAppStore();
+  const { pantryItems, fetchPantry, recipes } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (sessionToken) {
@@ -32,15 +35,34 @@ export default function PantryScreen() {
   };
 
   const getAIRecommendations = async () => {
+    if (pantryItems.length === 0) {
+      alert('Add some ingredients to your pantry first!');
+      return;
+    }
+    
     try {
+      setLoadingRecs(true);
+      setRecommendations([]);
+      
       const response = await axios.post(
         `${BACKEND_URL}/api/recipes/recommend`,
         {},
-        { headers: { Authorization: `Bearer ${sessionToken}` } }
+        { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 15000 }
       );
+      
       setRecommendations(response.data.recommendations);
+      
+      // Fade in animation
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
     } catch (error) {
       console.error('Error getting recommendations:', error);
+      alert('Failed to get recommendations. Please try again.');
+    } finally {
+      setLoadingRecs(false);
     }
   };
 
