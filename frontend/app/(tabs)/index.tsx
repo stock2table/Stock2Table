@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,22 +8,34 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
-const { width } = Dimensions.get('window');
+
+const CATEGORIES = ['vegetables', 'fruits', 'dairy', 'meat', 'grains', 'spices', 'other'];
+const UNITS = ['kg', 'g', 'L', 'ml', 'pieces', 'cups', 'tbsp', 'tsp', 'lbs', 'oz'];
 
 export default function PantryScreen() {
   const router = useRouter();
   const { sessionToken, user } = useAuth();
-  const { pantryItems, fetchPantry, recipes, fetchRecipes } = useAppStore();
+  const { pantryItems, fetchPantry, recipes, fetchRecipes, deletePantryItem, addPantryItem } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  
+  // Form state
+  const [formName, setFormName] = useState('');
+  const [formQuantity, setFormQuantity] = useState('');
+  const [formUnit, setFormUnit] = useState('pieces');
+  const [formCategory, setFormCategory] = useState('other');
+  const [formExpiry, setFormExpiry] = useState('');
+  const [saving, setSaving] = useState(false);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
     if (sessionToken) {
       loadData();
-      // Entrance animation
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 20 })
@@ -43,7 +55,7 @@ export default function PantryScreen() {
 
   const getAIRecommendations = async () => {
     if (pantryItems.length === 0) {
-      alert('Add some ingredients to your pantry first! 🥗');
+      Alert.alert('Empty Pantry', 'Add some ingredients first to get AI recipe recommendations! 🥗');
       return;
     }
     try {
@@ -56,7 +68,7 @@ export default function PantryScreen() {
       );
       setRecommendations(response.data.recommendations);
     } catch (error: any) {
-      alert('Failed to get AI recommendations. Please try again! 🤖');
+      Alert.alert('Error', 'Failed to get AI recommendations. Please try again! 🤖');
     } finally {
       setLoadingRecs(false);
     }
@@ -78,8 +90,97 @@ export default function PantryScreen() {
     if (recipe) {
       router.push(`/recipe-detail/${recipe.recipe_id}`);
     } else {
-      alert(`Recipe "${rec.name}" not yet in our database. More recipes coming soon! 🍳`);
+      Alert.alert(
+        'Recipe Coming Soon',
+        `"${rec.name}" will be added to our database soon! Meanwhile, try our other amazing recipes. 🍳`,
+        [{ text: 'Browse Recipes', onPress: () => router.push('/(tabs)/recipes') }, { text: 'OK' }]
+      );
     }
+  };
+
+  const openAddModal = () => {
+    setEditingItem(null);
+    setFormName('');
+    setFormQuantity('');
+    setFormUnit('pieces');
+    setFormCategory('other');
+    setFormExpiry('');
+    setShowAddModal(true);
+  };
+
+  const openEditModal = (item: any) => {
+    setEditingItem(item);
+    setFormName(item.name);
+    setFormQuantity(item.quantity.toString());
+    setFormUnit(item.unit);
+    setFormCategory(item.category);
+    setFormExpiry(item.expiry_date || '');
+    setShowAddModal(true);
+  };
+
+  const handleSaveItem = async () => {
+    if (!formName.trim()) {
+      Alert.alert('Error', 'Please enter an ingredient name');
+      return;
+    }
+    if (!formQuantity || parseFloat(formQuantity) <= 0) {
+      Alert.alert('Error', 'Please enter a valid quantity');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      if (editingItem) {
+        // Update existing item
+        await axios.put(
+          `${BACKEND_URL}/api/pantry/${editingItem.item_id}`,
+          {
+            name: formName.trim(),
+            quantity: parseFloat(formQuantity),
+            unit: formUnit,
+            category: formCategory,
+            expiry_date: formExpiry || null
+          },
+          { headers: { Authorization: `Bearer ${sessionToken}` } }
+        );
+      } else {
+        // Add new item
+        await addPantryItem(sessionToken!, {
+          name: formName.trim(),
+          quantity: parseFloat(formQuantity),
+          unit: formUnit,
+          category: formCategory,
+          expiry_date: formExpiry || null
+        });
+      }
+      setShowAddModal(false);
+      await fetchPantry(sessionToken!);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save ingredient. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteItem = (item: any) => {
+    Alert.alert(
+      'Delete Ingredient',
+      `Remove "${item.name}" from your pantry?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePantryItem(sessionToken!, item.item_id);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete ingredient');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const getCategoryIcon = (category: string) => {
@@ -116,7 +217,7 @@ export default function PantryScreen() {
       <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.headerGradient}>
         <Animated.View style={[styles.headerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.greetingRow}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.greetingText}>Hello, {user?.name?.split(' ')[0] || 'there'}! 👋</Text>
               <Text style={styles.subGreeting}>What's cooking today?</Text>
             </View>
@@ -133,7 +234,6 @@ export default function PantryScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8b5cf6" />}
       >
-        {/* Hero Stats Cards */}
         <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
           <TouchableOpacity style={styles.statCard} activeOpacity={0.85}>
             <LinearGradient colors={['#8b5cf6', '#7c3aed']} style={styles.statGradient}>
@@ -156,7 +256,6 @@ export default function PantryScreen() {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* AI Recommendations */}
         {recommendations.length > 0 && (
           <Animated.View style={[styles.recSection, { opacity: fadeAnim }]}>
             <View style={styles.sectionHeaderRow}>
@@ -176,7 +275,7 @@ export default function PantryScreen() {
                   key={idx}
                   style={styles.recCard}
                   onPress={() => handleRecommendationClick(rec)}
-                  activeOpacity={0.9}
+                  activeOpacity={0.8}
                 >
                   <View style={styles.recImageContainer}>
                     {recipe?.image_url ? (
@@ -186,10 +285,7 @@ export default function PantryScreen() {
                         <Ionicons name="restaurant" size={40} color="white" />
                       </LinearGradient>
                     )}
-                    <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.7)']}
-                      style={styles.recImageOverlay}
-                    />
+                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={styles.recImageOverlay} />
                     <View style={styles.recBadge}>
                       <Ionicons name="star" size={14} color="#fbbf24" />
                       <Text style={styles.recBadgeText}>Match</Text>
@@ -218,13 +314,8 @@ export default function PantryScreen() {
           </Animated.View>
         )}
 
-        {/* Action Buttons */}
         <View style={styles.actionsSection}>
-          <TouchableOpacity
-            style={styles.primaryAction}
-            onPress={() => router.push('/scan')}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity style={styles.primaryAction} onPress={() => router.push('/scan')} activeOpacity={0.85}>
             <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.actionGrad}>
               <View style={styles.actionIconCircle}>
                 <Ionicons name="camera" size={26} color="white" />
@@ -237,12 +328,7 @@ export default function PantryScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.secondaryAction}
-            onPress={getAIRecommendations}
-            disabled={loadingRecs}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity style={styles.secondaryAction} onPress={getAIRecommendations} disabled={loadingRecs} activeOpacity={0.85}>
             <LinearGradient colors={['#ec4899', '#f43f5e']} style={styles.actionGrad}>
               {loadingRecs ? (
                 <ActivityIndicator color="white" size="small" />
@@ -262,7 +348,6 @@ export default function PantryScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Pantry Items */}
         {Object.keys(categorizedItems).length === 0 ? (
           <View style={styles.emptyContainer}>
             <LinearGradient colors={['#f3f4f6', '#e5e7eb']} style={styles.emptyGrad}>
@@ -270,7 +355,10 @@ export default function PantryScreen() {
                 <Ionicons name="basket-outline" size={60} color="#9ca3af" />
               </View>
               <Text style={styles.emptyTitle}>Your Pantry is Empty</Text>
-              <Text style={styles.emptySubtitle}>Start by scanning some ingredients!</Text>
+              <Text style={styles.emptySubtitle}>Start by adding or scanning ingredients!</Text>
+              <TouchableOpacity style={styles.emptyButton} onPress={openAddModal}>
+                <Text style={styles.emptyButtonText}>Add Your First Item</Text>
+              </TouchableOpacity>
             </LinearGradient>
           </View>
         ) : (
@@ -290,7 +378,7 @@ export default function PantryScreen() {
                   </View>
                 </View>
                 {categorizedItems[cat].map((item: any) => (
-                  <TouchableOpacity key={item.item_id} style={styles.pantryCard} activeOpacity={0.9}>
+                  <TouchableOpacity key={item.item_id} style={styles.pantryCard} activeOpacity={0.9} onLongPress={() => openEditModal(item)}>
                     <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
                       <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
                     </LinearGradient>
@@ -310,7 +398,14 @@ export default function PantryScreen() {
                         )}
                       </View>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionIcon}>
+                        <Ionicons name="create-outline" size={22} color="#8b5cf6" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteItem(item)} style={styles.actionIcon}>
+                        <Ionicons name="trash-outline" size={22} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -318,8 +413,95 @@ export default function PantryScreen() {
           })
         )}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Floating Add Button */}
+      <TouchableOpacity style={styles.fabButton} onPress={openAddModal} activeOpacity={0.9}>
+        <LinearGradient colors={['#8b5cf6', '#ec4899']} style={styles.fabGradient}>
+          <Ionicons name="add" size={32} color="white" />
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {/* Add/Edit Modal */}
+      <Modal visible={showAddModal} animationType="slide" transparent>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{editingItem ? 'Edit' : 'Add'} Ingredient</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <Ionicons name="close" size={28} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
+              <Text style={styles.formLabel}>Name *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="e.g., Tomatoes"
+                value={formName}
+                onChangeText={setFormName}
+              />
+
+              <Text style={styles.formLabel}>Quantity *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="e.g., 5"
+                value={formQuantity}
+                onChangeText={setFormQuantity}
+                keyboardType="decimal-pad"
+              />
+
+              <Text style={styles.formLabel}>Unit *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                {UNITS.map(unit => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={[styles.chip, formUnit === unit && styles.chipActive]}
+                    onPress={() => setFormUnit(unit)}
+                  >
+                    <Text style={[styles.chipText, formUnit === unit && styles.chipTextActive]}>{unit}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <Text style={styles.formLabel}>Category *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                {CATEGORIES.map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.chip, formCategory === cat && styles.chipActive]}
+                    onPress={() => setFormCategory(cat)}
+                  >
+                    <Ionicons name={getCategoryIcon(cat)} size={16} color={formCategory === cat ? 'white' : '#6b7280'} />
+                    <Text style={[styles.chipText, formCategory === cat && styles.chipTextActive]}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <Text style={styles.formLabel}>Expiry Date (optional)</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="YYYY-MM-DD"
+                value={formExpiry}
+                onChangeText={setFormExpiry}
+              />
+            </ScrollView>
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveItem} disabled={saving}>
+              <LinearGradient colors={['#8b5cf6', '#ec4899']} style={styles.saveGradient}>
+                {saving ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.saveButtonText}>{editingItem ? 'Update' : 'Add'} Ingredient</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -383,9 +565,30 @@ const styles = StyleSheet.create({
   itemBadgeText: { fontSize: 13, fontWeight: '700' },
   expiryBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fff7ed', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   expiryText: { fontSize: 12, fontWeight: '600', color: '#ea580c' },
+  itemActions: { flexDirection: 'row', gap: 8 },
+  actionIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
   emptyContainer: { marginTop: 60, marginHorizontal: 24, borderRadius: 24, overflow: 'hidden' },
   emptyGrad: { padding: 48, alignItems: 'center' },
   emptyIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: '#374151', marginBottom: 8 },
-  emptySubtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center' },
+  emptySubtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
+  emptyButton: { backgroundColor: '#8b5cf6', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
+  emptyButtonText: { fontSize: 15, fontWeight: '700', color: 'white' },
+  fabButton: { position: 'absolute', bottom: 24, right: 24, borderRadius: 32, overflow: 'hidden', elevation: 12, shadowColor: '#8b5cf6', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 16 },
+  fabGradient: { width: 64, height: 64, justifyContent: 'center', alignItems: 'center' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: '85%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  modalTitle: { fontSize: 24, fontWeight: '800', color: '#1f2937' },
+  modalForm: { padding: 24 },
+  formLabel: { fontSize: 15, fontWeight: '700', color: '#374151', marginBottom: 10, marginTop: 16 },
+  formInput: { backgroundColor: '#f9fafb', borderWidth: 2, borderColor: '#e5e7eb', borderRadius: 12, padding: 16, fontSize: 16, color: '#1f2937' },
+  chipScroll: { marginTop: 8, marginBottom: 8 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#f3f4f6', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginRight: 8 },
+  chipActive: { backgroundColor: '#8b5cf6' },
+  chipText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
+  chipTextActive: { color: 'white' },
+  saveButton: { margin: 24, marginTop: 16, borderRadius: 16, overflow: 'hidden' },
+  saveGradient: { paddingVertical: 18, alignItems: 'center' },
+  saveButtonText: { fontSize: 17, fontWeight: '800', color: 'white' },
 });
