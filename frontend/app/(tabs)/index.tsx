@@ -243,34 +243,75 @@ export default function PantryScreen() {
         {/* Pantry Items by Category */}
         {Object.keys(categorizedItems).length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="basket-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>Your pantry is empty</Text>
-            <Text style={styles.emptySubtext}>Scan ingredients to get started</Text>
+            <LinearGradient
+              colors={['#f5f5f5', '#e0e0e0']}
+              style={styles.emptyStateGradient}
+            >
+              <Ionicons name="basket-outline" size={80} color="#999" />
+              <Text style={styles.emptyText}>Your pantry is empty</Text>
+              <Text style={styles.emptySubtext}>Scan ingredients to get started</Text>
+            </LinearGradient>
           </View>
         ) : (
-          Object.keys(categorizedItems).map(category => (
-            <View key={category} style={styles.categorySection}>
-              <Text style={styles.categoryTitle}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </Text>
-              {categorizedItems[category].map((item: any) => (
-                <View key={item.item_id} style={styles.pantryItem}>
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemQuantity}>
-                      {item.quantity} {item.unit}
+          Object.keys(categorizedItems).map(category => {
+            const [color1, color2] = getCategoryColor(category);
+            return (
+              <View key={category} style={styles.categorySection}>
+                <View style={styles.categoryHeader}>
+                  <LinearGradient
+                    colors={[color1, color2]}
+                    style={styles.categoryIconContainer}
+                  >
+                    <Ionicons name={getCategoryIcon(category)} size={20} color="white" />
+                  </LinearGradient>
+                  <Text style={styles.categoryTitle}>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </Text>
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryBadgeText}>
+                      {categorizedItems[category].length}
                     </Text>
-                    {item.expiry_date && (
-                      <Text style={styles.itemExpiry}>
-                        Expires: {item.expiry_date}
-                      </Text>
-                    )}
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color="#999" />
                 </View>
-              ))}
-            </View>
-          ))
+                
+                {categorizedItems[category].map((item: any) => (
+                  <TouchableOpacity
+                    key={item.item_id}
+                    style={styles.pantryItem}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.itemIconContainer}>
+                      <LinearGradient
+                        colors={[color1 + '30', color2 + '30']}
+                        style={styles.itemIcon}
+                      >
+                        <Ionicons name={getCategoryIcon(category)} size={24} color={color1} />
+                      </LinearGradient>
+                    </View>
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                      <View style={styles.itemDetailsRow}>
+                        <View style={styles.quantityBadge}>
+                          <Text style={styles.itemQuantity}>
+                            {item.quantity} {item.unit}
+                          </Text>
+                        </View>
+                        {item.expiry_date && (
+                          <View style={styles.expiryBadge}>
+                            <Ionicons name="time-outline" size={12} color="#FF9800" />
+                            <Text style={styles.itemExpiry}>
+                              {item.expiry_date}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#ccc" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            );
+          })
         )}
       </ScrollView>
     </View>
