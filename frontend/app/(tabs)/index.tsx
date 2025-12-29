@@ -408,34 +408,61 @@ export default function PantryScreen() {
                   </View>
                 </View>
                 {categorizedItems[cat].map((item: any) => (
-                  <Swipeable
-                    key={item.item_id}
-                    renderRightActions={() => renderRightActions(item)}
-                    overshootRight={false}
-                  >
-                    <View style={styles.pantryCard}>
-                      <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
-                        <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
-                      </LinearGradient>
-                      <View style={styles.itemDetails}>
-                        <Text style={styles.itemName}>{item.name}</Text>
-                        <View style={styles.itemMeta}>
-                          <View style={[styles.itemBadge, { backgroundColor: c1 + '20' }]}>
-                            <Text style={[styles.itemBadgeText, { color: c1 }]}>
-                              {item.quantity} {item.unit}
-                            </Text>
-                          </View>
-                          {item.expiry_date && (
-                            <View style={styles.expiryBadge}>
-                              <Ionicons name="time-outline" size={12} color="#f97316" />
-                              <Text style={styles.expiryText}>{item.expiry_date}</Text>
-                            </View>
-                          )}
+                  <View key={item.item_id} style={styles.pantryCard}>
+                    <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
+                      <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
+                    </LinearGradient>
+                    <View style={styles.itemDetails}>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                      <View style={styles.itemMeta}>
+                        <View style={[styles.itemBadge, { backgroundColor: c1 + '20' }]}>
+                          <Text style={[styles.itemBadgeText, { color: c1 }]}>
+                            {item.quantity} {item.unit}
+                          </Text>
                         </View>
+                        {item.expiry_date && (
+                          <View style={styles.expiryBadge}>
+                            <Ionicons name="time-outline" size={12} color="#f97316" />
+                            <Text style={styles.expiryText}>{item.expiry_date}</Text>
+                          </View>
+                        )}
                       </View>
-                      <Ionicons name="chevron-back" size={20} color="#d1d5db" />
                     </View>
-                  </Swipeable>
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity 
+                        onPress={() => openEditModal(item)}
+                        style={styles.actionIconButton}
+                      >
+                        <Ionicons name="create-outline" size={20} color="#8b5cf6" />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          Alert.alert(
+                            'Delete Ingredient',
+                            `Remove "${item.name}" from your pantry?`,
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              { 
+                                text: 'Delete', 
+                                style: 'destructive', 
+                                onPress: async () => {
+                                  try {
+                                    await deletePantryItem(sessionToken!, item.item_id);
+                                    await fetchPantry(sessionToken!);
+                                  } catch (error) {
+                                    Alert.alert('Error', 'Failed to delete');
+                                  }
+                                }
+                              }
+                            ]
+                          );
+                        }}
+                        style={styles.actionIconButton}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 ))}
               </View>
             );
