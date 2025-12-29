@@ -1,124 +1,187 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import Logo from '../components/Logo';
+
+const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const { login } = useAuth();
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        {/* Logo/Icon */}
-        <View style={styles.iconContainer}>
-          <Ionicons name="restaurant" size={80} color="#4CAF50" />
-        </View>
-        
-        <Text style={styles.title}>Stock2Table</Text>
-        <Text style={styles.subtitle}>AI-Powered Meal Planning</Text>
-        
-        <View style={styles.features}>
-          <View style={styles.feature}>
-            <Ionicons name="camera" size={24} color="#4CAF50" />
-            <Text style={styles.featureText}>Scan Ingredients</Text>
-          </View>
-          <View style={styles.feature}>
-            <Ionicons name="nutrition" size={24} color="#4CAF50" />
-            <Text style={styles.featureText}>Smart Recipes</Text>
-          </View>
-          <View style={styles.feature}>
-            <Ionicons name="calendar" size={24} color="#4CAF50" />
-            <Text style={styles.featureText}>Meal Planning</Text>
-          </View>
-        </View>
+      <LinearGradient
+        colors={['#8b5cf6', '#6366f1', '#ec4899']}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        {/* Decorative circles */}
+        <View style={[styles.circle, styles.circle1]} />
+        <View style={[styles.circle, styles.circle2]} />
+        <View style={[styles.circle, styles.circle3]} />
 
-        <TouchableOpacity 
-          style={styles.loginButton}
-          onPress={login}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="logo-google" size={24} color="white" style={styles.googleIcon} />
-          <Text style={styles.loginButtonText}>Continue with Google</Text>
-        </TouchableOpacity>
+        <View style={styles.content}>
+          {/* Logo */}
+          <View style={styles.logoSection}>
+            <Logo size="large" />
+            <Text style={styles.tagline}>AI-Powered Meal Planning</Text>
+          </View>
 
-        <Text style={styles.termsText}>
-          By continuing, you agree to our Terms of Service
-        </Text>
-      </View>
+          {/* Hero Image */}
+          <View style={styles.heroSection}>
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconCircle}>
+                <Ionicons name="camera" size={32} color="#8b5cf6" />
+              </View>
+              <Text style={styles.featureTitle}>Smart Scanner</Text>
+              <Text style={styles.featureDesc}>AI identifies ingredients instantly</Text>
+            </View>
+
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconCircle}>
+                <Ionicons name="sparkles" size={32} color="#ec4899" />
+              </View>
+              <Text style={styles.featureTitle}>Recipe Magic</Text>
+              <Text style={styles.featureDesc}>Get personalized meal ideas</Text>
+            </View>
+
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconCircle}>
+                <Ionicons name="calendar" size={32} color="#f59e0b" />
+              </View>
+              <Text style={styles.featureTitle}>Meal Planning</Text>
+              <Text style={styles.featureDesc}>Plan your week effortlessly</Text>
+            </View>
+          </View>
+
+          {/* Login Button */}
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={login}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={['#ffffff', '#f9fafb']}
+              style={styles.loginGradient}
+            >
+              <Image
+                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.loginText}>Continue with Google</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <Text style={styles.termsText}>
+            By continuing, you agree to our{' '}
+            <Text style={styles.termsLink}>Terms of Service</Text>
+          </Text>
+        </View>
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  container: { flex: 1 },
+  gradient: { flex: 1 },
+  circle: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
+  circle1: { width: 300, height: 300, top: -100, right: -50 },
+  circle2: { width: 200, height: 200, bottom: 100, left: -50 },
+  circle3: { width: 150, height: 150, top: 200, left: 50 },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    padding: 32,
+    paddingTop: 80,
+    paddingBottom: 48,
+  },
+  logoSection: {
     alignItems: 'center',
-    padding: 24,
   },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#E8F5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#2E7D32',
-    marginBottom: 8,
-  },
-  subtitle: {
+  tagline: {
     fontSize: 18,
-    color: '#666',
-    marginBottom: 48,
-  },
-  features: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 48,
-  },
-  feature: {
-    alignItems: 'center',
-  },
-  featureText: {
-    marginTop: 8,
-    fontSize: 12,
-    color: '#666',
-  },
-  loginButton: {
-    flexDirection: 'row',
-    backgroundColor: '#4285F4',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  googleIcon: {
-    marginRight: 12,
-  },
-  loginButtonText: {
-    color: 'white',
-    fontSize: 18,
+    color: 'rgba(255,255,255,0.95)',
+    marginTop: 16,
     fontWeight: '600',
   },
+  heroSection: {
+    gap: 16,
+  },
+  featureCard: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 24,
+    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  featureIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+    flex: 1,
+  },
+  featureDesc: {
+    fontSize: 14,
+    color: '#6b7280',
+    flex: 1,
+    position: 'absolute',
+    left: 104,
+    bottom: 24,
+  },
+  loginButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  loginGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 12,
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
+  },
+  loginText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
   termsText: {
-    marginTop: 24,
-    fontSize: 12,
-    color: '#999',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
+    marginTop: 16,
+  },
+  termsLink: {
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });
