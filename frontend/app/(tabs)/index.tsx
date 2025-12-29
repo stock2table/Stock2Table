@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Dimensions } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,28 +8,31 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+const { width } = Dimensions.get('window');
 
 export default function PantryScreen() {
   const router = useRouter();
-  const { sessionToken } = useAuth();
+  const { sessionToken, user } = useAuth();
   const { pantryItems, fetchPantry, recipes, fetchRecipes } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const bounceAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
     if (sessionToken) {
       loadData();
+      // Entrance animation
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 20 })
+      ]).start();
     }
   }, [sessionToken]);
 
   const loadData = async () => {
-    await Promise.all([
-      fetchPantry(sessionToken!),
-      fetchRecipes()
-    ]);
+    await Promise.all([fetchPantry(sessionToken!), fetchRecipes()]);
   };
 
   const onRefresh = async () => {
@@ -43,34 +46,16 @@ export default function PantryScreen() {
       alert('Add some ingredients to your pantry first! 🥗');
       return;
     }
-    
     try {
       setLoadingRecs(true);
       setRecommendations([]);
-      
-      // Bounce animation for button
-      Animated.sequence([
-        Animated.timing(bounceAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
-        Animated.timing(bounceAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
-      ]).start();
-      
       const response = await axios.post(
         `${BACKEND_URL}/api/recipes/recommend`,
         {},
         { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 20000 }
       );
-      
       setRecommendations(response.data.recommendations);
-      
-      // Fade in animation
-      fadeAnim.setValue(0);
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }).start();
     } catch (error: any) {
-      console.error('Error getting recommendations:', error);
       alert('Failed to get AI recommendations. Please try again! 🤖');
     } finally {
       setLoadingRecs(false);
@@ -78,25 +63,18 @@ export default function PantryScreen() {
   };
 
   const findRecipeByName = (recipeName: string) => {
-    // Try exact match first
-    let recipe = recipes.find(r => 
-      r.name.toLowerCase() === recipeName.toLowerCase()
-    );
-    
-    // Try partial match if no exact match
+    let recipe = recipes.find(r => r.name.toLowerCase() === recipeName.toLowerCase());
     if (!recipe) {
       recipe = recipes.find(r => 
         r.name.toLowerCase().includes(recipeName.toLowerCase()) ||
         recipeName.toLowerCase().includes(r.name.toLowerCase())
       );
     }
-    
     return recipe;
   };
 
   const handleRecommendationClick = (rec: any) => {
     const recipe = findRecipeByName(rec.name);
-    
     if (recipe) {
       router.push(`/recipe-detail/${recipe.recipe_id}`);
     } else {
@@ -104,575 +82,310 @@ export default function PantryScreen() {
     }
   };
 
-  const categorizedItems = pantryItems.reduce((acc: any, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
-    }
-    acc[item.category].push(item);
-    return acc;
-  }, {});
-
   const getCategoryIcon = (category: string) => {
     const icons: any = {
-      vegetables: 'leaf',
-      fruits: 'nutrition',
-      dairy: 'water',
-      meat: 'restaurant',
-      grains: 'fast-food',
-      spices: 'sparkles',
-      other: 'cube'
+      vegetables: 'leaf', fruits: 'nutrition', dairy: 'water',
+      meat: 'restaurant', grains: 'fast-food', spices: 'sparkles', other: 'cube'
     };
     return icons[category] || 'cube';
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: any = {
-      vegetables: ['#4CAF50', '#81C784'],
-      fruits: ['#FF9800', '#FFB74D'],
-      dairy: ['#2196F3', '#64B5F6'],
-      meat: ['#F44336', '#E57373'],
-      grains: ['#FF9800', '#FFB74D'],
-      spices: ['#9C27B0', '#BA68C8'],
-      other: ['#607D8B', '#90A4AE']
+  const getCategoryGradient = (category: string) => {
+    const gradients: any = {
+      vegetables: ['#10b981', '#34d399'],
+      fruits: ['#f59e0b', '#fbbf24'],
+      dairy: ['#3b82f6', '#60a5fa'],
+      meat: ['#ef4444', '#f87171'],
+      grains: ['#f59e0b', '#fcd34d'],
+      spices: ['#8b5cf6', '#a78bfa'],
+      other: ['#6b7280', '#9ca3af']
     };
-    return colors[category] || ['#607D8B', '#90A4AE'];
+    return gradients[category] || ['#6b7280', '#9ca3af'];
   };
+
+  const categorizedItems = pantryItems.reduce((acc: any, item) => {
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {});
+
+  const expiringCount = pantryItems.filter(i => i.expiry_date).length;
 
   return (
     <View style={styles.container}>
+      <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.headerGradient}>
+        <Animated.View style={[styles.headerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <View style={styles.greetingRow}>
+            <View>
+              <Text style={styles.greetingText}>Hello, {user?.name?.split(' ')[0] || 'there'}! 👋</Text>
+              <Text style={styles.subGreeting}>What's cooking today?</Text>
+            </View>
+            {user?.picture && (
+              <Image source={{ uri: user.picture }} style={styles.profilePic} />
+            )}
+          </View>
+        </Animated.View>
+      </LinearGradient>
+
       <ScrollView
         style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8b5cf6" />}
       >
-        {/* Header with Gradient */}
-        <LinearGradient
-          colors={['#4CAF50', '#45a049']}
-          style={styles.headerGradient}
-        >
-          <Text style={styles.headerTitle}>My Pantry</Text>
-          <Text style={styles.headerSubtitle}>Smart ingredient management</Text>
-        </LinearGradient>
+        {/* Hero Stats Cards */}
+        <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
+          <TouchableOpacity style={styles.statCard} activeOpacity={0.85}>
+            <LinearGradient colors={['#8b5cf6', '#7c3aed']} style={styles.statGradient}>
+              <View style={styles.statIconCircle}>
+                <Ionicons name="basket" size={28} color="white" />
+              </View>
+              <Text style={styles.statNumber}>{pantryItems.length}</Text>
+              <Text style={styles.statLabel}>Items in Pantry</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        {/* Stats Container with Cards */}
-        <View style={styles.statsContainer}>
-          <LinearGradient
-            colors={['#4CAF50', '#66BB6A']}
-            style={styles.statCard}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="basket" size={36} color="white" />
-            <Text style={styles.statNumber}>{pantryItems.length}</Text>
-            <Text style={styles.statLabel}>Total Items</Text>
-          </LinearGradient>
-          
-          <LinearGradient
-            colors={['#FF9800', '#FFB74D']}
-            style={styles.statCard}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="time" size={36} color="white" />
-            <Text style={styles.statNumber}>
-              {pantryItems.filter(item => item.expiry_date).length}
-            </Text>
-            <Text style={styles.statLabel}>Expiring Soon</Text>
-          </LinearGradient>
-        </View>
+          <TouchableOpacity style={styles.statCard} activeOpacity={0.85}>
+            <LinearGradient colors={['#f59e0b', '#f97316']} style={styles.statGradient}>
+              <View style={styles.statIconCircle}>
+                <Ionicons name="time" size={28} color="white" />
+              </View>
+              <Text style={styles.statNumber}>{expiringCount}</Text>
+              <Text style={styles.statLabel}>Expiring Soon</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
 
-        {/* AI Recommendations Section */}
+        {/* AI Recommendations */}
         {recommendations.length > 0 && (
-          <Animated.View style={[styles.recommendationsSection, { opacity: fadeAnim }]}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleContainer}>
-                <LinearGradient
-                  colors={['#9C27B0', '#BA68C8']}
-                  style={styles.aiIconContainer}
-                >
-                  <Ionicons name="sparkles" size={20} color="white" />
+          <Animated.View style={[styles.recSection, { opacity: fadeAnim }]}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.aiHeaderBadge}>
+                <LinearGradient colors={['#ec4899', '#f43f5e']} style={styles.aiBadgeGrad}>
+                  <Ionicons name="sparkles" size={18} color="white" />
+                  <Text style={styles.aiBadgeText}>AI Powered</Text>
                 </LinearGradient>
-                <Text style={styles.sectionTitle}>AI Recipe Ideas</Text>
               </View>
             </View>
-            
-            {recommendations.map((rec, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.recommendationCard}
-                onPress={() => {
-                  // Try to find matching recipe in database
-                  alert(`Opening ${rec.name}... (Feature coming soon!)`);
-                }}
-                activeOpacity={0.7}
-              >
-                <LinearGradient
-                  colors={['#E8F5E9', '#C8E6C9']}
-                  style={styles.recommendationGradient}
+            <Text style={styles.sectionTitle}>Recipes You Can Make</Text>
+
+            {recommendations.map((rec, idx) => {
+              const recipe = findRecipeByName(rec.name);
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.recCard}
+                  onPress={() => handleRecommendationClick(rec)}
+                  activeOpacity={0.9}
                 >
-                  <View style={styles.recommendationHeader}>
-                    <View style={styles.recommendationIconBadge}>
-                      <Ionicons name="restaurant" size={20} color="#2E7D32" />
+                  <View style={styles.recImageContainer}>
+                    {recipe?.image_url ? (
+                      <Image source={{ uri: recipe.image_url }} style={styles.recImage} />
+                    ) : (
+                      <LinearGradient colors={['#ec4899', '#f43f5e']} style={styles.recImagePlaceholder}>
+                        <Ionicons name="restaurant" size={40} color="white" />
+                      </LinearGradient>
+                    )}
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.7)']}
+                      style={styles.recImageOverlay}
+                    />
+                    <View style={styles.recBadge}>
+                      <Ionicons name="star" size={14} color="#fbbf24" />
+                      <Text style={styles.recBadgeText}>Match</Text>
                     </View>
-                    <Text style={styles.recipeTitle}>{rec.name}</Text>
                   </View>
-                  <Text style={styles.recipeReason}>{rec.reason}</Text>
-                  {rec.missing_ingredients && rec.missing_ingredients.length > 0 && (
-                    <View style={styles.missingContainer}>
-                      <Ionicons name="information-circle" size={16} color="#FF9800" />
-                      <Text style={styles.missingText}>
-                        Missing: {rec.missing_ingredients.join(', ')}
-                      </Text>
+                  <View style={styles.recContent}>
+                    <Text style={styles.recTitle}>{rec.name}</Text>
+                    <Text style={styles.recReason} numberOfLines={2}>{rec.reason}</Text>
+                    {rec.missing_ingredients && rec.missing_ingredients.length > 0 && (
+                      <View style={styles.missingBadge}>
+                        <Ionicons name="alert-circle" size={14} color="#f97316" />
+                        <Text style={styles.missingText} numberOfLines={1}>
+                          Need: {rec.missing_ingredients.slice(0, 2).join(', ')}
+                          {rec.missing_ingredients.length > 2 && ` +${rec.missing_ingredients.length - 2}`}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.viewRecipeBtn}>
+                      <Text style={styles.viewRecipeText}>View Recipe</Text>
+                      <Ionicons name="arrow-forward" size={16} color="#8b5cf6" />
                     </View>
-                  )}
-                  <View style={styles.viewRecipeButton}>
-                    <Text style={styles.viewRecipeText}>View Recipe</Text>
-                    <Ionicons name="arrow-forward" size={16} color="#2E7D32" />
                   </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              );
+            })}
           </Animated.View>
         )}
 
-        {/* Action Buttons with Enhanced Design */}
-        <View style={styles.actionsContainer}>
+        {/* Action Buttons */}
+        <View style={styles.actionsSection}>
           <TouchableOpacity
-            style={styles.primaryButtonContainer}
+            style={styles.primaryAction}
             onPress={() => router.push('/scan')}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <LinearGradient
-              colors={['#4CAF50', '#45a049']}
-              style={styles.primaryButton}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="camera" size={28} color="white" />
-              <Text style={styles.primaryButtonText}>Scan Ingredient</Text>
+            <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.actionGrad}>
+              <View style={styles.actionIconCircle}>
+                <Ionicons name="camera" size={26} color="white" />
+              </View>
+              <View style={styles.actionText}>
+                <Text style={styles.actionTitle}>Scan Ingredients</Text>
+                <Text style={styles.actionSubtitle}>Use AI to identify food</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
             </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.secondaryButtonContainer}
+            style={styles.secondaryAction}
             onPress={getAIRecommendations}
             disabled={loadingRecs}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <LinearGradient
-              colors={['#9C27B0', '#BA68C8']}
-              style={styles.secondaryButton}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
+            <LinearGradient colors={['#ec4899', '#f43f5e']} style={styles.actionGrad}>
               {loadingRecs ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
                 <>
-                  <Ionicons name="bulb" size={28} color="white" />
-                  <Text style={styles.secondaryButtonText}>Get AI Ideas</Text>
+                  <View style={styles.actionIconCircle}>
+                    <Ionicons name="bulb" size={26} color="white" />
+                  </View>
+                  <View style={styles.actionText}>
+                    <Text style={styles.actionTitle}>Get Recipe Ideas</Text>
+                    <Text style={styles.actionSubtitle}>AI-powered suggestions</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
                 </>
               )}
             </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {/* Pantry Items by Category */}
+        {/* Pantry Items */}
         {Object.keys(categorizedItems).length === 0 ? (
-          <View style={styles.emptyState}>
-            <LinearGradient
-              colors={['#f5f5f5', '#e0e0e0']}
-              style={styles.emptyStateGradient}
-            >
-              <Ionicons name="basket-outline" size={80} color="#999" />
-              <Text style={styles.emptyText}>Your pantry is empty</Text>
-              <Text style={styles.emptySubtext}>Scan ingredients to get started</Text>
+          <View style={styles.emptyContainer}>
+            <LinearGradient colors={['#f3f4f6', '#e5e7eb']} style={styles.emptyGrad}>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="basket-outline" size={60} color="#9ca3af" />
+              </View>
+              <Text style={styles.emptyTitle}>Your Pantry is Empty</Text>
+              <Text style={styles.emptySubtitle}>Start by scanning some ingredients!</Text>
             </LinearGradient>
           </View>
         ) : (
-          Object.keys(categorizedItems).map(category => {
-            const [color1, color2] = getCategoryColor(category);
+          Object.keys(categorizedItems).map(cat => {
+            const [c1, c2] = getCategoryGradient(cat);
             return (
-              <View key={category} style={styles.categorySection}>
+              <View key={cat} style={styles.categoryContainer}>
                 <View style={styles.categoryHeader}>
-                  <LinearGradient
-                    colors={[color1, color2]}
-                    style={styles.categoryIconContainer}
-                  >
-                    <Ionicons name={getCategoryIcon(category)} size={20} color="white" />
+                  <LinearGradient colors={[c1, c2]} style={styles.catIconCircle}>
+                    <Ionicons name={getCategoryIcon(cat)} size={20} color="white" />
                   </LinearGradient>
                   <Text style={styles.categoryTitle}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
                   </Text>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>
-                      {categorizedItems[category].length}
-                    </Text>
+                  <View style={styles.categoryCount}>
+                    <Text style={styles.categoryCountText}>{categorizedItems[cat].length}</Text>
                   </View>
                 </View>
-                
-                {categorizedItems[category].map((item: any) => (
-                  <TouchableOpacity
-                    key={item.item_id}
-                    style={styles.pantryItem}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.itemIconContainer}>
-                      <LinearGradient
-                        colors={[color1 + '30', color2 + '30']}
-                        style={styles.itemIcon}
-                      >
-                        <Ionicons name={getCategoryIcon(category)} size={24} color={color1} />
-                      </LinearGradient>
-                    </View>
-                    <View style={styles.itemInfo}>
+                {categorizedItems[cat].map((item: any) => (
+                  <TouchableOpacity key={item.item_id} style={styles.pantryCard} activeOpacity={0.9}>
+                    <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
+                      <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
+                    </LinearGradient>
+                    <View style={styles.itemDetails}>
                       <Text style={styles.itemName}>{item.name}</Text>
-                      <View style={styles.itemDetailsRow}>
-                        <View style={styles.quantityBadge}>
-                          <Text style={styles.itemQuantity}>
+                      <View style={styles.itemMeta}>
+                        <View style={[styles.itemBadge, { backgroundColor: c1 + '20' }]}>
+                          <Text style={[styles.itemBadgeText, { color: c1 }]}>
                             {item.quantity} {item.unit}
                           </Text>
                         </View>
                         {item.expiry_date && (
                           <View style={styles.expiryBadge}>
-                            <Ionicons name="time-outline" size={12} color="#FF9800" />
-                            <Text style={styles.itemExpiry}>
-                              {item.expiry_date}
-                            </Text>
+                            <Ionicons name="time-outline" size={12} color="#f97316" />
+                            <Text style={styles.expiryText}>{item.expiry_date}</Text>
                           </View>
                         )}
                       </View>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#ccc" />
+                    <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                   </TouchableOpacity>
                 ))}
               </View>
             );
           })
         )}
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  headerGradient: {
-    padding: 24,
-    paddingTop: 16,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 16,
-    marginTop: -20,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    marginTop: 12,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  actionsContainer: {
-    padding: 16,
-    gap: 12,
-  },
-  primaryButtonContainer: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 18,
-    gap: 12,
-  },
-  primaryButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  secondaryButtonContainer: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#9C27B0',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 18,
-    gap: 12,
-  },
-  secondaryButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  recommendationsSection: {
-    padding: 16,
-    paddingTop: 8,
-  },
-  sectionHeader: {
-    marginBottom: 16,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  aiIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#9C27B0',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  recommendationCard: {
-    marginBottom: 12,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  recommendationGradient: {
-    padding: 16,
-  },
-  recommendationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  recommendationIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  recipeTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2E7D32',
-  },
-  recipeReason: {
-    fontSize: 15,
-    color: '#555',
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  missingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFF3E0',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  missingText: {
-    flex: 1,
-    fontSize: 13,
-    color: '#E65100',
-  },
-  viewRecipeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 10,
-  },
-  viewRecipeText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#2E7D32',
-  },
-  categorySection: {
-    padding: 16,
-    paddingTop: 8,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 12,
-  },
-  categoryIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  categoryTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  categoryBadge: {
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  categoryBadgeText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  pantryItem: {
-    backgroundColor: 'white',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  itemIconContainer: {
-    marginRight: 16,
-  },
-  itemIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  itemName: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    textTransform: 'capitalize',
-  },
-  itemDetailsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  quantityBadge: {
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  itemQuantity: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#2E7D32',
-  },
-  expiryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  itemExpiry: {
-    fontSize: 12,
-    color: '#E65100',
-    fontWeight: '600',
-  },
-  emptyState: {
-    padding: 16,
-    marginTop: 32,
-  },
-  emptyStateGradient: {
-    alignItems: 'center',
-    padding: 48,
-    borderRadius: 20,
-  },
-  emptyText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#666',
-    marginTop: 20,
-  },
-  emptySubtext: {
-    fontSize: 15,
-    color: '#999',
-    marginTop: 8,
-    textAlign: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#fafafa' },
+  headerGradient: { paddingTop: 60, paddingBottom: 32, paddingHorizontal: 24 },
+  headerContent: {},
+  greetingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  greetingText: { fontSize: 28, fontWeight: '700', color: 'white', marginBottom: 4 },
+  subGreeting: { fontSize: 16, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  profilePic: { width: 50, height: 50, borderRadius: 25, borderWidth: 3, borderColor: 'white' },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 24 },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 24, marginTop: -40, gap: 16 },
+  statCard: { flex: 1, borderRadius: 24, overflow: 'hidden', elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
+  statGradient: { padding: 24, alignItems: 'center' },
+  statIconCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  statNumber: { fontSize: 32, fontWeight: '800', color: 'white', marginBottom: 4 },
+  statLabel: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
+  recSection: { marginTop: 32, paddingHorizontal: 24 },
+  sectionHeaderRow: { marginBottom: 12 },
+  aiHeaderBadge: { alignSelf: 'flex-start', borderRadius: 20, overflow: 'hidden' },
+  aiBadgeGrad: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
+  aiBadgeText: { fontSize: 13, fontWeight: '700', color: 'white' },
+  sectionTitle: { fontSize: 24, fontWeight: '800', color: '#1f2937', marginBottom: 16 },
+  recCard: { backgroundColor: 'white', borderRadius: 20, marginBottom: 16, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
+  recImageContainer: { position: 'relative', height: 180 },
+  recImage: { width: '100%', height: '100%' },
+  recImagePlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
+  recImageOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 80 },
+  recBadge: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  recBadgeText: { fontSize: 12, fontWeight: '700', color: 'white' },
+  recContent: { padding: 16 },
+  recTitle: { fontSize: 20, fontWeight: '700', color: '#1f2937', marginBottom: 8 },
+  recReason: { fontSize: 14, color: '#6b7280', lineHeight: 20, marginBottom: 12 },
+  missingBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff7ed', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, marginBottom: 12 },
+  missingText: { flex: 1, fontSize: 13, color: '#ea580c', fontWeight: '600' },
+  viewRecipeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#f3f4f6', paddingVertical: 12, borderRadius: 12 },
+  viewRecipeText: { fontSize: 15, fontWeight: '700', color: '#8b5cf6' },
+  actionsSection: { marginTop: 32, paddingHorizontal: 24, gap: 12 },
+  primaryAction: { borderRadius: 20, overflow: 'hidden', elevation: 6, shadowColor: '#8b5cf6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
+  secondaryAction: { borderRadius: 20, overflow: 'hidden', elevation: 6, shadowColor: '#ec4899', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
+  actionGrad: { flexDirection: 'row', alignItems: 'center', padding: 20, gap: 16 },
+  actionIconCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center' },
+  actionText: { flex: 1 },
+  actionTitle: { fontSize: 17, fontWeight: '700', color: 'white', marginBottom: 2 },
+  actionSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  categoryContainer: { marginTop: 32, paddingHorizontal: 24 },
+  categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 },
+  catIconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
+  categoryTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: '#1f2937' },
+  categoryCount: { backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  categoryCountText: { fontSize: 14, fontWeight: '700', color: '#6b7280' },
+  pantryCard: { backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4, gap: 16 },
+  itemIconBg: { width: 60, height: 60, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  itemDetails: { flex: 1 },
+  itemName: { fontSize: 17, fontWeight: '600', color: '#1f2937', marginBottom: 8, textTransform: 'capitalize' },
+  itemMeta: { flexDirection: 'row', gap: 8 },
+  itemBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  itemBadgeText: { fontSize: 13, fontWeight: '700' },
+  expiryBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fff7ed', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  expiryText: { fontSize: 12, fontWeight: '600', color: '#ea580c' },
+  emptyContainer: { marginTop: 60, marginHorizontal: 24, borderRadius: 24, overflow: 'hidden' },
+  emptyGrad: { padding: 48, alignItems: 'center' },
+  emptyIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  emptyTitle: { fontSize: 22, fontWeight: '700', color: '#374151', marginBottom: 8 },
+  emptySubtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center' },
 });
