@@ -231,7 +231,7 @@ export default function PantryScreen() {
   const expiringCount = pantryItems.filter(i => i.expiry_date).length;
 
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.headerGradient}>
         <Animated.View style={[styles.headerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.greetingRow}>
