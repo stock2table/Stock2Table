@@ -525,7 +525,7 @@ export default function PantryScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 
