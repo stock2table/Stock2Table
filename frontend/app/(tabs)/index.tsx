@@ -378,35 +378,55 @@ export default function PantryScreen() {
                   </View>
                 </View>
                 {categorizedItems[cat].map((item: any) => (
-                  <TouchableOpacity key={item.item_id} style={styles.pantryCard} activeOpacity={0.9} onLongPress={() => openEditModal(item)}>
-                    <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
-                      <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
-                    </LinearGradient>
-                    <View style={styles.itemDetails}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      <View style={styles.itemMeta}>
-                        <View style={[styles.itemBadge, { backgroundColor: c1 + '20' }]}>
-                          <Text style={[styles.itemBadgeText, { color: c1 }]}>
-                            {item.quantity} {item.unit}
-                          </Text>
-                        </View>
-                        {item.expiry_date && (
-                          <View style={styles.expiryBadge}>
-                            <Ionicons name="time-outline" size={12} color="#f97316" />
-                            <Text style={styles.expiryText}>{item.expiry_date}</Text>
+                  <View key={item.item_id} style={styles.pantryCard}>
+                    <TouchableOpacity 
+                      style={styles.pantryCardInner}
+                      activeOpacity={0.9} 
+                      onLongPress={() => openEditModal(item)}
+                    >
+                      <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
+                        <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
+                      </LinearGradient>
+                      <View style={styles.itemDetails}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <View style={styles.itemMeta}>
+                          <View style={[styles.itemBadge, { backgroundColor: c1 + '20' }]}>
+                            <Text style={[styles.itemBadgeText, { color: c1 }]}>
+                              {item.quantity} {item.unit}
+                            </Text>
                           </View>
-                        )}
+                          {item.expiry_date && (
+                            <View style={styles.expiryBadge}>
+                              <Ionicons name="time-outline" size={12} color="#f97316" />
+                              <Text style={styles.expiryText}>{item.expiry_date}</Text>
+                            </View>
+                          )}
+                        </View>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                     <View style={styles.itemActions}>
-                      <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionIcon}>
+                      <TouchableOpacity 
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          openEditModal(item);
+                        }} 
+                        style={styles.actionIcon}
+                        activeOpacity={0.7}
+                      >
                         <Ionicons name="create-outline" size={22} color="#8b5cf6" />
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDeleteItem(item)} style={styles.actionIcon}>
+                      <TouchableOpacity 
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleDeleteItem(item);
+                        }} 
+                        style={styles.actionIcon}
+                        activeOpacity={0.7}
+                      >
                         <Ionicons name="trash-outline" size={22} color="#ef4444" />
                       </TouchableOpacity>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 ))}
               </View>
             );
