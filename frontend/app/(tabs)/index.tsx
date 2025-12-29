@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated, Image } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,11 +12,12 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 export default function PantryScreen() {
   const router = useRouter();
   const { sessionToken } = useAuth();
-  const { pantryItems, fetchPantry, recipes } = useAppStore();
+  const { pantryItems, fetchPantry, recipes, fetchRecipes } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (sessionToken) {
@@ -25,7 +26,10 @@ export default function PantryScreen() {
   }, [sessionToken]);
 
   const loadData = async () => {
-    await fetchPantry(sessionToken!);
+    await Promise.all([
+      fetchPantry(sessionToken!),
+      fetchRecipes()
+    ]);
   };
 
   const onRefresh = async () => {
@@ -36,7 +40,7 @@ export default function PantryScreen() {
 
   const getAIRecommendations = async () => {
     if (pantryItems.length === 0) {
-      alert('Add some ingredients to your pantry first!');
+      alert('Add some ingredients to your pantry first! 🥗');
       return;
     }
     
@@ -44,25 +48,59 @@ export default function PantryScreen() {
       setLoadingRecs(true);
       setRecommendations([]);
       
+      // Bounce animation for button
+      Animated.sequence([
+        Animated.timing(bounceAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+        Animated.timing(bounceAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+      ]).start();
+      
       const response = await axios.post(
         `${BACKEND_URL}/api/recipes/recommend`,
         {},
-        { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 15000 }
+        { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 20000 }
       );
       
       setRecommendations(response.data.recommendations);
       
       // Fade in animation
+      fadeAnim.setValue(0);
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 600,
         useNativeDriver: true,
       }).start();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting recommendations:', error);
-      alert('Failed to get recommendations. Please try again.');
+      alert('Failed to get AI recommendations. Please try again! 🤖');
     } finally {
       setLoadingRecs(false);
+    }
+  };
+
+  const findRecipeByName = (recipeName: string) => {
+    // Try exact match first
+    let recipe = recipes.find(r => 
+      r.name.toLowerCase() === recipeName.toLowerCase()
+    );
+    
+    // Try partial match if no exact match
+    if (!recipe) {
+      recipe = recipes.find(r => 
+        r.name.toLowerCase().includes(recipeName.toLowerCase()) ||
+        recipeName.toLowerCase().includes(r.name.toLowerCase())
+      );
+    }
+    
+    return recipe;
+  };
+
+  const handleRecommendationClick = (rec: any) => {
+    const recipe = findRecipeByName(rec.name);
+    
+    if (recipe) {
+      router.push(`/recipe-detail/${recipe.recipe_id}`);
+    } else {
+      alert(`Recipe "${rec.name}" not yet in our database. More recipes coming soon! 🍳`);
     }
   };
 
