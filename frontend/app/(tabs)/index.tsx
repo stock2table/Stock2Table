@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Swipeable } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
@@ -131,7 +133,6 @@ export default function PantryScreen() {
     try {
       setSaving(true);
       if (editingItem) {
-        // Update existing item
         await axios.put(
           `${BACKEND_URL}/api/pantry/${editingItem.item_id}`,
           {
@@ -144,7 +145,6 @@ export default function PantryScreen() {
           { headers: { Authorization: `Bearer ${sessionToken}` } }
         );
       } else {
-        // Add new item
         await addPantryItem(sessionToken!, {
           name: formName.trim(),
           quantity: parseFloat(formQuantity),
@@ -162,29 +162,42 @@ export default function PantryScreen() {
     }
   };
 
-  const handleDeleteItem = (item: any) => {
-    console.log('Delete button pressed for item:', item.name, 'ID:', item.item_id);
-    Alert.alert(
-      'Delete Ingredient',
-      `Remove "${item.name}" from your pantry?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('Deleting item with ID:', item.item_id);
-              await deletePantryItem(sessionToken!, item.item_id);
-              console.log('Item deleted successfully');
-              Alert.alert('Success', `${item.name} removed from pantry!`);
-            } catch (error) {
-              console.error('Delete error:', error);
-              Alert.alert('Error', 'Failed to delete ingredient. Please try again.');
-            }
-          }
-        }
-      ]
+  const deleteItem = async (item: any) => {
+    try {
+      await deletePantryItem(sessionToken!, item.item_id);
+      Alert.alert('Deleted', `${item.name} removed from pantry!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete ingredient');
+    }
+  };
+
+  const renderRightActions = (item: any) => {
+    return (
+      <View style={styles.swipeActions}>
+        <TouchableOpacity
+          style={styles.editAction}
+          onPress={() => openEditModal(item)}
+        >
+          <Ionicons name="create" size={24} color="white" />
+          <Text style={styles.actionText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteAction}
+          onPress={() => {
+            Alert.alert(
+              'Delete Ingredient',
+              `Remove "${item.name}" from your pantry?`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: () => deleteItem(item) }
+              ]
+            );
+          }}
+        >
+          <Ionicons name="trash" size={24} color="white" />
+          <Text style={styles.actionText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -218,7 +231,7 @@ export default function PantryScreen() {
   const expiringCount = pantryItems.filter(i => i.expiry_date).length;
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.headerGradient}>
         <Animated.View style={[styles.headerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.greetingRow}>
@@ -260,6 +273,14 @@ export default function PantryScreen() {
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
+
+        {/* Swipe Tutorial Hint */}
+        {pantryItems.length > 0 && (
+          <View style={styles.hintBanner}>
+            <Ionicons name="hand-left" size={20} color="#8b5cf6" />
+            <Text style={styles.hintText}>Swipe left on any item to edit or delete</Text>
+          </View>
+        )}
 
         {recommendations.length > 0 && (
           <Animated.View style={[styles.recSection, { opacity: fadeAnim }]}>
@@ -383,12 +404,12 @@ export default function PantryScreen() {
                   </View>
                 </View>
                 {categorizedItems[cat].map((item: any) => (
-                  <View key={item.item_id} style={styles.pantryCard}>
-                    <TouchableOpacity 
-                      style={styles.pantryCardInner}
-                      activeOpacity={0.7} 
-                      onLongPress={() => openEditModal(item)}
-                    >
+                  <Swipeable
+                    key={item.item_id}
+                    renderRightActions={() => renderRightActions(item)}
+                    overshootRight={false}
+                  >
+                    <View style={styles.pantryCard}>
                       <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
                         <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
                       </LinearGradient>
@@ -408,30 +429,9 @@ export default function PantryScreen() {
                           )}
                         </View>
                       </View>
-                    </TouchableOpacity>
-                    <View style={styles.itemActions}>
-                      <TouchableOpacity 
-                        onPress={() => {
-                          console.log('Edit pressed for:', item.name);
-                          openEditModal(item);
-                        }} 
-                        style={styles.actionIcon}
-                        activeOpacity={0.6}
-                      >
-                        <Ionicons name="create-outline" size={22} color="#8b5cf6" />
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        onPress={() => {
-                          console.log('Delete pressed for:', item.name);
-                          handleDeleteItem(item);
-                        }} 
-                        style={styles.actionIcon}
-                        activeOpacity={0.6}
-                      >
-                        <Ionicons name="trash-outline" size={22} color="#ef4444" />
-                      </TouchableOpacity>
+                      <Ionicons name="chevron-back" size={20} color="#d1d5db" />
                     </View>
-                  </View>
+                  </Swipeable>
                 ))}
               </View>
             );
@@ -441,14 +441,12 @@ export default function PantryScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Floating Add Button */}
       <TouchableOpacity style={styles.fabButton} onPress={openAddModal} activeOpacity={0.9}>
         <LinearGradient colors={['#8b5cf6', '#ec4899']} style={styles.fabGradient}>
           <Ionicons name="add" size={32} color="white" />
         </LinearGradient>
       </TouchableOpacity>
 
-      {/* Add/Edit Modal */}
       <Modal visible={showAddModal} animationType="slide" transparent>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.modalContent}>
@@ -527,7 +525,7 @@ export default function PantryScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -547,6 +545,8 @@ const styles = StyleSheet.create({
   statIconCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   statNumber: { fontSize: 32, fontWeight: '800', color: 'white', marginBottom: 4 },
   statLabel: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
+  hintBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#f3f4f6', padding: 16, marginHorizontal: 24, marginTop: 20, borderRadius: 12 },
+  hintText: { flex: 1, fontSize: 14, color: '#374151', fontWeight: '500' },
   recSection: { marginTop: 32, paddingHorizontal: 24 },
   sectionHeaderRow: { marginBottom: 12 },
   aiHeaderBadge: { alignSelf: 'flex-start', borderRadius: 20, overflow: 'hidden' },
@@ -581,8 +581,7 @@ const styles = StyleSheet.create({
   categoryTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: '#1f2937' },
   categoryCount: { backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
   categoryCountText: { fontSize: 14, fontWeight: '700', color: '#6b7280' },
-  pantryCard: { backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
-  pantryCardInner: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 },
+  pantryCard: { backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
   itemIconBg: { width: 60, height: 60, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   itemDetails: { flex: 1 },
   itemName: { fontSize: 17, fontWeight: '600', color: '#1f2937', marginBottom: 8, textTransform: 'capitalize' },
@@ -591,8 +590,10 @@ const styles = StyleSheet.create({
   itemBadgeText: { fontSize: 13, fontWeight: '700' },
   expiryBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fff7ed', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   expiryText: { fontSize: 12, fontWeight: '600', color: '#ea580c' },
-  itemActions: { flexDirection: 'row', gap: 8 },
-  actionIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
+  swipeActions: { flexDirection: 'row', marginBottom: 12 },
+  editAction: { backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center', width: 80, paddingHorizontal: 12 },
+  deleteAction: { backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center', width: 80, paddingHorizontal: 12 },
+  actionText: { color: 'white', fontSize: 12, fontWeight: '600', marginTop: 4 },
   emptyContainer: { marginTop: 60, marginHorizontal: 24, borderRadius: 24, overflow: 'hidden' },
   emptyGrad: { padding: 48, alignItems: 'center' },
   emptyIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
