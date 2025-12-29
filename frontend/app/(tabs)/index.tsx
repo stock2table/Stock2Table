@@ -242,14 +242,6 @@ export default function PantryScreen() {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Swipe Tutorial Hint */}
-        {pantryItems.length > 0 && (
-          <View style={styles.hintBanner}>
-            <Ionicons name="hand-left" size={20} color="#8b5cf6" />
-            <Text style={styles.hintText}>Swipe left on any item to edit or delete</Text>
-          </View>
-        )}
-
         {recommendations.length > 0 && (
           <Animated.View style={[styles.recSection, { opacity: fadeAnim }]}>
             <View style={styles.sectionHeaderRow}>
