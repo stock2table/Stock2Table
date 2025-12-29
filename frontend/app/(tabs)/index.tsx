@@ -162,46 +162,11 @@ export default function PantryScreen() {
 
   const deleteItem = async (item: any) => {
     try {
-      console.log('Starting delete for:', item.name, 'ID:', item.item_id);
       await deletePantryItem(sessionToken!, item.item_id);
-      console.log('Delete successful, refreshing pantry...');
-      // Force refresh the pantry list
       await fetchPantry(sessionToken!);
-      Alert.alert('Success! ✅', `${item.name} has been removed from your pantry.`);
     } catch (error: any) {
-      console.error('Delete error:', error);
-      Alert.alert('Error ❌', `Failed to delete ${item.name}. Please try again.\n\nError: ${error.message || 'Unknown error'}`);
+      Alert.alert('Error', 'Failed to delete');
     }
-  };
-
-  const renderRightActions = (item: any) => {
-    return (
-      <View style={styles.swipeActions}>
-        <TouchableOpacity
-          style={styles.editAction}
-          onPress={() => openEditModal(item)}
-        >
-          <Ionicons name="create" size={24} color="white" />
-          <Text style={styles.actionText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.deleteAction}
-          onPress={() => {
-            Alert.alert(
-              'Delete Ingredient',
-              `Remove "${item.name}" from your pantry?`,
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete', style: 'destructive', onPress: () => deleteItem(item) }
-              ]
-            );
-          }}
-        >
-          <Ionicons name="trash" size={24} color="white" />
-          <Text style={styles.actionText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    );
   };
 
   const getCategoryIcon = (category: string) => {
