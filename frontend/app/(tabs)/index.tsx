@@ -74,6 +74,32 @@ export default function PantryScreen() {
     return acc;
   }, {});
 
+  const getCategoryIcon = (category: string) => {
+    const icons: any = {
+      vegetables: 'leaf',
+      fruits: 'nutrition',
+      dairy: 'water',
+      meat: 'restaurant',
+      grains: 'fast-food',
+      spices: 'sparkles',
+      other: 'cube'
+    };
+    return icons[category] || 'cube';
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors: any = {
+      vegetables: ['#4CAF50', '#81C784'],
+      fruits: ['#FF9800', '#FFB74D'],
+      dairy: ['#2196F3', '#64B5F6'],
+      meat: ['#F44336', '#E57373'],
+      grains: ['#FF9800', '#FFB74D'],
+      spices: ['#9C27B0', '#BA68C8'],
+      other: ['#607D8B', '#90A4AE']
+    };
+    return colors[category] || ['#607D8B', '#90A4AE'];
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -82,51 +108,135 @@ export default function PantryScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Header Stats */}
+        {/* Header with Gradient */}
+        <LinearGradient
+          colors={['#4CAF50', '#45a049']}
+          style={styles.headerGradient}
+        >
+          <Text style={styles.headerTitle}>My Pantry</Text>
+          <Text style={styles.headerSubtitle}>Smart ingredient management</Text>
+        </LinearGradient>
+
+        {/* Stats Container with Cards */}
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Ionicons name="basket" size={32} color="#4CAF50" />
+          <LinearGradient
+            colors={['#4CAF50', '#66BB6A']}
+            style={styles.statCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="basket" size={36} color="white" />
             <Text style={styles.statNumber}>{pantryItems.length}</Text>
-            <Text style={styles.statLabel}>Items</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="time" size={32} color="#FF9800" />
+            <Text style={styles.statLabel}>Total Items</Text>
+          </LinearGradient>
+          
+          <LinearGradient
+            colors={['#FF9800', '#FFB74D']}
+            style={styles.statCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="time" size={36} color="white" />
             <Text style={styles.statNumber}>
               {pantryItems.filter(item => item.expiry_date).length}
             </Text>
-            <Text style={styles.statLabel}>Expiring</Text>
-          </View>
+            <Text style={styles.statLabel}>Expiring Soon</Text>
+          </LinearGradient>
         </View>
 
-        {/* AI Recommendations */}
+        {/* AI Recommendations Section */}
         {recommendations.length > 0 && (
-          <View style={styles.recommendationsSection}>
-            <Text style={styles.sectionTitle}>AI Recommendations</Text>
-            {recommendations.map((rec, index) => (
-              <View key={index} style={styles.recommendationCard}>
-                <Text style={styles.recipeTitle}>{rec.name}</Text>
-                <Text style={styles.recipeReason}>{rec.reason}</Text>
+          <Animated.View style={[styles.recommendationsSection, { opacity: fadeAnim }]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <LinearGradient
+                  colors={['#9C27B0', '#BA68C8']}
+                  style={styles.aiIconContainer}
+                >
+                  <Ionicons name="sparkles" size={20} color="white" />
+                </LinearGradient>
+                <Text style={styles.sectionTitle}>AI Recipe Ideas</Text>
               </View>
+            </View>
+            
+            {recommendations.map((rec, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.recommendationCard}
+                onPress={() => {
+                  // Try to find matching recipe in database
+                  alert(`Opening ${rec.name}... (Feature coming soon!)`);
+                }}
+                activeOpacity={0.7}
+              >
+                <LinearGradient
+                  colors={['#E8F5E9', '#C8E6C9']}
+                  style={styles.recommendationGradient}
+                >
+                  <View style={styles.recommendationHeader}>
+                    <View style={styles.recommendationIconBadge}>
+                      <Ionicons name="restaurant" size={20} color="#2E7D32" />
+                    </View>
+                    <Text style={styles.recipeTitle}>{rec.name}</Text>
+                  </View>
+                  <Text style={styles.recipeReason}>{rec.reason}</Text>
+                  {rec.missing_ingredients && rec.missing_ingredients.length > 0 && (
+                    <View style={styles.missingContainer}>
+                      <Ionicons name="information-circle" size={16} color="#FF9800" />
+                      <Text style={styles.missingText}>
+                        Missing: {rec.missing_ingredients.join(', ')}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.viewRecipeButton}>
+                    <Text style={styles.viewRecipeText}>View Recipe</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#2E7D32" />
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
             ))}
-          </View>
+          </Animated.View>
         )}
 
-        {/* Action Buttons */}
+        {/* Action Buttons with Enhanced Design */}
         <View style={styles.actionsContainer}>
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={styles.primaryButtonContainer}
             onPress={() => router.push('/scan')}
+            activeOpacity={0.8}
           >
-            <Ionicons name="camera" size={24} color="white" />
-            <Text style={styles.primaryButtonText}>Scan Ingredient</Text>
+            <LinearGradient
+              colors={['#4CAF50', '#45a049']}
+              style={styles.primaryButton}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="camera" size={28} color="white" />
+              <Text style={styles.primaryButtonText}>Scan Ingredient</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={styles.secondaryButtonContainer}
             onPress={getAIRecommendations}
+            disabled={loadingRecs}
+            activeOpacity={0.8}
           >
-            <Ionicons name="bulb" size={24} color="#4CAF50" />
-            <Text style={styles.secondaryButtonText}>Get Recipe Ideas</Text>
+            <LinearGradient
+              colors={['#9C27B0', '#BA68C8']}
+              style={styles.secondaryButton}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              {loadingRecs ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="bulb" size={28} color="white" />
+                  <Text style={styles.secondaryButtonText}>Get AI Ideas</Text>
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
