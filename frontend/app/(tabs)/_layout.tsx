@@ -1,27 +1,38 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet } from 'react-native';
+import Logo from '../../components/Logo';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#4CAF50',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: '#8b5cf6',
+        tabBarInactiveTintColor: '#9ca3af',
         tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 1,
-          borderTopColor: '#f0f0f0',
-          height: 60,
-          paddingBottom: 8,
+          backgroundColor: '#ffffff',
+          borderTopWidth: 0,
+          height: 70,
+          paddingBottom: 12,
           paddingTop: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 20,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
         },
         headerStyle: {
-          backgroundColor: '#4CAF50',
+          backgroundColor: '#ffffff',
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 0,
         },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerTitle: () => <Logo size="small" />,
+        headerTitleAlign: 'center',
       }}
     >
       <Tabs.Screen
@@ -29,7 +40,9 @@ export default function TabLayout() {
         options={{
           title: 'Pantry',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <View style={styles.iconContainer}>
+              <Ionicons name="home" size={size + 2} color={color} />
+            </View>
           ),
         }}
       />
@@ -38,7 +51,9 @@ export default function TabLayout() {
         options={{
           title: 'Recipes',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book" size={size} color={color} />
+            <View style={styles.iconContainer}>
+              <Ionicons name="book" size={size + 2} color={color} />
+            </View>
           ),
         }}
       />
@@ -47,7 +62,9 @@ export default function TabLayout() {
         options={{
           title: 'Meal Plan',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
+            <View style={styles.iconContainer}>
+              <Ionicons name="calendar" size={size + 2} color={color} />
+            </View>
           ),
         }}
       />
@@ -56,7 +73,9 @@ export default function TabLayout() {
         options={{
           title: 'Shopping',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cart" size={size} color={color} />
+            <View style={styles.iconContainer}>
+              <Ionicons name="cart" size={size + 2} color={color} />
+            </View>
           ),
         }}
       />
@@ -65,10 +84,19 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <View style={styles.iconContainer}>
+              <Ionicons name="person" size={size + 2} color={color} />
+            </View>
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
