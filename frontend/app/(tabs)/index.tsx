@@ -6,7 +6,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Swipeable } from 'react-native-gesture-handler';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
