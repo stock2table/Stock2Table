@@ -279,11 +279,26 @@ export default function HomeScreen() {
                     <Ionicons name="flame-outline" size={14} color="white" />
                     <Text style={styles.heroMetaText}>{todaySuggestion.calories || 400} cal</Text>
                   </View>
-                  <View style={styles.heroMetaItem}>
-                    <Ionicons name="star" size={14} color="#fbbf24" />
-                    <Text style={styles.heroMetaText}>{todaySuggestion.rating || 4.8}</Text>
-                  </View>
+                  {todaySuggestion.missing_ingredients && (
+                    <View style={[styles.heroMetaItem, { backgroundColor: todaySuggestion.can_make ? 'rgba(34,197,94,0.3)' : 'rgba(249,115,22,0.3)', paddingHorizontal: 8, borderRadius: 8 }]}>
+                      <Ionicons name={todaySuggestion.can_make ? 'checkmark-circle' : 'cart'} size={14} color={todaySuggestion.can_make ? '#22c55e' : '#f97316'} />
+                      <Text style={[styles.heroMetaText, { color: todaySuggestion.can_make ? '#22c55e' : '#f97316' }]}>
+                        {todaySuggestion.can_make ? 'Ready!' : `Need ${todaySuggestion.missing_ingredients.length}`}
+                      </Text>
+                    </View>
+                  )}
                 </View>
+                
+                {/* Missing Ingredients List */}
+                {todaySuggestion.missing_ingredients && todaySuggestion.missing_ingredients.length > 0 && (
+                  <View style={styles.missingIngredientsRow}>
+                    <Text style={styles.missingLabel}>Missing: </Text>
+                    <Text style={styles.missingList} numberOfLines={1}>
+                      {todaySuggestion.missing_ingredients.slice(0, 3).join(', ')}
+                      {todaySuggestion.missing_ingredients.length > 3 ? ` +${todaySuggestion.missing_ingredients.length - 3} more` : ''}
+                    </Text>
+                  </View>
+                )}
                 
                 <View style={styles.heroActions}>
                   <TouchableOpacity style={styles.cookNowBtn}>
