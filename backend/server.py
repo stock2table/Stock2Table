@@ -428,8 +428,9 @@ async def generate_recipe_details(request: RecipeDetailsRequest, current_user: U
     try:
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
-            model="gpt-5.2"
-        )
+            session_id=f"trending_{uuid.uuid4().hex[:8]}",
+            system_message="You are a culinary expert. Generate trending recipe suggestions."
+        ).with_model("openai", "gpt-4.1-mini")
         
         prompt = f"""Generate a detailed recipe for: {request.recipe_name}
 
@@ -569,8 +570,9 @@ async def get_trending_content(current_user: User = Depends(require_auth)):
         
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
-            model="gpt-5.2"
-        )
+            session_id=f"trending_{uuid.uuid4().hex[:8]}",
+            system_message="You are a culinary expert. Generate trending recipe suggestions."
+        ).with_model("openai", "gpt-4.1-mini")
         
         user_context = ""
         if prefs:
@@ -641,8 +643,9 @@ async def get_video_tutorials(current_user: User = Depends(require_auth)):
         
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
-            model="gpt-5.2"
-        )
+            session_id=f"trending_{uuid.uuid4().hex[:8]}",
+            system_message="You are a culinary expert. Generate trending recipe suggestions."
+        ).with_model("openai", "gpt-4.1-mini")
         
         skill_level = prefs.get('cooking_skill', 'intermediate') if prefs else 'intermediate'
         
@@ -707,8 +710,9 @@ async def get_daily_suggestion(current_user: User = Depends(require_auth)):
         
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
-            model="gpt-5.2"
-        )
+            session_id=f"trending_{uuid.uuid4().hex[:8]}",
+            system_message="You are a culinary expert. Generate trending recipe suggestions."
+        ).with_model("openai", "gpt-4.1-mini")
         
         pantry_items = [p.get('name', '') for p in pantry]
         
