@@ -364,7 +364,34 @@ export default function PantryScreen() {
                   </View>
                 </View>
                 {categorizedItems[cat].map((item: any) => (
-                  <View key={item.item_id} style={styles.pantryCard}>
+                  <TouchableOpacity 
+                    key={item.item_id} 
+                    style={styles.pantryCard}
+                    onPress={() => {
+                      Alert.alert(
+                        'Delete ' + item.name + '?',
+                        'Tap Delete to remove this item',
+                        [
+                          { text: 'Cancel' },
+                          { 
+                            text: 'DELETE NOW', 
+                            onPress: async () => {
+                              try {
+                                await axios.delete(
+                                  `${BACKEND_URL}/api/pantry/${item.item_id}`,
+                                  { headers: { Authorization: `Bearer ${sessionToken}` } }
+                                );
+                                await fetchPantry(sessionToken!);
+                                Alert.alert('✅ Deleted!', item.name + ' removed');
+                              } catch (err: any) {
+                                Alert.alert('❌ Error', err.message || 'Delete failed');
+                              }
+                            }
+                          }
+                        ]
+                      );
+                    }}
+                  >
                     <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
                       <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
                     </LinearGradient>
@@ -384,41 +411,8 @@ export default function PantryScreen() {
                         )}
                       </View>
                     </View>
-                    <View style={styles.itemActions}>
-                      <TouchableOpacity 
-                        onPress={() => openEditModal(item)}
-                        style={styles.actionIconButton}
-                      >
-                        <Ionicons name="create-outline" size={20} color="#8b5cf6" />
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        onPress={() => {
-                          Alert.alert(
-                            'Delete Ingredient',
-                            `Remove "${item.name}" from your pantry?`,
-                            [
-                              { text: 'Cancel', style: 'cancel' },
-                              { 
-                                text: 'Delete', 
-                                style: 'destructive', 
-                                onPress: async () => {
-                                  try {
-                                    await deletePantryItem(sessionToken!, item.item_id);
-                                    await fetchPantry(sessionToken!);
-                                  } catch (error) {
-                                    Alert.alert('Error', 'Failed to delete');
-                                  }
-                                }
-                              }
-                            ]
-                          );
-                        }}
-                        style={styles.actionIconButton}
-                      >
-                        <Ionicons name="trash-outline" size={20} color="#ef4444" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                    <Ionicons name="trash" size={24} color="#ef4444" />
+                  </TouchableOpacity>
                 ))}
               </View>
             );
