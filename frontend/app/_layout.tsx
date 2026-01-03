@@ -11,10 +11,12 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="login" />
+          <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="scan" />
           <Stack.Screen name="recipe-detail/[id]" />
           <Stack.Screen name="add-family" />
+          <Stack.Screen name="ai-recipe" />
         </Stack>
       </AuthProvider>
     </GestureHandlerRootView>
