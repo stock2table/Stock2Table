@@ -320,7 +320,7 @@ EMERGENT_LLM_KEY=sk-emergent-8892b09C81b85376f0
 
 ### Frontend (.env)
 ```
-EXPO_PUBLIC_BACKEND_URL=https://[your-domain].preview.emergentagent.com
+EXPO_PUBLIC_BACKEND_URL=https://mealgenius-43.preview.emergentagent.com
 EXPO_PACKAGER_PROXY_URL=[managed by platform]
 EXPO_PACKAGER_HOSTNAME=[managed by platform]
 ```
