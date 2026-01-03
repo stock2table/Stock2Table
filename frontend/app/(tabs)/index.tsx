@@ -480,7 +480,7 @@ export default function HomeScreen() {
                 activeOpacity={0.9}
               >
                 <Image 
-                  source={{ uri: rec.image_url || `https://source.unsplash.com/200x200/?${encodeURIComponent(rec.name)},food` }} 
+                  source={{ uri: getRecipeImage(idx) }} 
                   style={styles.recImage} 
                 />
                 <View style={styles.recContent}>
