@@ -629,20 +629,29 @@ async def get_activity_history(limit: int = 50, current_user: User = Depends(req
 
 @api_router.get("/discover/trending")
 async def get_trending_content(current_user: User = Depends(require_auth)):
-    """Get trending dishes - uses cache for fast response"""
+    """Get trending dishes with missing ingredients info"""
     try:
-        # Check cache first
-        cached = get_cached("trending")
-        if cached:
-            logger.info("Returning cached trending dishes")
-            return {"trending": cached}
+        # Get user's pantry items
+        pantry_items = await db.pantry_items.find(
+            {"user_id": current_user.user_id},
+            {"_id": 0, "name": 1}
+        ).to_list(100)
+        pantry_names = [p.get('name', '') for p in pantry_items]
         
-        # Return pre-computed trending immediately (fast!)
-        # Background task can refresh this with AI later
-        trending = PRECOMPUTED_TRENDING.copy()
+        # Use pre-computed trending and add missing ingredients
+        trending = []
+        for dish in PRECOMPUTED_TRENDING:
+            dish_copy = dish.copy()
+            ingredients = dish.get('ingredients', [])
+            missing = calculate_missing_ingredients(ingredients, pantry_names)
+            dish_copy['missing_ingredients'] = missing
+            dish_copy['have_ingredients'] = len(ingredients) - len(missing)
+            dish_copy['total_ingredients'] = len(ingredients)
+            dish_copy['can_make'] = len(missing) == 0
+            trending.append(dish_copy)
         
-        # Cache the result
-        set_cached("trending", trending)
+        # Sort by fewest missing ingredients
+        trending.sort(key=lambda x: len(x.get('missing_ingredients', [])))
         
         return {"trending": trending}
     
