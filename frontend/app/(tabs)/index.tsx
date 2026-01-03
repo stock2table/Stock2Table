@@ -465,6 +465,10 @@ export default function HomeScreen() {
                 onPress={() => navigateToRecipe(rec)}
                 activeOpacity={0.9}
               >
+                <Image 
+                  source={{ uri: rec.image_url || `https://source.unsplash.com/200x200/?${encodeURIComponent(rec.name)},food` }} 
+                  style={styles.recImage} 
+                />
                 <View style={styles.recContent}>
                   <Text style={styles.recName}>{rec.name}</Text>
                   <Text style={styles.recReason} numberOfLines={2}>{rec.reason}</Text>
