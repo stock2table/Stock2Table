@@ -448,10 +448,35 @@ export default function PantryScreen() {
                             pressed && { opacity: 0.5, transform: [{ scale: 0.95 }] }
                           ]}
                           onPress={() => {
-                            console.log('Delete pressed for:', item.name, item.item_id);
-                            handleDeleteItem(item);
+                            console.log('DELETE BUTTON TAPPED for:', item.name);
+                            Alert.alert(
+                              'Delete Item',
+                              `Remove "${item.name}" from pantry?`,
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                {
+                                  text: 'Delete',
+                                  style: 'destructive',
+                                  onPress: () => {
+                                    console.log('User confirmed delete');
+                                    setDeletingId(item.item_id);
+                                    axios.delete(
+                                      `${BACKEND_URL}/api/pantry/${item.item_id}`,
+                                      { headers: { Authorization: `Bearer ${sessionToken}` } }
+                                    ).then(() => {
+                                      console.log('Delete successful');
+                                      fetchPantry(sessionToken!);
+                                    }).catch((err) => {
+                                      console.error('Delete failed:', err);
+                                      Alert.alert('Error', 'Failed to delete item');
+                                    }).finally(() => {
+                                      setDeletingId(null);
+                                    });
+                                  }
+                                }
+                              ]
+                            );
                           }}
-                          disabled={deletingId === item.item_id}
                           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                         >
                           {deletingId === item.item_id ? (
