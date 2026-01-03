@@ -650,6 +650,7 @@ const styles = StyleSheet.create({
   deleteBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#fef2f2', justifyContent: 'center', alignItems: 'center' },
   swipeHint: { flexDirection: 'row', alignItems: 'center', paddingRight: 12, gap: 2 },
   swipeHintText: { fontSize: 11, color: '#d1d5db', fontWeight: '500' },
+  tapHint: { paddingRight: 12 },
   swipeActionsContainer: { flexDirection: 'row', marginBottom: 8 },
   editSwipeAction: { backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center', width: 80, borderTopLeftRadius: 12, borderBottomLeftRadius: 12 },
   deleteSwipeAction: { backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center', width: 80, borderTopRightRadius: 12, borderBottomRightRadius: 12 },
