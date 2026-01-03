@@ -20,6 +20,20 @@ const CATEGORY_IMAGES = {
   snack: 'https://images.unsplash.com/photo-1604152135912-04a022e23696?w=400&q=80',
 };
 
+// Reliable food images for AI recommendations
+const RECIPE_IMAGES = [
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&q=80',
+  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&q=80',
+  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&q=80',
+  'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&q=80',
+  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&q=80',
+  'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=300&q=80',
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&q=80',
+  'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=300&q=80',
+];
+
+const getRecipeImage = (index: number) => RECIPE_IMAGES[index % RECIPE_IMAGES.length];
+
 // Fallback trending dishes with beautiful images
 const FALLBACK_TRENDING = [
   { id: '1', name: 'Korean Fried Chicken', cuisine: 'Korean', time: 45, calories: 580, rating: 4.9, image_url: 'https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=400&q=80', video_url: 'https://www.youtube.com/results?search_query=korean+fried+chicken+recipe' },
