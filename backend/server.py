@@ -826,7 +826,7 @@ async def generate_meal_plan(request: AIMealPlanRequest, current_user: User = De
             api_key=EMERGENT_LLM_KEY,
             session_id=f"mealplan_{uuid.uuid4().hex[:8]}",
             system_message="You are a meal planning expert. Create a weekly meal plan with breakfast, lunch, and dinner for each day. Return ONLY valid JSON."
-        ).with_model("openai", "gpt-5.2")
+        ).with_model("openai", "gpt-4.1-mini")
         
         prompt = f"""Create a 7-day meal plan starting {request.week_start_date}.
 Family size: {family_size}
