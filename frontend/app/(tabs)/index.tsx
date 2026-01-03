@@ -1,11 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, Dimensions, Pressable, TouchableOpacity as RNTouchableOpacity } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 import axios from 'axios';
 
 const { width } = Dimensions.get('window');
