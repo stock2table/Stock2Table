@@ -410,7 +410,44 @@ export default function PantryScreen() {
                   </View>
                   
                   {categorizedItems[cat].map((item: any) => (
-                    <View key={item.item_id} style={styles.pantryCard}>
+                    <Pressable 
+                      key={item.item_id} 
+                      style={({ pressed }) => [
+                        styles.pantryCard,
+                        pressed && { opacity: 0.7 }
+                      ]}
+                      onLongPress={() => {
+                        console.log('LONG PRESS - DELETE:', item.name);
+                        Alert.alert(
+                          'Delete Item',
+                          `Remove "${item.name}" from pantry?`,
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Delete',
+                              style: 'destructive',
+                              onPress: () => {
+                                setDeletingId(item.item_id);
+                                axios.delete(
+                                  `${BACKEND_URL}/api/pantry/${item.item_id}`,
+                                  { headers: { Authorization: `Bearer ${sessionToken}` } }
+                                ).then(() => {
+                                  fetchPantry(sessionToken!);
+                                }).catch((err) => {
+                                  Alert.alert('Error', 'Failed to delete');
+                                }).finally(() => {
+                                  setDeletingId(null);
+                                });
+                              }
+                            }
+                          ]
+                        );
+                      }}
+                      onPress={() => {
+                        console.log('TAP - EDIT:', item.name);
+                        openEditModal(item);
+                      }}
+                    >
                       <View style={[styles.itemIndicator, { backgroundColor: color }]} />
                       <View style={styles.itemContent}>
                         <Text style={styles.itemName}>{item.name}</Text>
@@ -429,64 +466,18 @@ export default function PantryScreen() {
                         </View>
                       </View>
                       <View style={styles.itemActions}>
-                        <Pressable 
-                          style={({ pressed }) => [
-                            styles.editBtn,
-                            pressed && { opacity: 0.5, transform: [{ scale: 0.95 }] }
-                          ]}
-                          onPress={() => {
-                            console.log('Edit pressed for:', item.name);
-                            openEditModal(item);
-                          }}
-                          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                        >
+                        <View style={styles.editBtn}>
                           <Ionicons name="pencil" size={18} color="#6b7280" />
-                        </Pressable>
-                        <Pressable 
-                          style={({ pressed }) => [
-                            styles.deleteBtn,
-                            pressed && { opacity: 0.5, transform: [{ scale: 0.95 }] }
-                          ]}
-                          onPress={() => {
-                            console.log('DELETE BUTTON TAPPED for:', item.name);
-                            Alert.alert(
-                              'Delete Item',
-                              `Remove "${item.name}" from pantry?`,
-                              [
-                                { text: 'Cancel', style: 'cancel' },
-                                {
-                                  text: 'Delete',
-                                  style: 'destructive',
-                                  onPress: () => {
-                                    console.log('User confirmed delete');
-                                    setDeletingId(item.item_id);
-                                    axios.delete(
-                                      `${BACKEND_URL}/api/pantry/${item.item_id}`,
-                                      { headers: { Authorization: `Bearer ${sessionToken}` } }
-                                    ).then(() => {
-                                      console.log('Delete successful');
-                                      fetchPantry(sessionToken!);
-                                    }).catch((err) => {
-                                      console.error('Delete failed:', err);
-                                      Alert.alert('Error', 'Failed to delete item');
-                                    }).finally(() => {
-                                      setDeletingId(null);
-                                    });
-                                  }
-                                }
-                              ]
-                            );
-                          }}
-                          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                        >
+                        </View>
+                        <View style={styles.deleteBtn}>
                           {deletingId === item.item_id ? (
                             <ActivityIndicator size="small" color="#ef4444" />
                           ) : (
                             <Ionicons name="trash" size={18} color="#ef4444" />
                           )}
-                        </Pressable>
+                        </View>
                       </View>
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
               );
