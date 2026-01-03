@@ -618,6 +618,7 @@ const styles = StyleSheet.create({
   familyAvatar: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   familyName: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
   familyAge: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  familyHint: { fontSize: 10, color: '#9ca3af', marginTop: 4, textAlign: 'center' },
   
   settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f3f4f6', gap: 14 },
   settingIcon: { width: 42, height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
