@@ -1,40 +1,108 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
-  const { familyMembers } = useAppStore();
+  const { user, logout, sessionToken } = useAuth();
+  const { familyMembers, fetchFamilyMembers, pantryItems, recipes, mealPlans } = useAppStore();
+
+  useEffect(() => {
+    if (sessionToken) {
+      fetchFamilyMembers(sessionToken);
+    }
+  }, [sessionToken]);
 
   const handleLogout = async () => {
-    await logout();
-    router.replace('/login');
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/login');
+          }
+        }
+      ]
+    );
+  };
+
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case 'pro': return ['#f59e0b', '#d97706'];
+      case 'premium': return ['#8b5cf6', '#7c3aed'];
+      default: return ['#22c55e', '#16a34a'];
+    }
+  };
+
+  const getDietaryIcon = (restriction: string) => {
+    if (restriction.includes('vegetarian')) return 'leaf';
+    if (restriction.includes('vegan')) return 'leaf';
+    if (restriction.includes('gluten')) return 'warning';
+    if (restriction.includes('lactose') || restriction.includes('dairy')) return 'water';
+    if (restriction.includes('nut')) return 'alert-circle';
+    return 'nutrition';
   };
 
   return (
-    <ScrollView style={styles.container}>
-      {/* User Profile Section */}
-      <View style={styles.profileSection}>
-        <View style={styles.avatarContainer}>
-          {user?.picture ? (
-            <Image source={{ uri: user.picture }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={48} color="white" />
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <Image source={{ uri: HERO_IMAGE }} style={styles.heroImage} />
+        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.heroOverlay}>
+          {/* Avatar */}
+          <View style={styles.avatarSection}>
+            {user?.picture ? (
+              <Image source={{ uri: user.picture }} style={styles.avatar} />
+            ) : (
+              <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={48} color="white" />
+              </LinearGradient>
+            )}
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{user?.name || 'User'}</Text>
+              <Text style={styles.userEmail}>{user?.email || ''}</Text>
             </View>
-          )}
+          </View>
+          
+          {/* Subscription Badge */}
+          <LinearGradient
+            colors={getTierColor(user?.subscription_tier || 'free')}
+            style={styles.tierBadge}
+          >
+            <Ionicons name="star" size={16} color="white" />
+            <Text style={styles.tierText}>
+              {(user?.subscription_tier || 'free').toUpperCase()}
+            </Text>
+          </LinearGradient>
+        </LinearGradient>
+      </View>
+
+      {/* Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{pantryItems.length}</Text>
+          <Text style={styles.statLabel}>Pantry Items</Text>
         </View>
-        <Text style={styles.userName}>{user?.name}</Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
-        
-        <View style={styles.subscriptionBadge}>
-          <Ionicons name="star" size={16} color="#FFD700" />
-          <Text style={styles.subscriptionText}>
-            {user?.subscription_tier.toUpperCase()}
-          </Text>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{recipes.length}</Text>
+          <Text style={styles.statLabel}>Recipes</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{mealPlans.length}</Text>
+          <Text style={styles.statLabel}>Meal Plans</Text>
         </View>
       </View>
 
@@ -46,30 +114,44 @@ export default function ProfileScreen() {
             style={styles.addButton}
             onPress={() => router.push('/add-family')}
           >
-            <Ionicons name="add" size={20} color="#4CAF50" />
-            <Text style={styles.addButtonText}>Add</Text>
+            <Ionicons name="add" size={20} color="white" />
           </TouchableOpacity>
         </View>
         
         {familyMembers.length === 0 ? (
-          <Text style={styles.emptyText}>No family members added</Text>
+          <View style={styles.emptyFamily}>
+            <Ionicons name="people-outline" size={48} color="#d1d5db" />
+            <Text style={styles.emptyFamilyText}>No family members yet</Text>
+            <TouchableOpacity
+              style={styles.addFamilyBtn}
+              onPress={() => router.push('/add-family')}
+            >
+              <Text style={styles.addFamilyBtnText}>Add Family Member</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          familyMembers.map((member) => (
-            <View key={member.member_id} style={styles.familyCard}>
-              <Ionicons name="person-circle" size={40} color="#4CAF50" />
-              <View style={styles.familyInfo}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {familyMembers.map((member) => (
+              <View key={member.member_id} style={styles.familyCard}>
+                <LinearGradient colors={['#f3f4f6', '#e5e7eb']} style={styles.familyAvatar}>
+                  <Ionicons name="person" size={28} color="#6b7280" />
+                </LinearGradient>
                 <Text style={styles.familyName}>{member.name}</Text>
-                {member.age && (
-                  <Text style={styles.familyDetail}>Age: {member.age}</Text>
-                )}
+                {member.age && <Text style={styles.familyAge}>Age {member.age}</Text>}
+                
+                {/* Dietary Icons */}
                 {member.dietary_restrictions.length > 0 && (
-                  <Text style={styles.familyDetail}>
-                    {member.dietary_restrictions.join(', ')}
-                  </Text>
+                  <View style={styles.dietaryIcons}>
+                    {member.dietary_restrictions.slice(0, 3).map((restriction, idx) => (
+                      <View key={idx} style={styles.dietaryIcon}>
+                        <Ionicons name={getDietaryIcon(restriction)} size={12} color="#6b7280" />
+                      </View>
+                    ))}
+                  </View>
                 )}
               </View>
-            </View>
-          ))
+            ))}
+          </ScrollView>
         )}
       </View>
 
@@ -78,44 +160,74 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>Settings</Text>
         
         <TouchableOpacity style={styles.settingItem}>
-          <Ionicons name="notifications-outline" size={24} color="#666" />
-          <Text style={styles.settingText}>Notifications</Text>
-          <Switch value={true} onValueChange={() => {}} />
+          <View style={[styles.settingIcon, { backgroundColor: '#dbeafe' }]}>
+            <Ionicons name="notifications" size={20} color="#3b82f6" />
+          </View>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingText}>Notifications</Text>
+            <Text style={styles.settingDescription}>Meal reminders & updates</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.settingItem}>
-          <Ionicons name="language-outline" size={24} color="#666" />
-          <Text style={styles.settingText}>Language</Text>
-          <Text style={styles.settingValue}>English</Text>
+          <View style={[styles.settingIcon, { backgroundColor: '#dcfce7' }]}>
+            <Ionicons name="nutrition" size={20} color="#22c55e" />
+          </View>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingText}>Dietary Preferences</Text>
+            <Text style={styles.settingDescription}>Allergies & restrictions</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.settingItem}>
-          <Ionicons name="help-circle-outline" size={24} color="#666" />
-          <Text style={styles.settingText}>Help & Support</Text>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
+          <View style={[styles.settingIcon, { backgroundColor: '#fef3c7' }]}>
+            <Ionicons name="language" size={20} color="#f59e0b" />
+          </View>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingText}>Language</Text>
+            <Text style={styles.settingDescription}>English (US)</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.settingItem}>
-          <Ionicons name="information-circle-outline" size={24} color="#666" />
-          <Text style={styles.settingText}>About</Text>
-          <Text style={styles.settingValue}>v1.0.0</Text>
+          <View style={[styles.settingIcon, { backgroundColor: '#f3e8ff' }]}>
+            <Ionicons name="help-circle" size={20} color="#8b5cf6" />
+          </View>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingText}>Help & Support</Text>
+            <Text style={styles.settingDescription}>FAQs & Contact us</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingItem}>
+          <View style={[styles.settingIcon, { backgroundColor: '#f3f4f6' }]}>
+            <Ionicons name="information-circle" size={20} color="#6b7280" />
+          </View>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingText}>About</Text>
+            <Text style={styles.settingDescription}>Version 1.0.0</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </TouchableOpacity>
       </View>
 
       {/* Logout Button */}
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleLogout}
-      >
-        <Ionicons name="log-out-outline" size={24} color="#FF5252" />
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={22} color="#ef4444" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 
+      {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Made with ❤️ for healthy eating
-        </Text>
+        <Text style={styles.footerText}>Made with ❤️ for healthy eating</Text>
+        <Text style={styles.footerVersion}>Stock2Table v1.0.0</Text>
       </View>
+
+      <View style={{ height: 100 }} />
     </ScrollView>
   );
 }
@@ -123,60 +235,122 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8fafc',
   },
-  profileSection: {
-    backgroundColor: 'white',
+  // Hero
+  heroSection: {
+    height: 260,
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    justifyContent: 'flex-end',
+    padding: 20,
+    paddingBottom: 30,
+  },
+  avatarSection: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  avatarContainer: {
-    marginBottom: 16,
+    gap: 16,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: 'white',
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#4CAF50',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'white',
+  },
+  userInfo: {
+    flex: 1,
   },
   userName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+    fontWeight: '800',
+    color: 'white',
   },
   userEmail: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
   },
-  subscriptionBadge: {
+  tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF9C4',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 20,
-    gap: 4,
+    marginTop: 16,
   },
-  subscriptionText: {
+  tierText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#F57F17',
+    fontWeight: '800',
+    color: 'white',
   },
+  // Stats
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    marginHorizontal: 16,
+    marginTop: -20,
+    borderRadius: 16,
+    padding: 20,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#22c55e',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#e5e7eb',
+  },
+  // Section
   section: {
     backgroundColor: 'white',
-    padding: 16,
-    marginTop: 16,
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 16,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -186,85 +360,136 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: '#1f2937',
   },
   addButton: {
-    flexDirection: 'row',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
   },
-  addButtonText: {
-    color: '#4CAF50',
-    fontSize: 16,
-    fontWeight: '600',
+  // Family
+  emptyFamily: {
+    alignItems: 'center',
+    padding: 24,
   },
-  emptyText: {
+  emptyFamilyText: {
     fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    padding: 16,
+    color: '#9ca3af',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  addFamilyBtn: {
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  addFamilyBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#22c55e',
   },
   familyCard: {
-    flexDirection: 'row',
+    backgroundColor: '#f9fafb',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 12,
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-    marginBottom: 8,
-    gap: 12,
+    minWidth: 100,
   },
-  familyInfo: {
-    flex: 1,
+  familyAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   familyName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  familyDetail: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  familyAge: {
+    fontSize: 12,
+    color: '#6b7280',
     marginTop: 2,
   },
+  dietaryIcons: {
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 8,
+  },
+  dietaryIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#e5e7eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Settings
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    gap: 12,
+    borderBottomColor: '#f3f4f6',
+    gap: 14,
+  },
+  settingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingInfo: {
+    flex: 1,
   },
   settingText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937',
   },
-  settingValue: {
-    fontSize: 14,
-    color: '#666',
+  settingDescription: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 2,
   },
+  // Logout
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'white',
-    padding: 16,
-    margin: 16,
-    borderRadius: 12,
+    backgroundColor: '#fef2f2',
+    marginHorizontal: 16,
+    marginTop: 16,
+    paddingVertical: 16,
+    borderRadius: 14,
     gap: 8,
   },
   logoutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FF5252',
+    color: '#ef4444',
   },
+  // Footer
   footer: {
-    padding: 32,
     alignItems: 'center',
+    padding: 24,
   },
   footerText: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  footerVersion: {
+    fontSize: 11,
+    color: '#d1d5db',
+    marginTop: 4,
   },
 });
