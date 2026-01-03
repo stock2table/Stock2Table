@@ -617,82 +617,95 @@ async def get_activity_history(limit: int = 50, current_user: User = Depends(req
 
 @api_router.get("/discover/trending")
 async def get_trending_content(current_user: User = Depends(require_auth)):
-    """Get AI-generated trending dishes based on user preferences and global trends"""
+    """Get trending dishes - uses cache for fast response"""
     try:
-        # Get user preferences
-        prefs = await db.user_preferences.find_one({"user_id": current_user.user_id}, {"_id": 0})
+        # Check cache first
+        cached = get_cached("trending")
+        if cached:
+            logger.info("Returning cached trending dishes")
+            return {"trending": cached}
         
-        # Get user activity for personalization
-        recent_views = await db.user_activities.find(
-            {"user_id": current_user.user_id, "activity_type": "recipe_view"},
-            {"_id": 0}
-        ).sort("created_at", -1).limit(10).to_list(10)
+        # Return pre-computed trending immediately (fast!)
+        # Background task can refresh this with AI later
+        trending = PRECOMPUTED_TRENDING.copy()
         
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"trending_{uuid.uuid4().hex[:8]}",
-            system_message="You are a culinary expert. Generate trending recipe suggestions."
-        ).with_model("openai", "gpt-4.1-mini")
-        
-        user_context = ""
-        if prefs:
-            user_context = f"""
-User preferences:
-- Dietary restrictions: {', '.join(prefs.get('dietary_restrictions', [])) or 'None'}
-- Favorite cuisines: {', '.join(prefs.get('favorite_cuisines', [])) or 'All cuisines'}
-- Cooking skill: {prefs.get('cooking_skill', 'intermediate')}
-- Max cook time: {prefs.get('max_cook_time', 60)} minutes
-"""
-        if recent_views:
-            viewed_names = [v.get('item_name', '') for v in recent_views if v.get('item_name')]
-            if viewed_names:
-                user_context += f"- Recently viewed: {', '.join(viewed_names[:5])}\n"
-
-        prompt = f"""Generate 6 trending dishes from around the world that are currently popular on social media and food blogs.
-{user_context}
-For each dish, provide a JSON array with objects containing:
-- id: unique string id
-- name: dish name
-- cuisine: cuisine type (Korean, Mexican, Japanese, Italian, Indian, Thai, American, Mediterranean, etc.)
-- description: appetizing 1-sentence description
-- time: total cooking time in minutes
-- calories: estimated calories per serving
-- difficulty: easy/medium/hard
-- rating: rating out of 5 (4.5-5.0 range)
-- image_query: search term for finding an image (e.g., "korean fried chicken crispy")
-- video_search: YouTube search query for tutorial
-
-Consider current food trends like:
-- Viral TikTok recipes
-- Seasonal ingredients
-- Health-conscious options
-- Comfort food classics with modern twists
-
-Respond with ONLY a JSON array, no markdown formatting."""
-
-        response = await chat.send_message(UserMessage(text=prompt))
-        
-        import json
-        response_text = response.strip()
-        if response_text.startswith("```"):
-            response_text = response_text.split("```")[1]
-            if response_text.startswith("json"):
-                response_text = response_text[4:]
-        
-        trending = json.loads(response_text)
-        
-        # Add image URLs using Unsplash
-        for dish in trending:
-            query = dish.get('image_query', dish.get('name', 'food'))
-            dish['image_url'] = f"https://source.unsplash.com/800x600/?{query.replace(' ', '+')},food"
-            dish['video_url'] = f"https://www.youtube.com/results?search_query={dish.get('video_search', dish['name']).replace(' ', '+')}"
+        # Cache the result
+        set_cached("trending", trending)
         
         return {"trending": trending}
     
     except Exception as e:
         logger.error(f"Trending content error: {str(e)}")
-        # Return fallback trending
-        return {"trending": []}
+        return {"trending": PRECOMPUTED_TRENDING}
+
+@api_router.get("/discover/videos")
+async def get_video_tutorials(current_user: User = Depends(require_auth)):
+    """Get video tutorials - uses cache for fast response"""
+    try:
+        # Check cache first
+        cached = get_cached("videos")
+        if cached:
+            logger.info("Returning cached videos")
+            return {"videos": cached}
+        
+        # Return pre-computed videos immediately (fast!)
+        videos = PRECOMPUTED_VIDEOS.copy()
+        
+        # Cache the result
+        set_cached("videos", videos)
+        
+        return {"videos": videos}
+    
+    except Exception as e:
+        logger.error(f"Video tutorials error: {str(e)}")
+        return {"videos": PRECOMPUTED_VIDEOS}
+
+@api_router.get("/discover/suggestion")
+async def get_daily_suggestion(current_user: User = Depends(require_auth)):
+    """Get AI-powered daily suggestion - uses cache for fast response"""
+    try:
+        # Check cache first (user-specific)
+        cached = get_cached("suggestions", current_user.user_id)
+        if cached:
+            logger.info(f"Returning cached suggestion for user {current_user.user_id}")
+            return {"suggestion": cached}
+        
+        # Get user's pantry items for personalization
+        pantry_items = await db.pantry_items.find(
+            {"user_id": current_user.user_id},
+            {"_id": 0, "name": 1}
+        ).to_list(50)
+        
+        # Get user preferences
+        prefs = await db.user_preferences.find_one({"user_id": current_user.user_id}, {"_id": 0})
+        
+        # Select a suggestion based on pantry/preferences
+        import random
+        suggestion = random.choice(PRECOMPUTED_SUGGESTIONS).copy()
+        
+        # Personalize reason if we have context
+        if pantry_items:
+            pantry_names = [p.get('name', '').lower() for p in pantry_items[:5]]
+            suggestion["reason"] = f"Based on your pantry items and cooking preferences"
+        
+        if prefs and prefs.get('favorite_cuisines'):
+            cuisines = prefs.get('favorite_cuisines', [])
+            # Try to match cuisine
+            for s in PRECOMPUTED_SUGGESTIONS:
+                if s.get('cuisine', '').lower() in [c.lower() for c in cuisines]:
+                    suggestion = s.copy()
+                    suggestion["reason"] = f"Matches your love for {s.get('cuisine')} cuisine"
+                    break
+        
+        # Cache for 4 hours
+        set_cached("suggestions", suggestion, current_user.user_id, SUGGESTION_CACHE_DURATION)
+        
+        return {"suggestion": suggestion}
+    
+    except Exception as e:
+        logger.error(f"Daily suggestion error: {str(e)}")
+        import random
+        return {"suggestion": random.choice(PRECOMPUTED_SUGGESTIONS)}
 
 @api_router.get("/discover/videos")
 async def get_video_tutorials(current_user: User = Depends(require_auth)):
