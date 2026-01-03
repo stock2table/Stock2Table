@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Create platform-specific redirect URL
       const redirectUrl = Platform.OS === 'web'
-        ? `${BACKEND_URL}/`
+        ? window.location.origin + '/'
         : Linking.createURL('/');
 
       const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
