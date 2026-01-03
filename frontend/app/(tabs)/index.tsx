@@ -740,4 +740,6 @@ const styles = StyleSheet.create({
   saveButton: { margin: 24, marginTop: 16, borderRadius: 16, overflow: 'hidden' },
   saveGradient: { paddingVertical: 18, alignItems: 'center' },
   saveButtonText: { fontSize: 17, fontWeight: '800', color: 'white' },
+  deleteButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginHorizontal: 24, marginBottom: 24, paddingVertical: 16, borderRadius: 16, backgroundColor: '#fef2f2', borderWidth: 2, borderColor: '#fecaca', gap: 8 },
+  deleteButtonText: { fontSize: 16, fontWeight: '700', color: '#ef4444' },
 });
