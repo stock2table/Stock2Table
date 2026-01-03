@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Image, ActivityIndicator, Dimensions, Linking } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,55 +10,86 @@ import axios from 'axios';
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
-// Trending dishes with YouTube video links
-const TRENDING_DISHES = [
-  { id: '1', name: 'Korean Fried Chicken', image: 'https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=400&q=80', cuisine: 'Korean', time: 45, calories: 420, videoUrl: 'https://www.youtube.com/watch?v=K4sMzzClGEQ', rating: 4.9 },
-  { id: '2', name: 'Birria Tacos', image: 'https://images.unsplash.com/photo-1613514785940-daed07799d9b?w=400&q=80', cuisine: 'Mexican', time: 180, calories: 380, videoUrl: 'https://www.youtube.com/watch?v=bPU6h1F3L_Q', rating: 4.8 },
-  { id: '3', name: 'Smash Burger', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80', cuisine: 'American', time: 20, calories: 650, videoUrl: 'https://www.youtube.com/watch?v=n8NKGaOlL10', rating: 4.7 },
-  { id: '4', name: 'Pad Thai', image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&q=80', cuisine: 'Thai', time: 30, calories: 350, videoUrl: 'https://www.youtube.com/watch?v=P1oo0gD-LM4', rating: 4.8 },
-  { id: '5', name: 'Butter Chicken', image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80', cuisine: 'Indian', time: 50, calories: 490, videoUrl: 'https://www.youtube.com/watch?v=a03U45jFxOI', rating: 4.9 },
-  { id: '6', name: 'Ramen', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&q=80', cuisine: 'Japanese', time: 60, calories: 450, videoUrl: 'https://www.youtube.com/watch?v=9WXIrnWsaCo', rating: 4.9 },
-];
-
-const VIDEO_TUTORIALS = [
-  { id: '1', title: 'Perfect Pasta Basics', thumbnail: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&q=80', duration: '12:45', videoUrl: 'https://www.youtube.com/watch?v=bJUiWdM__Qw', views: '2.5M' },
-  { id: '2', title: 'Knife Skills 101', thumbnail: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&q=80', duration: '8:30', videoUrl: 'https://www.youtube.com/watch?v=G-Fg7l7G1zw', views: '5.1M' },
-  { id: '3', title: 'Sauces Masterclass', thumbnail: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=400&q=80', duration: '15:20', videoUrl: 'https://www.youtube.com/watch?v=Ot-dmfBaZrA', views: '1.8M' },
-  { id: '4', title: 'Grilling Like a Pro', thumbnail: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80', duration: '10:15', videoUrl: 'https://www.youtube.com/watch?v=9n4G5lELwGA', views: '3.2M' },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
   const { sessionToken, user } = useAuth();
   const { pantryItems, fetchPantry, recipes, fetchRecipes } = useAppStore();
+  
+  // Dynamic content states
   const [refreshing, setRefreshing] = useState(false);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [loadingRecs, setLoadingRecs] = useState(false);
   const [todaySuggestion, setTodaySuggestion] = useState<any>(null);
+  const [trendingDishes, setTrendingDishes] = useState<any[]>([]);
+  const [videoTutorials, setVideoTutorials] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [loadingContent, setLoadingContent] = useState(true);
+  const [loadingRecs, setLoadingRecs] = useState(false);
 
   useEffect(() => {
     if (sessionToken) {
-      loadData();
+      loadAllContent();
     }
   }, [sessionToken]);
 
-  useEffect(() => {
-    if (recipes.length > 0 && !todaySuggestion) {
-      const randomRecipe = recipes[Math.floor(Math.random() * recipes.length)];
-      setTodaySuggestion(randomRecipe);
+  const loadAllContent = async () => {
+    setLoadingContent(true);
+    try {
+      await Promise.all([
+        fetchPantry(sessionToken!),
+        fetchRecipes(),
+        loadDailySuggestion(),
+        loadTrendingDishes(),
+        loadVideoTutorials(),
+      ]);
+    } catch (error) {
+      console.error('Error loading content:', error);
+    } finally {
+      setLoadingContent(false);
     }
-  }, [recipes]);
+  };
 
-  const loadData = async () => {
-    await Promise.all([fetchPantry(sessionToken!), fetchRecipes()]);
+  const loadDailySuggestion = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/discover/suggestion`, {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+        timeout: 30000
+      });
+      setTodaySuggestion(response.data.suggestion);
+    } catch (error) {
+      console.error('Error loading suggestion:', error);
+      // Fallback to random recipe from database
+      if (recipes.length > 0) {
+        setTodaySuggestion(recipes[Math.floor(Math.random() * recipes.length)]);
+      }
+    }
+  };
+
+  const loadTrendingDishes = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/discover/trending`, {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+        timeout: 30000
+      });
+      setTrendingDishes(response.data.trending || []);
+    } catch (error) {
+      console.error('Error loading trending:', error);
+    }
+  };
+
+  const loadVideoTutorials = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/discover/videos`, {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+        timeout: 30000
+      });
+      setVideoTutorials(response.data.videos || []);
+    } catch (error) {
+      console.error('Error loading videos:', error);
+    }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadData();
-    if (recipes.length > 0) {
-      setTodaySuggestion(recipes[Math.floor(Math.random() * recipes.length)]);
-    }
+    await loadAllContent();
     setRefreshing(false);
   };
 
@@ -82,12 +113,37 @@ export default function HomeScreen() {
     }
   };
 
-  const openYouTubeVideo = (url: string) => {
+  const trackActivity = async (type: string, itemId?: string, itemName?: string) => {
+    try {
+      await axios.post(`${BACKEND_URL}/api/activity`, {
+        activity_type: type,
+        item_id: itemId,
+        item_name: itemName
+      }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+    } catch (error) {
+      // Silent fail for tracking
+    }
+  };
+
+  const openVideo = (url: string, title: string) => {
+    trackActivity('video_view', undefined, title);
     Linking.openURL(url);
   };
 
+  const navigateToRecipe = (recipe: any) => {
+    trackActivity('recipe_view', recipe.recipe_id || recipe.id, recipe.name);
+    if (recipe.recipe_id) {
+      router.push(`/recipe-detail/${recipe.recipe_id}`);
+    } else {
+      router.push({
+        pathname: '/ai-recipe',
+        params: { recipe: JSON.stringify(recipe) }
+      });
+    }
+  };
+
   const navigateToAIRecipe = (rec: any) => {
-    // Navigate to AI recipe detail screen with the recommendation data
+    trackActivity('recipe_view', undefined, rec.name);
     router.push({
       pathname: '/ai-recipe',
       params: { recipe: JSON.stringify(rec) }
@@ -113,33 +169,38 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Today's Suggestion */}
-        {todaySuggestion && (
+        {/* Today's AI-Powered Suggestion */}
+        {loadingContent && !todaySuggestion ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color="#22c55e" />
+            <Text style={styles.loadingText}>Creating your personalized suggestion...</Text>
+          </View>
+        ) : todaySuggestion && (
           <TouchableOpacity 
             style={styles.suggestionCard}
-            onPress={() => router.push(`/recipe-detail/${todaySuggestion.recipe_id}`)}
+            onPress={() => navigateToRecipe(todaySuggestion)}
             activeOpacity={0.9}
           >
             <Image source={{ uri: todaySuggestion.image_url }} style={styles.suggestionImage} />
             <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.suggestionOverlay}>
               <View style={styles.suggestionBadge}>
-                <Ionicons name="star" size={14} color="#fbbf24" />
-                <Text style={styles.suggestionBadgeText}>Today's Suggestion</Text>
+                <Ionicons name="sparkles" size={14} color="#ec4899" />
+                <Text style={styles.suggestionBadgeText}>AI Picked for You</Text>
               </View>
               <Text style={styles.suggestionTitle}>{todaySuggestion.name}</Text>
-              <Text style={styles.suggestionDesc} numberOfLines={2}>{todaySuggestion.description}</Text>
+              <Text style={styles.suggestionDesc} numberOfLines={2}>{todaySuggestion.description || todaySuggestion.reason}</Text>
               <View style={styles.suggestionMeta}>
                 <View style={styles.metaItem}>
                   <Ionicons name="time-outline" size={16} color="white" />
-                  <Text style={styles.metaText}>{todaySuggestion.prep_time + todaySuggestion.cook_time} min</Text>
+                  <Text style={styles.metaText}>{(todaySuggestion.prep_time || 15) + (todaySuggestion.cook_time || 30)} min</Text>
                 </View>
                 <View style={styles.metaItem}>
                   <Ionicons name="flame-outline" size={16} color="white" />
-                  <Text style={styles.metaText}>{todaySuggestion.nutritional_info?.calories || 400} cal</Text>
+                  <Text style={styles.metaText}>{todaySuggestion.calories || todaySuggestion.nutritional_info?.calories || 400} cal</Text>
                 </View>
                 <View style={styles.metaItem}>
-                  <Ionicons name="heart" size={16} color="#ef4444" />
-                  <Text style={styles.metaText}>4.8</Text>
+                  <Ionicons name="star" size={16} color="#fbbf24" />
+                  <Text style={styles.metaText}>{todaySuggestion.rating || 4.8}</Text>
                 </View>
               </View>
               <View style={styles.cookNowBtn}>
@@ -162,7 +223,7 @@ export default function HomeScreen() {
                 <Ionicons name="play-circle" size={26} color="#8b5cf6" />
               </View>
               <Text style={styles.featureTitle}>Video Tutorials</Text>
-              <Text style={styles.featureSubtitle}>{VIDEO_TUTORIALS.length} videos</Text>
+              <Text style={styles.featureSubtitle}>{videoTutorials.length || 'New'} videos</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -176,89 +237,93 @@ export default function HomeScreen() {
                 <Ionicons name="calendar" size={26} color="#22c55e" />
               </View>
               <Text style={styles.featureTitle}>Weekly Plan</Text>
-              <Text style={styles.featureSubtitle}>Plan meals</Text>
+              <Text style={styles.featureSubtitle}>AI Powered</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {/* Video Tutorials */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons name="play-circle" size={22} color="#8b5cf6" />
-              <Text style={styles.sectionTitle}>Video Tutorials</Text>
-            </View>
-            <TouchableOpacity onPress={() => openYouTubeVideo('https://www.youtube.com/results?search_query=cooking+tutorials')}>
-              <Text style={styles.seeAllText}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-            {VIDEO_TUTORIALS.map((video) => (
-              <TouchableOpacity
-                key={video.id}
-                style={styles.videoCard}
-                onPress={() => openYouTubeVideo(video.videoUrl)}
-                activeOpacity={0.9}
-              >
-                <Image source={{ uri: video.thumbnail }} style={styles.videoThumbnail} />
-                <View style={styles.playOverlay}>
-                  <View style={styles.playButton}>
-                    <Ionicons name="play" size={24} color="white" />
-                  </View>
-                </View>
-                <View style={styles.durationBadge}>
-                  <Text style={styles.durationText}>{video.duration}</Text>
-                </View>
-                <View style={styles.videoInfo}>
-                  <Text style={styles.videoTitle} numberOfLines={2}>{video.title}</Text>
-                  <Text style={styles.videoViews}>{video.views} views</Text>
-                </View>
+        {/* Video Tutorials - Dynamic */}
+        {videoTutorials.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons name="play-circle" size={22} color="#8b5cf6" />
+                <Text style={styles.sectionTitle}>Video Tutorials</Text>
+              </View>
+              <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/results?search_query=cooking+tutorials')}>
+                <Text style={styles.seeAllText}>See all</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+              {videoTutorials.map((video, idx) => (
+                <TouchableOpacity
+                  key={video.id || idx}
+                  style={styles.videoCard}
+                  onPress={() => openVideo(video.video_url, video.title)}
+                  activeOpacity={0.9}
+                >
+                  <Image source={{ uri: video.thumbnail_url }} style={styles.videoThumbnail} />
+                  <View style={styles.playOverlay}>
+                    <View style={styles.playButton}>
+                      <Ionicons name="play" size={24} color="white" />
+                    </View>
+                  </View>
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{video.duration}</Text>
+                  </View>
+                  <View style={styles.videoInfo}>
+                    <Text style={styles.videoTitle} numberOfLines={2}>{video.title}</Text>
+                    <Text style={styles.videoViews}>{video.estimated_views} views</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-        {/* Trending Worldwide */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons name="trending-up" size={22} color="#f97316" />
-              <Text style={styles.sectionTitle}>Trending Worldwide</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/recipes')}>
-              <Text style={styles.seeAllText}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-            {TRENDING_DISHES.map((dish) => (
-              <TouchableOpacity
-                key={dish.id}
-                style={styles.trendingCard}
-                onPress={() => openYouTubeVideo(dish.videoUrl)}
-                activeOpacity={0.9}
-              >
-                <Image source={{ uri: dish.image }} style={styles.trendingImage} />
-                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.trendingOverlay}>
-                  <View style={styles.trendingRating}>
-                    <Ionicons name="star" size={12} color="#fbbf24" />
-                    <Text style={styles.ratingText}>{dish.rating}</Text>
-                  </View>
-                  <Text style={styles.trendingName} numberOfLines={1}>{dish.name}</Text>
-                  <Text style={styles.trendingCuisine}>{dish.cuisine}</Text>
-                  <View style={styles.trendingMeta}>
-                    <Ionicons name="time" size={12} color="rgba(255,255,255,0.8)" />
-                    <Text style={styles.trendingMetaText}>{dish.time}m</Text>
-                    <Ionicons name="flame" size={12} color="rgba(255,255,255,0.8)" style={{ marginLeft: 8 }} />
-                    <Text style={styles.trendingMetaText}>{dish.calories}</Text>
-                  </View>
-                </LinearGradient>
-                <View style={styles.videoIconBadge}>
-                  <Ionicons name="logo-youtube" size={16} color="#ef4444" />
-                </View>
+        {/* Trending Worldwide - Dynamic */}
+        {trendingDishes.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons name="trending-up" size={22} color="#f97316" />
+                <Text style={styles.sectionTitle}>Trending Worldwide</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/recipes')}>
+                <Text style={styles.seeAllText}>See all</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+              {trendingDishes.map((dish, idx) => (
+                <TouchableOpacity
+                  key={dish.id || idx}
+                  style={styles.trendingCard}
+                  onPress={() => openVideo(dish.video_url, dish.name)}
+                  activeOpacity={0.9}
+                >
+                  <Image source={{ uri: dish.image_url }} style={styles.trendingImage} />
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.trendingOverlay}>
+                    <View style={styles.trendingRating}>
+                      <Ionicons name="star" size={12} color="#fbbf24" />
+                      <Text style={styles.ratingText}>{dish.rating}</Text>
+                    </View>
+                    <Text style={styles.trendingName} numberOfLines={1}>{dish.name}</Text>
+                    <Text style={styles.trendingCuisine}>{dish.cuisine}</Text>
+                    <View style={styles.trendingMeta}>
+                      <Ionicons name="time" size={12} color="rgba(255,255,255,0.8)" />
+                      <Text style={styles.trendingMetaText}>{dish.time}m</Text>
+                      <Ionicons name="flame" size={12} color="rgba(255,255,255,0.8)" style={{ marginLeft: 8 }} />
+                      <Text style={styles.trendingMetaText}>{dish.calories}</Text>
+                    </View>
+                  </LinearGradient>
+                  <View style={styles.videoIconBadge}>
+                    <Ionicons name="logo-youtube" size={16} color="#ef4444" />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* AI Recipe Assistant */}
         <View style={styles.section}>
@@ -268,7 +333,7 @@ export default function HomeScreen() {
                 <Ionicons name="sparkles" size={32} color="white" />
                 <View style={styles.aiTextContent}>
                   <Text style={styles.aiTitle}>AI Recipe Assistant</Text>
-                  <Text style={styles.aiSubtitle}>Get personalized recipes based on your pantry</Text>
+                  <Text style={styles.aiSubtitle}>Get personalized recipes from your pantry ({pantryItems.length} items)</Text>
                 </View>
               </View>
               <TouchableOpacity 
@@ -372,11 +437,14 @@ const styles = StyleSheet.create({
   subGreeting: { fontSize: 14, color: '#6b7280', marginTop: 4 },
   notificationBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
   
+  loadingCard: { marginHorizontal: 20, height: 200, borderRadius: 20, backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  loadingText: { fontSize: 14, color: '#22c55e', marginTop: 12, fontWeight: '600' },
+  
   suggestionCard: { marginHorizontal: 20, height: 200, borderRadius: 20, overflow: 'hidden', marginBottom: 20 },
   suggestionImage: { width: '100%', height: '100%' },
   suggestionOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%', justifyContent: 'flex-end', padding: 16 },
-  suggestionBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(251,191,36,0.2)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, marginBottom: 8 },
-  suggestionBadgeText: { fontSize: 11, fontWeight: '700', color: '#fbbf24' },
+  suggestionBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(236,72,153,0.2)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, marginBottom: 8 },
+  suggestionBadgeText: { fontSize: 11, fontWeight: '700', color: '#ec4899' },
   suggestionTitle: { fontSize: 20, fontWeight: '800', color: 'white', marginBottom: 4 },
   suggestionDesc: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 10 },
   suggestionMeta: { flexDirection: 'row', gap: 14, marginBottom: 12 },
