@@ -178,41 +178,34 @@ export default function PantryScreen() {
     }
   };
 
-  // FIXED: Direct delete function with proper error handling
-  const handleDeleteItem = async (item: any) => {
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to remove "${item.name}" from your pantry?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setDeletingId(item.item_id);
-              console.log('Deleting item:', item.item_id);
-              
-              const response = await axios.delete(
-                `${BACKEND_URL}/api/pantry/${item.item_id}`,
-                { headers: { Authorization: `Bearer ${sessionToken}` } }
-              );
-              
-              console.log('Delete response:', response.status);
-              
-              // Refresh pantry after successful delete
-              await fetchPantry(sessionToken!);
-              
-            } catch (error: any) {
-              console.error('Delete error:', error.response?.data || error.message);
-              Alert.alert('Error', error.response?.data?.detail || 'Failed to delete item. Please try again.');
-            } finally {
-              setDeletingId(null);
-            }
-          }
-        }
-      ]
-    );
+  // Show delete confirmation modal
+  const confirmDelete = (item: any) => {
+    setItemToDelete(item);
+    setShowDeleteConfirm(true);
+  };
+
+  // Execute actual delete
+  const executeDelete = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      setDeletingId(itemToDelete.item_id);
+      setShowDeleteConfirm(false);
+      setShowAddModal(false);
+      
+      await axios.delete(
+        `${BACKEND_URL}/api/pantry/${itemToDelete.item_id}`,
+        { headers: { Authorization: `Bearer ${sessionToken}` } }
+      );
+      
+      await fetchPantry(sessionToken!);
+      setItemToDelete(null);
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      Alert.alert('Error', 'Failed to delete item');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const getCategoryIcon = (category: string) => {
