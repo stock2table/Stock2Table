@@ -332,8 +332,15 @@ export default function PantryScreen() {
                   <TouchableOpacity
                     key={idx}
                     style={styles.recCard}
-                    onPress={() => handleRecommendationClick(rec)}
-                    activeOpacity={0.9}
+                    onPress={() => {
+                      // Direct navigation - no function call
+                      if (recipe) {
+                        router.push(`/recipe-detail/${recipe.recipe_id}`);
+                      } else {
+                        router.push('/(tabs)/recipes');
+                      }
+                    }}
+                    activeOpacity={0.7}
                   >
                     <Image 
                       source={{ uri: recipe?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80' }} 
