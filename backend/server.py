@@ -396,6 +396,70 @@ Recommend 5 recipes. Format: [{{\"name\": \"recipe_name\", \"reason\": \"why sui
         logger.error(f"Recipe recommendation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get recommendations: {str(e)}")
 
+class RecipeDetailsRequest(BaseModel):
+    recipe_name: str
+    available_ingredients: List[str] = []
+    missing_ingredients: List[str] = []
+
+@api_router.post("/recipes/generate-details")
+async def generate_recipe_details(request: RecipeDetailsRequest, current_user: User = Depends(require_auth)):
+    """Generate detailed recipe instructions using AI"""
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            model="gpt-5.2"
+        )
+        
+        prompt = f"""Generate a detailed recipe for: {request.recipe_name}
+
+Available ingredients: {', '.join(request.available_ingredients) if request.available_ingredients else 'Not specified'}
+Missing ingredients to buy: {', '.join(request.missing_ingredients) if request.missing_ingredients else 'None'}
+
+Respond with a JSON object containing:
+{{
+    "name": "Recipe Name",
+    "description": "Brief appetizing description",
+    "prep_time": 15,
+    "cook_time": 30,
+    "servings": 4,
+    "difficulty": "easy|medium|hard",
+    "ingredients": [
+        {{"name": "ingredient name", "quantity": "1", "unit": "cup"}}
+    ],
+    "instructions": [
+        "Step 1: Detailed instruction...",
+        "Step 2: Next step..."
+    ],
+    "nutritional_info": {{"calories": 400, "protein": 25, "carbs": 40, "fat": 15}},
+    "tips": ["Chef tip 1", "Chef tip 2"]
+}}
+
+Make the instructions detailed and easy to follow. Include 6-10 steps. Be specific with quantities and cooking times."""
+
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        # Parse response
+        import json
+        response_text = response.strip()
+        if response_text.startswith("```json"):
+            response_text = response_text[7:-3].strip()
+        elif response_text.startswith("```"):
+            response_text = response_text[3:-3].strip()
+        
+        recipe_details = json.loads(response_text)
+        
+        # Mark missing ingredients
+        for ing in recipe_details.get("ingredients", []):
+            ing_name = ing.get("name", "").lower()
+            if any(missing.lower() in ing_name or ing_name in missing.lower() for missing in request.missing_ingredients):
+                ing["missing"] = True
+        
+        return recipe_details
+    
+    except Exception as e:
+        logger.error(f"Recipe details generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate recipe details: {str(e)}")
+
 # ==================== FAMILY MEMBER ENDPOINTS ====================
 
 @api_router.get("/family", response_model=List[FamilyMember])
