@@ -429,31 +429,37 @@ export default function PantryScreen() {
                         </View>
                       </View>
                       <View style={styles.itemActions}>
-                        <TouchableOpacity 
-                          style={styles.editBtn}
+                        <Pressable 
+                          style={({ pressed }) => [
+                            styles.editBtn,
+                            pressed && { opacity: 0.5, transform: [{ scale: 0.95 }] }
+                          ]}
                           onPress={() => {
                             console.log('Edit pressed for:', item.name);
                             openEditModal(item);
                           }}
-                          activeOpacity={0.6}
+                          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                         >
                           <Ionicons name="pencil" size={18} color="#6b7280" />
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                          style={styles.deleteBtn}
+                        </Pressable>
+                        <Pressable 
+                          style={({ pressed }) => [
+                            styles.deleteBtn,
+                            pressed && { opacity: 0.5, transform: [{ scale: 0.95 }] }
+                          ]}
                           onPress={() => {
                             console.log('Delete pressed for:', item.name, item.item_id);
                             handleDeleteItem(item);
                           }}
                           disabled={deletingId === item.item_id}
-                          activeOpacity={0.6}
+                          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                         >
                           {deletingId === item.item_id ? (
                             <ActivityIndicator size="small" color="#ef4444" />
                           ) : (
                             <Ionicons name="trash" size={18} color="#ef4444" />
                           )}
-                        </TouchableOpacity>
+                        </Pressable>
                       </View>
                     </View>
                   ))}
