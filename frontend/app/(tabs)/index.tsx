@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
