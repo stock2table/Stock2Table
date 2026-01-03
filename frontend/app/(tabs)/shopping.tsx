@@ -1,22 +1,32 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
+import { LinearGradient } from 'expo-linear-gradient';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80';
 
 export default function ShoppingScreen() {
   const { sessionToken } = useAuth();
-  const { shoppingLists, fetchShoppingLists } = useAppStore();
+  const { shoppingLists, fetchShoppingLists, mealPlans, fetchMealPlans } = useAppStore();
   const [selectedList, setSelectedList] = useState<any>(null);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     if (sessionToken) {
-      loadShoppingLists();
+      loadData();
     }
   }, [sessionToken]);
 
-  const loadShoppingLists = async () => {
-    await fetchShoppingLists(sessionToken!);
+  const loadData = async () => {
+    await Promise.all([
+      fetchShoppingLists(sessionToken!),
+      fetchMealPlans(sessionToken!)
+    ]);
   };
 
   useEffect(() => {
@@ -25,117 +35,214 @@ export default function ShoppingScreen() {
     }
   }, [shoppingLists]);
 
-  const groupedItems = selectedList?.items.reduce((acc: any, item: any) => {
-    const category = item.ingredient.toLowerCase().includes('vegetable') ? 'Vegetables' :
-                     item.ingredient.toLowerCase().includes('fruit') ? 'Fruits' :
-                     item.ingredient.toLowerCase().includes('meat') || item.ingredient.toLowerCase().includes('chicken') ? 'Meat & Poultry' :
-                     item.ingredient.toLowerCase().includes('dairy') || item.ingredient.toLowerCase().includes('milk') ? 'Dairy' :
-                     'Other';
-    
-    if (!acc[category]) {
-      acc[category] = [];
+  const generateShoppingList = async () => {
+    if (mealPlans.length === 0) {
+      Alert.alert(
+        'No Meal Plan',
+        'Create a meal plan first to generate a shopping list!',
+        [{ text: 'OK' }]
+      );
+      return;
     }
-    acc[category].push(item);
-    return acc;
-  }, {}) || {};
+
+    try {
+      setGenerating(true);
+      const latestPlan = mealPlans[0];
+      const response = await axios.post(
+        `${BACKEND_URL}/api/shopping-lists/generate/${latestPlan.plan_id}`,
+        {},
+        { headers: { Authorization: `Bearer ${sessionToken}` } }
+      );
+      setSelectedList(response.data);
+      await fetchShoppingLists(sessionToken!);
+    } catch (error) {
+      console.error('Error generating shopping list:', error);
+      Alert.alert('Error', 'Failed to generate shopping list. Please try again.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const toggleItem = (itemKey: string) => {
+    const newChecked = new Set(checkedItems);
+    if (newChecked.has(itemKey)) {
+      newChecked.delete(itemKey);
+    } else {
+      newChecked.add(itemKey);
+    }
+    setCheckedItems(newChecked);
+  };
+
+  const getCategoryColor = (ingredient: string) => {
+    const lowerIngredient = ingredient.toLowerCase();
+    if (lowerIngredient.includes('vegetable') || lowerIngredient.includes('tomato') || lowerIngredient.includes('onion') || lowerIngredient.includes('lettuce') || lowerIngredient.includes('carrot') || lowerIngredient.includes('pepper')) {
+      return ['#22c55e', '#16a34a'];
+    }
+    if (lowerIngredient.includes('fruit') || lowerIngredient.includes('apple') || lowerIngredient.includes('orange') || lowerIngredient.includes('banana') || lowerIngredient.includes('berry')) {
+      return ['#f97316', '#ea580c'];
+    }
+    if (lowerIngredient.includes('meat') || lowerIngredient.includes('chicken') || lowerIngredient.includes('beef') || lowerIngredient.includes('pork') || lowerIngredient.includes('fish')) {
+      return ['#ef4444', '#dc2626'];
+    }
+    if (lowerIngredient.includes('dairy') || lowerIngredient.includes('milk') || lowerIngredient.includes('cheese') || lowerIngredient.includes('yogurt') || lowerIngredient.includes('cream')) {
+      return ['#3b82f6', '#2563eb'];
+    }
+    if (lowerIngredient.includes('grain') || lowerIngredient.includes('bread') || lowerIngredient.includes('rice') || lowerIngredient.includes('pasta') || lowerIngredient.includes('flour')) {
+      return ['#eab308', '#ca8a04'];
+    }
+    return ['#8b5cf6', '#7c3aed'];
+  };
+
+  const totalItems = selectedList?.items?.length || 0;
+  const checkedCount = checkedItems.size;
+  const inPantryCount = selectedList?.items?.filter((item: any) => item.in_pantry).length || 0;
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Header Stats */}
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <Image source={{ uri: HERO_IMAGE }} style={styles.heroImage} />
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.heroOverlay}>
+            <Text style={styles.heroTitle}>Shopping List</Text>
+            <Text style={styles.heroSubtitle}>Your smart grocery companion</Text>
+          </LinearGradient>
+        </View>
+
+        {/* Stats */}
         {selectedList && (
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
-              <Ionicons name="cart" size={32} color="#4CAF50" />
-              <Text style={styles.statNumber}>{selectedList.items.length}</Text>
-              <Text style={styles.statLabel}>Items</Text>
+              <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.statGradient}>
+                <Ionicons name="cart" size={24} color="white" />
+                <Text style={styles.statNumber}>{totalItems}</Text>
+                <Text style={styles.statLabel}>Total Items</Text>
+              </LinearGradient>
             </View>
             <View style={styles.statCard}>
-              <Ionicons name="checkmark-circle" size={32} color="#2196F3" />
-              <Text style={styles.statNumber}>
-                {selectedList.items.filter((item: any) => item.in_pantry).length}
-              </Text>
-              <Text style={styles.statLabel}>In Pantry</Text>
+              <LinearGradient colors={['#3b82f6', '#2563eb']} style={styles.statGradient}>
+                <Ionicons name="checkmark-circle" size={24} color="white" />
+                <Text style={styles.statNumber}>{inPantryCount}</Text>
+                <Text style={styles.statLabel}>In Pantry</Text>
+              </LinearGradient>
+            </View>
+            <View style={styles.statCard}>
+              <LinearGradient colors={['#f97316', '#ea580c']} style={styles.statGradient}>
+                <Ionicons name="bag-check" size={24} color="white" />
+                <Text style={styles.statNumber}>{checkedCount}</Text>
+                <Text style={styles.statLabel}>Got It</Text>
+              </LinearGradient>
             </View>
           </View>
         )}
 
+        {/* Generate Button */}
+        <View style={styles.generateSection}>
+          <TouchableOpacity
+            style={styles.generateButton}
+            onPress={generateShoppingList}
+            disabled={generating}
+            activeOpacity={0.9}
+          >
+            <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.generateGradient}>
+              {generating ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <>
+                  <Ionicons name="list" size={22} color="white" />
+                  <Text style={styles.generateText}>Generate from Meal Plan</Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
         {!selectedList ? (
           <View style={styles.emptyState}>
-            <Ionicons name="cart-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No shopping list</Text>
-            <Text style={styles.emptySubtext}>
-              Create a meal plan to generate a shopping list
+            <View style={styles.emptyIconBg}>
+              <Ionicons name="cart-outline" size={64} color="#d1d5db" />
+            </View>
+            <Text style={styles.emptyTitle}>No Shopping List</Text>
+            <Text style={styles.emptySubtitle}>
+              Create a meal plan and generate a shopping list to see what you need to buy
             </Text>
           </View>
         ) : (
           <View style={styles.listContainer}>
-            {Object.keys(groupedItems).map((category) => (
-              <View key={category} style={styles.categorySection}>
-                <Text style={styles.categoryTitle}>{category}</Text>
-                {groupedItems[category].map((item: any, index: number) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.listItem,
-                      item.in_pantry && styles.listItemInPantry
-                    ]}
-                  >
-                    <View style={styles.checkbox}>
-                      {item.in_pantry && (
-                        <Ionicons name="checkmark" size={16} color="#4CAF50" />
+            {selectedList.items?.map((item: any, index: number) => {
+              const itemKey = `${item.ingredient}-${index}`;
+              const isChecked = checkedItems.has(itemKey) || item.in_pantry;
+              const [color1, color2] = getCategoryColor(item.ingredient);
+              
+              return (
+                <TouchableOpacity
+                  key={itemKey}
+                  style={[styles.listItem, isChecked && styles.listItemChecked]}
+                  onPress={() => !item.in_pantry && toggleItem(itemKey)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.checkboxContainer}>
+                    <LinearGradient
+                      colors={isChecked ? [color1, color2] : ['#e5e7eb', '#d1d5db']}
+                      style={styles.checkbox}
+                    >
+                      {isChecked && <Ionicons name="checkmark" size={16} color="white" />}
+                    </LinearGradient>
+                  </View>
+                  
+                  <View style={styles.itemInfo}>
+                    <Text style={[styles.itemName, isChecked && styles.itemNameChecked]}>
+                      {item.ingredient}
+                    </Text>
+                    <View style={styles.itemDetails}>
+                      <Text style={styles.itemQuantity}>
+                        {item.quantity} {item.unit}
+                      </Text>
+                      {item.recipe_name && (
+                        <Text style={styles.itemRecipe} numberOfLines={1}>
+                          for {item.recipe_name}
+                        </Text>
                       )}
                     </View>
-                    <View style={styles.itemInfo}>
-                      <Text
-                        style={[
-                          styles.itemName,
-                          item.in_pantry && styles.itemNameInPantry
-                        ]}
-                      >
-                        {item.ingredient}
-                      </Text>
-                      <Text style={styles.itemDetails}>
-                        {item.quantity} {item.unit}
-                        {item.recipe_name && ` • for ${item.recipe_name}`}
-                      </Text>
-                    </View>
-                    {item.in_pantry && (
-                      <View style={styles.pantryBadge}>
-                        <Text style={styles.pantryBadgeText}>In Pantry</Text>
-                      </View>
-                    )}
                   </View>
-                ))}
-              </View>
-            ))}
+                  
+                  {item.in_pantry && (
+                    <View style={[styles.pantryBadge, { backgroundColor: color1 }]}>
+                      <Text style={styles.pantryBadgeText}>In Pantry</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
 
-        {/* Shopping Lists History */}
+        {/* Other Lists */}
         {shoppingLists.length > 1 && (
           <View style={styles.historySection}>
-            <Text style={styles.sectionTitle}>Other Lists</Text>
-            {shoppingLists.slice(1, 4).map((list) => (
-              <TouchableOpacity
-                key={list.list_id}
-                style={styles.historyCard}
-                onPress={() => setSelectedList(list)}
-              >
-                <Ionicons name="list" size={24} color="#4CAF50" />
-                <View style={styles.historyInfo}>
-                  <Text style={styles.historyTitle}>
-                    Shopping List
-                  </Text>
-                  <Text style={styles.historyItems}>
-                    {list.items.length} items
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
-              </TouchableOpacity>
-            ))}
+            <Text style={styles.sectionTitle}>Previous Lists</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {shoppingLists.slice(1, 5).map((list) => (
+                <TouchableOpacity
+                  key={list.list_id}
+                  style={[
+                    styles.historyCard,
+                    selectedList?.list_id === list.list_id && styles.historyCardActive
+                  ]}
+                  onPress={() => {
+                    setSelectedList(list);
+                    setCheckedItems(new Set());
+                  }}
+                >
+                  <Ionicons name="list" size={24} color="#22c55e" />
+                  <Text style={styles.historyItems}>{list.items?.length || 0} items</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
+
+        <View style={{ height: 100 }} />
       </ScrollView>
     </View>
   );
@@ -144,144 +251,225 @@ export default function ShoppingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8fafc',
   },
   scrollView: {
     flex: 1,
   },
+  // Hero
+  heroSection: {
+    height: 160,
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    justifyContent: 'flex-end',
+    padding: 20,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: 'white',
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
+  },
+  // Stats
   statsContainer: {
     flexDirection: 'row',
-    padding: 16,
-    gap: 16,
+    paddingHorizontal: 16,
+    marginTop: -24,
+    gap: 10,
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
+    borderRadius: 14,
+    overflow: 'hidden',
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+  },
+  statGradient: {
+    padding: 14,
+    alignItems: 'center',
   },
   statNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 8,
+    fontSize: 24,
+    fontWeight: '800',
+    color: 'white',
+    marginTop: 6,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600',
   },
+  // Generate
+  generateSection: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+  },
+  generateButton: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  generateGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 10,
+  },
+  generateText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'white',
+  },
+  // List
   listContainer: {
     padding: 16,
-  },
-  categorySection: {
-    marginBottom: 24,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    gap: 8,
   },
   listItem: {
     backgroundColor: 'white',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    padding: 14,
+    borderRadius: 14,
     gap: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  listItemInPantry: {
-    backgroundColor: '#E8F5E9',
+  listItemChecked: {
+    backgroundColor: '#f0fdf4',
   },
+  checkboxContainer: {},
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-    alignItems: 'center',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   itemInfo: {
     flex: 1,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: '#1f2937',
+    textTransform: 'capitalize',
   },
-  itemNameInPantry: {
-    color: '#2E7D32',
+  itemNameChecked: {
+    color: '#16a34a',
+    textDecorationLine: 'line-through',
   },
   itemDetails: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  itemQuantity: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  itemRecipe: {
+    fontSize: 12,
+    color: '#9ca3af',
+    flex: 1,
   },
   pantryBadge: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
   pantryBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
     color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
   },
+  // Empty State
   emptyState: {
     alignItems: 'center',
     padding: 48,
   },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#999',
-    marginTop: 16,
+  emptyIconBg: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  emptySubtext: {
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
     fontSize: 14,
-    color: '#ccc',
-    marginTop: 8,
+    color: '#6b7280',
     textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 280,
   },
+  // History
   historySection: {
     padding: 16,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 16,
   },
   historyCard: {
     backgroundColor: 'white',
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 14,
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    gap: 12,
+    marginRight: 12,
+    alignItems: 'center',
+    minWidth: 100,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  historyInfo: {
-    flex: 1,
-  },
-  historyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+  historyCardActive: {
+    borderColor: '#22c55e',
+    backgroundColor: '#f0fdf4',
   },
   historyItems: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginTop: 8,
   },
 });
