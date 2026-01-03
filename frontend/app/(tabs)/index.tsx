@@ -538,9 +538,11 @@ const styles = StyleSheet.create({
   loadingHero: { height: 240, borderRadius: 24, backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center' },
   loadingText: { fontSize: 14, color: '#22c55e', marginTop: 12, fontWeight: '600' },
   
-  heroCard: { borderRadius: 24, overflow: 'hidden', height: 260, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8 },
+  heroCard: { borderRadius: 24, overflow: 'hidden', height: 280, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8 },
   heroImage: { width: '100%', height: '100%' },
-  heroOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '70%', justifyContent: 'flex-end', padding: 18 },
+  heroOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '75%', justifyContent: 'flex-end', padding: 18 },
+  whyBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.5)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, marginBottom: 8, maxWidth: '90%' },
+  whyText: { fontSize: 11, color: 'rgba(255,255,255,0.9)', fontStyle: 'italic' },
   heroTitle: { fontSize: 24, fontWeight: '800', color: 'white', marginBottom: 4 },
   heroDesc: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginBottom: 12, lineHeight: 18 },
   heroMeta: { flexDirection: 'row', gap: 16, marginBottom: 14 },
