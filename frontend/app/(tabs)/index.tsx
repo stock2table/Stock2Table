@@ -410,91 +410,35 @@ export default function PantryScreen() {
                     </LinearGradient>
                   </View>
                   
-                  {categorizedItems[cat].map((item: any) => {
-                    const swipeableRef = useRef<Swipeable>(null);
-                    
-                    const renderRightActions = () => (
-                      <View style={styles.swipeActionsContainer}>
-                        <TouchableOpacity 
-                          style={styles.editSwipeAction}
-                          onPress={() => {
-                            swipeableRef.current?.close();
-                            openEditModal(item);
-                          }}
-                        >
-                          <Ionicons name="pencil" size={22} color="white" />
-                          <Text style={styles.swipeActionText}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                          style={styles.deleteSwipeAction}
-                          onPress={() => {
-                            swipeableRef.current?.close();
-                            Alert.alert(
-                              'Delete Item',
-                              `Remove "${item.name}" from pantry?`,
-                              [
-                                { text: 'Cancel', style: 'cancel' },
-                                {
-                                  text: 'Delete',
-                                  style: 'destructive',
-                                  onPress: () => {
-                                    setDeletingId(item.item_id);
-                                    axios.delete(
-                                      `${BACKEND_URL}/api/pantry/${item.item_id}`,
-                                      { headers: { Authorization: `Bearer ${sessionToken}` } }
-                                    ).then(() => {
-                                      fetchPantry(sessionToken!);
-                                    }).catch(() => {
-                                      Alert.alert('Error', 'Failed to delete');
-                                    }).finally(() => {
-                                      setDeletingId(null);
-                                    });
-                                  }
-                                }
-                              ]
-                            );
-                          }}
-                        >
-                          <Ionicons name="trash" size={22} color="white" />
-                          <Text style={styles.swipeActionText}>Delete</Text>
-                        </TouchableOpacity>
-                      </View>
-                    );
-
-                    return (
-                      <Swipeable
-                        key={item.item_id}
-                        ref={swipeableRef}
-                        renderRightActions={renderRightActions}
-                        overshootRight={false}
-                        friction={2}
-                      >
-                        <View style={styles.pantryCard}>
-                          <View style={[styles.itemIndicator, { backgroundColor: color }]} />
-                          <View style={styles.itemContent}>
-                            <Text style={styles.itemName}>{item.name}</Text>
-                            <View style={styles.itemMeta}>
-                              <View style={[styles.itemBadge, { backgroundColor: color + '20' }]}>
-                                <Text style={[styles.itemBadgeText, { color }]}>
-                                  {item.quantity} {item.unit}
-                                </Text>
-                              </View>
-                              {item.expiry_date && (
-                                <View style={styles.expiryBadge}>
-                                  <Ionicons name="time" size={12} color="#f97316" />
-                                  <Text style={styles.expiryText}>{item.expiry_date}</Text>
-                                </View>
-                              )}
+                  {categorizedItems[cat].map((item: any) => (
+                    <TouchableOpacity 
+                      key={item.item_id}
+                      style={styles.pantryCard}
+                      onPress={() => openEditModal(item)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.itemIndicator, { backgroundColor: color }]} />
+                      <View style={styles.itemContent}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <View style={styles.itemMeta}>
+                          <View style={[styles.itemBadge, { backgroundColor: color + '20' }]}>
+                            <Text style={[styles.itemBadgeText, { color }]}>
+                              {item.quantity} {item.unit}
+                            </Text>
+                          </View>
+                          {item.expiry_date && (
+                            <View style={styles.expiryBadge}>
+                              <Ionicons name="time" size={12} color="#f97316" />
+                              <Text style={styles.expiryText}>{item.expiry_date}</Text>
                             </View>
-                          </View>
-                          <View style={styles.swipeHint}>
-                            <Ionicons name="chevron-back" size={16} color="#d1d5db" />
-                            <Text style={styles.swipeHintText}>Swipe</Text>
-                          </View>
+                          )}
                         </View>
-                      </Swipeable>
-                    );
-                  })}
+                      </View>
+                      <View style={styles.tapHint}>
+                        <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               );
             })
