@@ -122,23 +122,49 @@ export default function ShoppingScreen() {
   const detectRegion = async () => {
     try {
       setLocationLoading(true);
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const location = await Location.getCurrentPositionAsync({});
-        const [address] = await Location.reverseGeocodeAsync(location.coords);
-        if (address) {
-          const code = address.isoCountryCode || 'DEFAULT';
+      
+      // Try expo-location first (works on mobile)
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({});
+          const [address] = await Location.reverseGeocodeAsync(location.coords);
+          if (address) {
+            const code = address.isoCountryCode || 'DEFAULT';
+            if (GROCERY_APPS[code]) {
+              setRegion(code);
+            }
+            setCityName(address.city || address.region || '');
+            setCountryName(address.country || COUNTRY_NAMES[code] || 'Unknown');
+            setLocationLoading(false);
+            return;
+          }
+        }
+      } catch (locError) {
+        console.log('Location API failed, trying IP-based detection');
+      }
+      
+      // Fallback: IP-based geolocation (works on web)
+      try {
+        const ipResponse = await axios.get('https://ipapi.co/json/', { timeout: 5000 });
+        if (ipResponse.data) {
+          const code = ipResponse.data.country_code || 'DEFAULT';
           if (GROCERY_APPS[code]) {
             setRegion(code);
           }
-          setCityName(address.city || address.region || '');
-          setCountryName(address.country || COUNTRY_NAMES[code] || 'Unknown');
+          setCityName(ipResponse.data.city || '');
+          setCountryName(ipResponse.data.country_name || COUNTRY_NAMES[code] || 'Unknown');
+          setLocationLoading(false);
+          return;
         }
-      } else {
-        setCountryName('Location not available');
+      } catch (ipError) {
+        console.log('IP detection failed');
       }
+      
+      // Final fallback
+      setCountryName('Location unavailable');
     } catch (error) {
-      console.log('Region detection failed, using default');
+      console.log('Region detection failed completely');
       setCountryName('Location unavailable');
     } finally {
       setLocationLoading(false);
