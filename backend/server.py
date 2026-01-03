@@ -64,14 +64,14 @@ def set_cached(key: str, data: Any, user_id: str = None, duration: timedelta = N
     else:
         CACHE[key] = {"data": data, "expires": expires}
 
-# Pre-computed trending dishes (fast fallback)
+# Pre-computed trending dishes with ingredients (fast fallback)
 PRECOMPUTED_TRENDING = [
-    {"id": "t1", "name": "Korean Fried Chicken", "cuisine": "Korean", "time": 45, "calories": 580, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=400&q=80"},
-    {"id": "t2", "name": "Butter Chicken", "cuisine": "Indian", "time": 40, "calories": 490, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80"},
-    {"id": "t3", "name": "Tacos Al Pastor", "cuisine": "Mexican", "time": 35, "calories": 420, "rating": 4.7, "image_url": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80"},
-    {"id": "t4", "name": "Sushi Bowl", "cuisine": "Japanese", "time": 30, "calories": 380, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80"},
-    {"id": "t5", "name": "Margherita Pizza", "cuisine": "Italian", "time": 25, "calories": 450, "rating": 4.6, "image_url": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&q=80"},
-    {"id": "t6", "name": "Pad Thai", "cuisine": "Thai", "time": 30, "calories": 520, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&q=80"},
+    {"id": "t1", "name": "Korean Fried Chicken", "cuisine": "Korean", "time": 45, "calories": 580, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=400&q=80", "ingredients": ["chicken", "flour", "cornstarch", "garlic", "ginger", "soy sauce", "gochujang", "honey", "sesame oil"]},
+    {"id": "t2", "name": "Butter Chicken", "cuisine": "Indian", "time": 40, "calories": 490, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80", "ingredients": ["chicken", "butter", "tomato", "cream", "onion", "garlic", "ginger", "garam masala", "cumin", "yogurt"]},
+    {"id": "t3", "name": "Tacos Al Pastor", "cuisine": "Mexican", "time": 35, "calories": 420, "rating": 4.7, "image_url": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80", "ingredients": ["pork", "pineapple", "onion", "cilantro", "lime", "tortillas", "achiote", "garlic", "cumin"]},
+    {"id": "t4", "name": "Sushi Bowl", "cuisine": "Japanese", "time": 30, "calories": 380, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80", "ingredients": ["rice", "salmon", "avocado", "cucumber", "nori", "soy sauce", "rice vinegar", "sesame seeds", "edamame"]},
+    {"id": "t5", "name": "Margherita Pizza", "cuisine": "Italian", "time": 25, "calories": 450, "rating": 4.6, "image_url": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&q=80", "ingredients": ["flour", "yeast", "tomato", "mozzarella", "basil", "olive oil", "salt", "garlic"]},
+    {"id": "t6", "name": "Pad Thai", "cuisine": "Thai", "time": 30, "calories": 520, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&q=80", "ingredients": ["rice noodles", "shrimp", "egg", "tofu", "bean sprouts", "peanuts", "lime", "fish sauce", "tamarind"]},
 ]
 
 PRECOMPUTED_VIDEOS = [
@@ -82,11 +82,23 @@ PRECOMPUTED_VIDEOS = [
 ]
 
 PRECOMPUTED_SUGGESTIONS = [
-    {"name": "Honey Garlic Salmon", "description": "A perfectly glazed salmon with sweet honey and aromatic garlic.", "cuisine": "American", "prep_time": 10, "cook_time": 20, "calories": 420, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80", "reason": "Quick and nutritious - perfect for a busy weeknight"},
-    {"name": "Chicken Stir Fry", "description": "Colorful vegetables and tender chicken in a savory sauce.", "cuisine": "Asian", "prep_time": 15, "cook_time": 15, "calories": 380, "rating": 4.7, "image_url": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80", "reason": "Quick, healthy, and uses common pantry ingredients"},
-    {"name": "Mediterranean Salad", "description": "Fresh, crunchy, and packed with Mediterranean flavors.", "cuisine": "Mediterranean", "prep_time": 10, "cook_time": 0, "calories": 280, "rating": 4.6, "image_url": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80", "reason": "Light and refreshing - no cooking needed"},
-    {"name": "Beef Tacos", "description": "Seasoned ground beef with fresh toppings in warm tortillas.", "cuisine": "Mexican", "prep_time": 10, "cook_time": 15, "calories": 450, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80", "reason": "Family favorite - customizable for everyone"},
+    {"name": "Honey Garlic Salmon", "description": "A perfectly glazed salmon with sweet honey and aromatic garlic.", "cuisine": "American", "prep_time": 10, "cook_time": 20, "calories": 420, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80", "reason": "Quick and nutritious - perfect for a busy weeknight", "ingredients": ["salmon", "honey", "garlic", "soy sauce", "butter", "lemon", "olive oil"]},
+    {"name": "Chicken Stir Fry", "description": "Colorful vegetables and tender chicken in a savory sauce.", "cuisine": "Asian", "prep_time": 15, "cook_time": 15, "calories": 380, "rating": 4.7, "image_url": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80", "reason": "Quick, healthy, and uses common pantry ingredients", "ingredients": ["chicken", "broccoli", "bell pepper", "carrot", "soy sauce", "garlic", "ginger", "sesame oil"]},
+    {"name": "Mediterranean Salad", "description": "Fresh, crunchy, and packed with Mediterranean flavors.", "cuisine": "Mediterranean", "prep_time": 10, "cook_time": 0, "calories": 280, "rating": 4.6, "image_url": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80", "reason": "Light and refreshing - no cooking needed", "ingredients": ["lettuce", "cucumber", "tomato", "feta cheese", "olive", "red onion", "olive oil", "lemon"]},
+    {"name": "Beef Tacos", "description": "Seasoned ground beef with fresh toppings in warm tortillas.", "cuisine": "Mexican", "prep_time": 10, "cook_time": 15, "calories": 450, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80", "reason": "Family favorite - customizable for everyone", "ingredients": ["ground beef", "tortillas", "lettuce", "tomato", "cheese", "sour cream", "onion", "cumin", "chili powder"]},
 ]
+
+def calculate_missing_ingredients(recipe_ingredients: List[str], pantry_items: List[str]) -> List[str]:
+    """Calculate which ingredients are missing from pantry"""
+    pantry_lower = [p.lower().strip() for p in pantry_items]
+    missing = []
+    for ingredient in recipe_ingredients:
+        ing_lower = ingredient.lower().strip()
+        # Check if any pantry item contains the ingredient or vice versa
+        found = any(ing_lower in p or p in ing_lower for p in pantry_lower)
+        if not found:
+            missing.append(ingredient)
+    return missing
 
 # Create the main app
 app = FastAPI(title="Stock2Table API")
