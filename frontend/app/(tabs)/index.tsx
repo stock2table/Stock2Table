@@ -245,6 +245,14 @@ export default function HomeScreen() {
             >
               <Image source={{ uri: todaySuggestion.image_url }} style={styles.heroImage} />
               <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.heroOverlay}>
+                {/* Why suggested badge */}
+                <View style={styles.whyBadge}>
+                  <Ionicons name="bulb" size={12} color="#fbbf24" />
+                  <Text style={styles.whyText} numberOfLines={1}>
+                    {todaySuggestion.reason || 'Based on your pantry & preferences'}
+                  </Text>
+                </View>
+                
                 <Text style={styles.heroTitle}>{todaySuggestion.name}</Text>
                 <Text style={styles.heroDesc} numberOfLines={2}>{todaySuggestion.description || todaySuggestion.reason}</Text>
                 
