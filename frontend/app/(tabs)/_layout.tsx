@@ -11,8 +11,8 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: '#ffffff',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 88 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+          height: Platform.OS === 'ios' ? 88 : 65,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -4 },
@@ -31,10 +31,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="pantry"
+        options={{
           title: 'Pantry',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'basket' : 'basket-outline'} size={22} color={color} />
             </View>
           ),
         }}
@@ -45,7 +56,7 @@ export default function TabLayout() {
           title: 'Recipes',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Ionicons name={focused ? 'book' : 'book-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'book' : 'book-outline'} size={22} color={color} />
             </View>
           ),
         }}
@@ -53,10 +64,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="meal-plan"
         options={{
-          title: 'Meal Plan',
+          title: 'Plan',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={22} color={color} />
             </View>
           ),
         }}
@@ -64,10 +75,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="shopping"
         options={{
-          title: 'Shopping',
+          title: 'Shop',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Ionicons name={focused ? 'cart' : 'cart-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'cart' : 'cart-outline'} size={22} color={color} />
             </View>
           ),
         }}
@@ -78,7 +89,7 @@ export default function TabLayout() {
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
             </View>
           ),
         }}
@@ -91,9 +102,9 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 40,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 28,
+    borderRadius: 14,
   },
   iconContainerActive: {
     backgroundColor: '#dcfce7',
