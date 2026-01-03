@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Animated, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,20 +7,34 @@ import { useAppStore } from '../../store/appStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 
+const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
 const CATEGORIES = ['vegetables', 'fruits', 'dairy', 'meat', 'grains', 'spices', 'other'];
 const UNITS = ['kg', 'g', 'L', 'ml', 'pieces', 'cups', 'tbsp', 'tsp', 'lbs', 'oz'];
 
+const CATEGORY_IMAGES: any = {
+  vegetables: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&q=80',
+  fruits: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=400&q=80',
+  dairy: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=400&q=80',
+  meat: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=400&q=80',
+  grains: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80',
+  spices: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&q=80',
+  other: 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=400&q=80',
+};
+
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=800&q=80';
+
 export default function PantryScreen() {
   const router = useRouter();
   const { sessionToken, user } = useAuth();
-  const { pantryItems, fetchPantry, recipes, fetchRecipes, deletePantryItem, addPantryItem } = useAppStore();
+  const { pantryItems, fetchPantry, recipes, fetchRecipes, addPantryItem } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   // Form state
   const [formName, setFormName] = useState('');
@@ -31,7 +45,7 @@ export default function PantryScreen() {
   const [saving, setSaving] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
     if (sessionToken) {
@@ -55,7 +69,7 @@ export default function PantryScreen() {
 
   const getAIRecommendations = async () => {
     if (pantryItems.length === 0) {
-      Alert.alert('Empty Pantry', 'Add some ingredients first to get AI recipe recommendations! 🥗');
+      Alert.alert('Empty Pantry', 'Add some ingredients first to get AI recipe recommendations!');
       return;
     }
     try {
@@ -64,11 +78,12 @@ export default function PantryScreen() {
       const response = await axios.post(
         `${BACKEND_URL}/api/recipes/recommend`,
         {},
-        { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 20000 }
+        { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 30000 }
       );
-      setRecommendations(response.data.recommendations);
+      setRecommendations(response.data.recommendations || []);
     } catch (error: any) {
-      Alert.alert('Error', 'Failed to get AI recommendations. Please try again! 🤖');
+      console.error('AI Recommendation error:', error);
+      Alert.alert('Error', 'Failed to get AI recommendations. Please try again!');
     } finally {
       setLoadingRecs(false);
     }
@@ -91,8 +106,8 @@ export default function PantryScreen() {
       router.push(`/recipe-detail/${recipe.recipe_id}`);
     } else {
       Alert.alert(
-        'Recipe Coming Soon',
-        `"${rec.name}" will be added to our database soon! Meanwhile, try our other amazing recipes. 🍳`,
+        'Recipe Details',
+        `"${rec.name}"\n\n${rec.reason}\n\nThis AI-suggested recipe isn't in our database yet. Browse our recipe collection for similar options!`,
         [{ text: 'Browse Recipes', onPress: () => router.push('/(tabs)/recipes') }, { text: 'OK' }]
       );
     }
@@ -160,13 +175,41 @@ export default function PantryScreen() {
     }
   };
 
-  const deleteItem = async (item: any) => {
-    try {
-      await deletePantryItem(sessionToken!, item.item_id);
-      await fetchPantry(sessionToken!);
-    } catch (error: any) {
-      Alert.alert('Error', 'Failed to delete');
-    }
+  // FIXED: Direct delete function with proper error handling
+  const handleDeleteItem = async (item: any) => {
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to remove "${item.name}" from your pantry?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeletingId(item.item_id);
+              console.log('Deleting item:', item.item_id);
+              
+              const response = await axios.delete(
+                `${BACKEND_URL}/api/pantry/${item.item_id}`,
+                { headers: { Authorization: `Bearer ${sessionToken}` } }
+              );
+              
+              console.log('Delete response:', response.status);
+              
+              // Refresh pantry after successful delete
+              await fetchPantry(sessionToken!);
+              
+            } catch (error: any) {
+              console.error('Delete error:', error.response?.data || error.message);
+              Alert.alert('Error', error.response?.data?.detail || 'Failed to delete item. Please try again.');
+            } finally {
+              setDeletingId(null);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const getCategoryIcon = (category: string) => {
@@ -177,17 +220,17 @@ export default function PantryScreen() {
     return icons[category] || 'cube';
   };
 
-  const getCategoryGradient = (category: string) => {
-    const gradients: any = {
-      vegetables: ['#10b981', '#34d399'],
-      fruits: ['#f59e0b', '#fbbf24'],
-      dairy: ['#3b82f6', '#60a5fa'],
-      meat: ['#ef4444', '#f87171'],
-      grains: ['#f59e0b', '#fcd34d'],
-      spices: ['#8b5cf6', '#a78bfa'],
-      other: ['#6b7280', '#9ca3af']
+  const getCategoryColor = (category: string) => {
+    const colors: any = {
+      vegetables: '#22c55e',
+      fruits: '#f97316',
+      dairy: '#3b82f6',
+      meat: '#ef4444',
+      grains: '#eab308',
+      spices: '#a855f7',
+      other: '#6b7280'
     };
-    return gradients[category] || ['#6b7280', '#9ca3af'];
+    return colors[category] || '#6b7280';
   };
 
   const categorizedItems = pantryItems.reduce((acc: any, item) => {
@@ -196,238 +239,233 @@ export default function PantryScreen() {
     return acc;
   }, {});
 
+  const totalItems = pantryItems.length;
   const expiringCount = pantryItems.filter(i => i.expiry_date).length;
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.headerGradient}>
-        <Animated.View style={[styles.headerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          <View style={styles.greetingRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.greetingText}>Hello, {user?.name?.split(' ')[0] || 'there'}! 👋</Text>
-              <Text style={styles.subGreeting}>What's cooking today?</Text>
-            </View>
-            {user?.picture && (
-              <Image source={{ uri: user.picture }} style={styles.profilePic} />
-            )}
-          </View>
-        </Animated.View>
-      </LinearGradient>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8b5cf6" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#22c55e" />}
       >
-        <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
-          <TouchableOpacity style={styles.statCard} activeOpacity={0.85}>
-            <LinearGradient colors={['#8b5cf6', '#7c3aed']} style={styles.statGradient}>
-              <View style={styles.statIconCircle}>
-                <Ionicons name="basket" size={28} color="white" />
-              </View>
-              <Text style={styles.statNumber}>{pantryItems.length}</Text>
-              <Text style={styles.statLabel}>Items in Pantry</Text>
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <Image source={{ uri: HERO_IMAGE }} style={styles.heroImage} />
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.heroOverlay}>
+            <Animated.View style={[styles.heroContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+              <Text style={styles.greeting}>Hello, {user?.name?.split(' ')[0] || 'Chef'}!</Text>
+              <Text style={styles.subGreeting}>Ready to cook something amazing?</Text>
+            </Animated.View>
+          </LinearGradient>
+        </View>
+
+        {/* Stats Cards */}
+        <View style={styles.statsContainer}>
+          <TouchableOpacity style={styles.statCard} activeOpacity={0.8}>
+            <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.statGradient}>
+              <Ionicons name="basket" size={28} color="white" />
+              <Text style={styles.statNumber}>{totalItems}</Text>
+              <Text style={styles.statLabel}>Items</Text>
             </LinearGradient>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.statCard} activeOpacity={0.85}>
-            <LinearGradient colors={['#f59e0b', '#f97316']} style={styles.statGradient}>
-              <View style={styles.statIconCircle}>
-                <Ionicons name="time" size={28} color="white" />
-              </View>
+          <TouchableOpacity style={styles.statCard} activeOpacity={0.8}>
+            <LinearGradient colors={['#f97316', '#ea580c']} style={styles.statGradient}>
+              <Ionicons name="time" size={28} color="white" />
               <Text style={styles.statNumber}>{expiringCount}</Text>
-              <Text style={styles.statLabel}>Expiring Soon</Text>
+              <Text style={styles.statLabel}>Tracked</Text>
             </LinearGradient>
           </TouchableOpacity>
-        </Animated.View>
-
-        {recommendations.length > 0 && (
-          <Animated.View style={[styles.recSection, { opacity: fadeAnim }]}>
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.aiHeaderBadge}>
-                <LinearGradient colors={['#ec4899', '#f43f5e']} style={styles.aiBadgeGrad}>
-                  <Ionicons name="sparkles" size={18} color="white" />
-                  <Text style={styles.aiBadgeText}>AI Powered</Text>
-                </LinearGradient>
-              </View>
-            </View>
-            <Text style={styles.sectionTitle}>Recipes You Can Make</Text>
-
-            {recommendations.map((rec, idx) => {
-              const recipe = findRecipeByName(rec.name);
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.recCard}
-                  onPress={() => handleRecommendationClick(rec)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.recImageContainer}>
-                    {recipe?.image_url ? (
-                      <Image source={{ uri: recipe.image_url }} style={styles.recImage} />
-                    ) : (
-                      <LinearGradient colors={['#ec4899', '#f43f5e']} style={styles.recImagePlaceholder}>
-                        <Ionicons name="restaurant" size={40} color="white" />
-                      </LinearGradient>
-                    )}
-                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={styles.recImageOverlay} />
-                    <View style={styles.recBadge}>
-                      <Ionicons name="star" size={14} color="#fbbf24" />
-                      <Text style={styles.recBadgeText}>Match</Text>
-                    </View>
-                  </View>
-                  <View style={styles.recContent}>
-                    <Text style={styles.recTitle}>{rec.name}</Text>
-                    <Text style={styles.recReason} numberOfLines={2}>{rec.reason}</Text>
-                    {rec.missing_ingredients && rec.missing_ingredients.length > 0 && (
-                      <View style={styles.missingBadge}>
-                        <Ionicons name="alert-circle" size={14} color="#f97316" />
-                        <Text style={styles.missingText} numberOfLines={1}>
-                          Need: {rec.missing_ingredients.slice(0, 2).join(', ')}
-                          {rec.missing_ingredients.length > 2 && ` +${rec.missing_ingredients.length - 2}`}
-                        </Text>
-                      </View>
-                    )}
-                    <View style={styles.viewRecipeBtn}>
-                      <Text style={styles.viewRecipeText}>View Recipe</Text>
-                      <Ionicons name="arrow-forward" size={16} color="#8b5cf6" />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </Animated.View>
-        )}
-
-        <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.primaryAction} onPress={() => router.push('/scan')} activeOpacity={0.85}>
-            <LinearGradient colors={['#8b5cf6', '#6366f1']} style={styles.actionGrad}>
-              <View style={styles.actionIconCircle}>
-                <Ionicons name="camera" size={26} color="white" />
-              </View>
-              <View style={styles.actionText}>
-                <Text style={styles.actionTitle}>Scan Ingredients</Text>
-                <Text style={styles.actionSubtitle}>Use AI to identify food</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryAction} onPress={getAIRecommendations} disabled={loadingRecs} activeOpacity={0.85}>
-            <LinearGradient colors={['#ec4899', '#f43f5e']} style={styles.actionGrad}>
-              {loadingRecs ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <>
-                  <View style={styles.actionIconCircle}>
-                    <Ionicons name="bulb" size={26} color="white" />
-                  </View>
-                  <View style={styles.actionText}>
-                    <Text style={styles.actionTitle}>Get Recipe Ideas</Text>
-                    <Text style={styles.actionSubtitle}>AI-powered suggestions</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
-                </>
-              )}
+          <TouchableOpacity style={styles.statCard} activeOpacity={0.8} onPress={() => router.push('/(tabs)/recipes')}>
+            <LinearGradient colors={['#8b5cf6', '#7c3aed']} style={styles.statGradient}>
+              <Ionicons name="book" size={28} color="white" />
+              <Text style={styles.statNumber}>{recipes.length}</Text>
+              <Text style={styles.statLabel}>Recipes</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {Object.keys(categorizedItems).length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <LinearGradient colors={['#f3f4f6', '#e5e7eb']} style={styles.emptyGrad}>
-              <View style={styles.emptyIconCircle}>
-                <Ionicons name="basket-outline" size={60} color="#9ca3af" />
-              </View>
-              <Text style={styles.emptyTitle}>Your Pantry is Empty</Text>
-              <Text style={styles.emptySubtitle}>Start by adding or scanning ingredients!</Text>
-              <TouchableOpacity style={styles.emptyButton} onPress={openAddModal}>
-                <Text style={styles.emptyButtonText}>Add Your First Item</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        ) : (
-          Object.keys(categorizedItems).map(cat => {
-            const [c1, c2] = getCategoryGradient(cat);
-            return (
-              <View key={cat} style={styles.categoryContainer}>
-                <View style={styles.categoryHeader}>
-                  <LinearGradient colors={[c1, c2]} style={styles.catIconCircle}>
-                    <Ionicons name={getCategoryIcon(cat)} size={20} color="white" />
-                  </LinearGradient>
-                  <Text style={styles.categoryTitle}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </Text>
-                  <View style={styles.categoryCount}>
-                    <Text style={styles.categoryCountText}>{categorizedItems[cat].length}</Text>
-                  </View>
+        {/* Quick Actions */}
+        <View style={styles.actionsSection}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/scan')} activeOpacity={0.8}>
+              <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.actionGradient}>
+                <View style={styles.actionIconBg}>
+                  <Ionicons name="camera" size={28} color="#22c55e" />
                 </View>
-                {categorizedItems[cat].map((item: any) => (
-                  <TouchableOpacity 
-                    key={item.item_id} 
-                    style={styles.pantryCard}
-                    onPress={() => {
-                      Alert.alert(
-                        'Delete ' + item.name + '?',
-                        'Tap Delete to remove this item',
-                        [
-                          { text: 'Cancel' },
-                          { 
-                            text: 'DELETE NOW', 
-                            onPress: async () => {
-                              try {
-                                await axios.delete(
-                                  `${BACKEND_URL}/api/pantry/${item.item_id}`,
-                                  { headers: { Authorization: `Bearer ${sessionToken}` } }
-                                );
-                                await fetchPantry(sessionToken!);
-                                Alert.alert('✅ Deleted!', item.name + ' removed');
-                              } catch (err: any) {
-                                Alert.alert('❌ Error', err.message || 'Delete failed');
-                              }
-                            }
-                          }
-                        ]
-                      );
-                    }}
+                <Text style={styles.actionTitle}>Scan Items</Text>
+                <Text style={styles.actionSubtitle}>AI-powered</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard} onPress={getAIRecommendations} disabled={loadingRecs} activeOpacity={0.8}>
+              <LinearGradient colors={['#ec4899', '#db2777']} style={styles.actionGradient}>
+                {loadingRecs ? (
+                  <ActivityIndicator color="white" size="large" />
+                ) : (
+                  <>
+                    <View style={styles.actionIconBg}>
+                      <Ionicons name="sparkles" size={28} color="#ec4899" />
+                    </View>
+                    <Text style={styles.actionTitle}>Get Ideas</Text>
+                    <Text style={styles.actionSubtitle}>AI recipes</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* AI Recommendations */}
+        {recommendations.length > 0 && (
+          <View style={styles.recSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.aiBadge}>
+                <Ionicons name="sparkles" size={16} color="white" />
+                <Text style={styles.aiBadgeText}>AI Suggestions</Text>
+              </View>
+            </View>
+            <Text style={styles.sectionTitle}>Recipes You Can Make</Text>
+            
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recScroll}>
+              {recommendations.map((rec, idx) => {
+                const recipe = findRecipeByName(rec.name);
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.recCard}
+                    onPress={() => handleRecommendationClick(rec)}
+                    activeOpacity={0.9}
                   >
-                    <LinearGradient colors={[c1 + '15', c2 + '15']} style={styles.itemIconBg}>
-                      <Ionicons name={getCategoryIcon(cat)} size={28} color={c1} />
-                    </LinearGradient>
-                    <View style={styles.itemDetails}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      <View style={styles.itemMeta}>
-                        <View style={[styles.itemBadge, { backgroundColor: c1 + '20' }]}>
-                          <Text style={[styles.itemBadgeText, { color: c1 }]}>
-                            {item.quantity} {item.unit}
+                    <Image 
+                      source={{ uri: recipe?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80' }} 
+                      style={styles.recImage} 
+                    />
+                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.recOverlay}>
+                      <Text style={styles.recTitle} numberOfLines={2}>{rec.name}</Text>
+                      <Text style={styles.recReason} numberOfLines={2}>{rec.reason}</Text>
+                      {rec.missing_ingredients?.length > 0 && (
+                        <View style={styles.missingBadge}>
+                          <Ionicons name="cart" size={12} color="#f97316" />
+                          <Text style={styles.missingText}>
+                            +{rec.missing_ingredients.length} items needed
                           </Text>
                         </View>
-                        {item.expiry_date && (
-                          <View style={styles.expiryBadge}>
-                            <Ionicons name="time-outline" size={12} color="#f97316" />
-                            <Text style={styles.expiryText}>{item.expiry_date}</Text>
-                          </View>
-                        )}
+                      )}
+                      <View style={styles.viewRecipeBtn}>
+                        <Text style={styles.viewRecipeText}>View Recipe</Text>
+                        <Ionicons name="arrow-forward" size={14} color="white" />
                       </View>
-                    </View>
-                    <Ionicons name="trash" size={24} color="#ef4444" />
+                    </LinearGradient>
                   </TouchableOpacity>
-                ))}
-              </View>
-            );
-          })
+                );
+              })}
+            </ScrollView>
+          </View>
         )}
 
-        <View style={{ height: 100 }} />
+        {/* Pantry Section */}
+        <View style={styles.pantrySection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>My Pantry</Text>
+            <TouchableOpacity onPress={openAddModal} style={styles.addBtn}>
+              <Ionicons name="add" size={20} color="white" />
+              <Text style={styles.addBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          {Object.keys(categorizedItems).length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=400&q=80' }} 
+                style={styles.emptyImage} 
+              />
+              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.emptyOverlay}>
+                <Ionicons name="basket-outline" size={48} color="white" />
+                <Text style={styles.emptyTitle}>Your Pantry is Empty</Text>
+                <Text style={styles.emptySubtitle}>Scan or add ingredients to get started!</Text>
+                <TouchableOpacity style={styles.emptyButton} onPress={openAddModal}>
+                  <Text style={styles.emptyButtonText}>Add First Item</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          ) : (
+            Object.keys(categorizedItems).map(cat => {
+              const color = getCategoryColor(cat);
+              return (
+                <View key={cat} style={styles.categoryContainer}>
+                  <View style={styles.categoryHeader}>
+                    <Image source={{ uri: CATEGORY_IMAGES[cat] }} style={styles.categoryImage} />
+                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={styles.categoryOverlay}>
+                      <Ionicons name={getCategoryIcon(cat)} size={20} color="white" />
+                      <Text style={styles.categoryTitle}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </Text>
+                      <View style={styles.categoryCount}>
+                        <Text style={styles.categoryCountText}>{categorizedItems[cat].length}</Text>
+                      </View>
+                    </LinearGradient>
+                  </View>
+                  
+                  {categorizedItems[cat].map((item: any) => (
+                    <View key={item.item_id} style={styles.pantryCard}>
+                      <View style={[styles.itemIndicator, { backgroundColor: color }]} />
+                      <View style={styles.itemContent}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <View style={styles.itemMeta}>
+                          <View style={[styles.itemBadge, { backgroundColor: color + '20' }]}>
+                            <Text style={[styles.itemBadgeText, { color }]}>
+                              {item.quantity} {item.unit}
+                            </Text>
+                          </View>
+                          {item.expiry_date && (
+                            <View style={styles.expiryBadge}>
+                              <Ionicons name="time" size={12} color="#f97316" />
+                              <Text style={styles.expiryText}>{item.expiry_date}</Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                      <View style={styles.itemActions}>
+                        <TouchableOpacity 
+                          style={styles.editBtn} 
+                          onPress={() => openEditModal(item)}
+                        >
+                          <Ionicons name="pencil" size={18} color="#6b7280" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.deleteBtn} 
+                          onPress={() => handleDeleteItem(item)}
+                          disabled={deletingId === item.item_id}
+                        >
+                          {deletingId === item.item_id ? (
+                            <ActivityIndicator size="small" color="#ef4444" />
+                          ) : (
+                            <Ionicons name="trash" size={18} color="#ef4444" />
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              );
+            })
+          )}
+        </View>
+
+        <View style={{ height: 120 }} />
       </ScrollView>
 
-      <TouchableOpacity style={styles.fabButton} onPress={openAddModal} activeOpacity={0.9}>
-        <LinearGradient colors={['#8b5cf6', '#ec4899']} style={styles.fabGradient}>
+      {/* FAB */}
+      <TouchableOpacity style={styles.fab} onPress={openAddModal} activeOpacity={0.9}>
+        <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.fabGradient}>
           <Ionicons name="add" size={32} color="white" />
         </LinearGradient>
       </TouchableOpacity>
 
+      {/* Add/Edit Modal */}
       <Modal visible={showAddModal} animationType="slide" transparent>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.modalContent}>
@@ -443,6 +481,7 @@ export default function PantryScreen() {
               <TextInput
                 style={styles.formInput}
                 placeholder="e.g., Tomatoes"
+                placeholderTextColor="#9ca3af"
                 value={formName}
                 onChangeText={setFormName}
               />
@@ -451,6 +490,7 @@ export default function PantryScreen() {
               <TextInput
                 style={styles.formInput}
                 placeholder="e.g., 5"
+                placeholderTextColor="#9ca3af"
                 value={formQuantity}
                 onChangeText={setFormQuantity}
                 keyboardType="decimal-pad"
@@ -489,13 +529,14 @@ export default function PantryScreen() {
               <TextInput
                 style={styles.formInput}
                 placeholder="YYYY-MM-DD"
+                placeholderTextColor="#9ca3af"
                 value={formExpiry}
                 onChangeText={setFormExpiry}
               />
             </ScrollView>
 
             <TouchableOpacity style={styles.saveButton} onPress={handleSaveItem} disabled={saving}>
-              <LinearGradient colors={['#8b5cf6', '#ec4899']} style={styles.saveGradient}>
+              <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.saveGradient}>
                 {saving ? (
                   <ActivityIndicator color="white" />
                 ) : (
@@ -511,87 +552,101 @@ export default function PantryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fafafa' },
-  headerGradient: { paddingTop: 60, paddingBottom: 32, paddingHorizontal: 24 },
-  headerContent: {},
-  greetingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  greetingText: { fontSize: 28, fontWeight: '700', color: 'white', marginBottom: 4 },
-  subGreeting: { fontSize: 16, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
-  profilePic: { width: 50, height: 50, borderRadius: 25, borderWidth: 3, borderColor: 'white' },
+  container: { flex: 1, backgroundColor: '#f8fafc' },
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 24 },
-  statsRow: { flexDirection: 'row', paddingHorizontal: 24, marginTop: -40, gap: 16 },
-  statCard: { flex: 1, borderRadius: 24, overflow: 'hidden', elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
-  statGradient: { padding: 24, alignItems: 'center' },
-  statIconCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  statNumber: { fontSize: 32, fontWeight: '800', color: 'white', marginBottom: 4 },
-  statLabel: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
-  hintBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#f3f4f6', padding: 16, marginHorizontal: 24, marginTop: 20, borderRadius: 12 },
-  hintText: { flex: 1, fontSize: 14, color: '#374151', fontWeight: '500' },
-  recSection: { marginTop: 32, paddingHorizontal: 24 },
-  sectionHeaderRow: { marginBottom: 12 },
-  aiHeaderBadge: { alignSelf: 'flex-start', borderRadius: 20, overflow: 'hidden' },
-  aiBadgeGrad: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
-  aiBadgeText: { fontSize: 13, fontWeight: '700', color: 'white' },
-  sectionTitle: { fontSize: 24, fontWeight: '800', color: '#1f2937', marginBottom: 16 },
-  recCard: { backgroundColor: 'white', borderRadius: 20, marginBottom: 16, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
-  recImageContainer: { position: 'relative', height: 180 },
+  
+  // Hero
+  heroSection: { height: 220, position: 'relative' },
+  heroImage: { width: '100%', height: '100%' },
+  heroOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%', justifyContent: 'flex-end', padding: 24 },
+  heroContent: {},
+  greeting: { fontSize: 28, fontWeight: '800', color: 'white' },
+  subGreeting: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  
+  // Stats
+  statsContainer: { flexDirection: 'row', paddingHorizontal: 16, marginTop: -30, gap: 12 },
+  statCard: { flex: 1, borderRadius: 16, overflow: 'hidden', elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8 },
+  statGradient: { padding: 16, alignItems: 'center' },
+  statNumber: { fontSize: 28, fontWeight: '800', color: 'white', marginTop: 8 },
+  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
+  
+  // Actions
+  actionsSection: { marginTop: 24, paddingHorizontal: 16 },
+  sectionTitle: { fontSize: 22, fontWeight: '800', color: '#1f2937', marginBottom: 16 },
+  actionsGrid: { flexDirection: 'row', gap: 12 },
+  actionCard: { flex: 1, borderRadius: 20, overflow: 'hidden', elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8 },
+  actionGradient: { padding: 20, alignItems: 'center' },
+  actionIconBg: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  actionTitle: { fontSize: 16, fontWeight: '700', color: 'white' },
+  actionSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+  
+  // AI Recommendations
+  recSection: { marginTop: 32, paddingHorizontal: 16 },
+  sectionHeader: { marginBottom: 8 },
+  aiBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ec4899', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  aiBadgeText: { fontSize: 12, fontWeight: '700', color: 'white' },
+  recScroll: { marginTop: 8 },
+  recCard: { width: 200, height: 280, borderRadius: 20, marginRight: 16, overflow: 'hidden' },
   recImage: { width: '100%', height: '100%' },
-  recImagePlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  recImageOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 80 },
-  recBadge: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-  recBadgeText: { fontSize: 12, fontWeight: '700', color: 'white' },
-  recContent: { padding: 16 },
-  recTitle: { fontSize: 20, fontWeight: '700', color: '#1f2937', marginBottom: 8 },
-  recReason: { fontSize: 14, color: '#6b7280', lineHeight: 20, marginBottom: 12 },
-  missingBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff7ed', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, marginBottom: 12 },
-  missingText: { flex: 1, fontSize: 13, color: '#ea580c', fontWeight: '600' },
-  viewRecipeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#f3f4f6', paddingVertical: 12, borderRadius: 12 },
-  viewRecipeText: { fontSize: 15, fontWeight: '700', color: '#8b5cf6' },
-  actionsSection: { marginTop: 32, paddingHorizontal: 24, gap: 12 },
-  primaryAction: { borderRadius: 20, overflow: 'hidden', elevation: 6, shadowColor: '#8b5cf6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
-  secondaryAction: { borderRadius: 20, overflow: 'hidden', elevation: 6, shadowColor: '#ec4899', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
-  actionGrad: { flexDirection: 'row', alignItems: 'center', padding: 20, gap: 16 },
-  actionIconCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center' },
-  actionText: { flex: 1 },
-  actionTitle: { fontSize: 17, fontWeight: '700', color: 'white', marginBottom: 2 },
-  actionSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
-  categoryContainer: { marginTop: 32, paddingHorizontal: 24 },
-  categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 },
-  catIconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
-  categoryTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: '#1f2937' },
-  categoryCount: { backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  categoryCountText: { fontSize: 14, fontWeight: '700', color: '#6b7280' },
-  pantryCard: { backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
-  itemIconBg: { width: 60, height: 60, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-  itemDetails: { flex: 1 },
-  itemName: { fontSize: 17, fontWeight: '600', color: '#1f2937', marginBottom: 8, textTransform: 'capitalize' },
-  itemMeta: { flexDirection: 'row', gap: 8 },
-  itemBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  itemBadgeText: { fontSize: 13, fontWeight: '700' },
-  expiryBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fff7ed', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  expiryText: { fontSize: 12, fontWeight: '600', color: '#ea580c' },
-  itemActions: { flexDirection: 'row', gap: 8 },
-  actionIconButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
-  emptyContainer: { marginTop: 60, marginHorizontal: 24, borderRadius: 24, overflow: 'hidden' },
-  emptyGrad: { padding: 48, alignItems: 'center' },
-  emptyIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  emptyTitle: { fontSize: 22, fontWeight: '700', color: '#374151', marginBottom: 8 },
-  emptySubtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
-  emptyButton: { backgroundColor: '#8b5cf6', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
+  recOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, height: '70%', justifyContent: 'flex-end' },
+  recTitle: { fontSize: 16, fontWeight: '700', color: 'white', marginBottom: 4 },
+  recReason: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8 },
+  missingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(249,115,22,0.2)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 8 },
+  missingText: { fontSize: 11, color: '#f97316', fontWeight: '600' },
+  viewRecipeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, alignSelf: 'flex-start' },
+  viewRecipeText: { fontSize: 12, fontWeight: '700', color: 'white' },
+  
+  // Pantry
+  pantrySection: { marginTop: 32, paddingHorizontal: 16 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#22c55e', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  addBtnText: { fontSize: 14, fontWeight: '700', color: 'white' },
+  
+  categoryContainer: { marginTop: 20 },
+  categoryHeader: { height: 80, borderRadius: 16, overflow: 'hidden', marginBottom: 12 },
+  categoryImage: { width: '100%', height: '100%' },
+  categoryOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%', flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
+  categoryTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: 'white' },
+  categoryCount: { backgroundColor: 'rgba(255,255,255,0.3)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  categoryCountText: { fontSize: 14, fontWeight: '700', color: 'white' },
+  
+  pantryCard: { backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', borderRadius: 16, marginBottom: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+  itemIndicator: { width: 4, height: '100%' },
+  itemContent: { flex: 1, padding: 16 },
+  itemName: { fontSize: 16, fontWeight: '600', color: '#1f2937', textTransform: 'capitalize' },
+  itemMeta: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  itemBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  itemBadgeText: { fontSize: 12, fontWeight: '700' },
+  expiryBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fff7ed', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  expiryText: { fontSize: 11, fontWeight: '600', color: '#f97316' },
+  itemActions: { flexDirection: 'row', paddingRight: 8, gap: 4 },
+  editBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
+  deleteBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fef2f2', justifyContent: 'center', alignItems: 'center' },
+  
+  // Empty
+  emptyContainer: { height: 280, borderRadius: 24, overflow: 'hidden', marginTop: 16 },
+  emptyImage: { width: '100%', height: '100%' },
+  emptyOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  emptyTitle: { fontSize: 22, fontWeight: '700', color: 'white', marginTop: 16 },
+  emptySubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginTop: 8 },
+  emptyButton: { backgroundColor: '#22c55e', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, marginTop: 20 },
   emptyButtonText: { fontSize: 15, fontWeight: '700', color: 'white' },
-  fabButton: { position: 'absolute', bottom: 24, right: 24, borderRadius: 32, overflow: 'hidden', elevation: 12, shadowColor: '#8b5cf6', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 16 },
+  
+  // FAB
+  fab: { position: 'absolute', bottom: 100, right: 24, borderRadius: 32, overflow: 'hidden', elevation: 12, shadowColor: '#22c55e', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 16 },
   fabGradient: { width: 64, height: 64, justifyContent: 'center', alignItems: 'center' },
+  
+  // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: '85%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   modalTitle: { fontSize: 24, fontWeight: '800', color: '#1f2937' },
   modalForm: { padding: 24 },
-  formLabel: { fontSize: 15, fontWeight: '700', color: '#374151', marginBottom: 10, marginTop: 16 },
+  formLabel: { fontSize: 14, fontWeight: '700', color: '#374151', marginBottom: 8, marginTop: 16 },
   formInput: { backgroundColor: '#f9fafb', borderWidth: 2, borderColor: '#e5e7eb', borderRadius: 12, padding: 16, fontSize: 16, color: '#1f2937' },
-  chipScroll: { marginTop: 8, marginBottom: 8 },
+  chipScroll: { marginTop: 8 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#f3f4f6', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginRight: 8 },
-  chipActive: { backgroundColor: '#8b5cf6' },
+  chipActive: { backgroundColor: '#22c55e' },
   chipText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
   chipTextActive: { color: 'white' },
   saveButton: { margin: 24, marginTop: 16, borderRadius: 16, overflow: 'hidden' },
