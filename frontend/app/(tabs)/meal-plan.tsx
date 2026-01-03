@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
+import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
@@ -10,9 +11,17 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 
+const MEAL_ICONS: any = {
+  breakfast: 'sunny',
+  lunch: 'partly-sunny',
+  dinner: 'moon',
+};
+
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1493770348161-369560ae357d?w=800&q=80';
+
 export default function MealPlanScreen() {
   const { sessionToken } = useAuth();
-  const { mealPlans, fetchMealPlans } = useAppStore();
+  const { mealPlans, fetchMealPlans, pantryItems } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
@@ -23,6 +32,12 @@ export default function MealPlanScreen() {
     }
   }, [sessionToken]);
 
+  useEffect(() => {
+    if (mealPlans.length > 0 && !selectedPlan) {
+      setSelectedPlan(mealPlans[0]);
+    }
+  }, [mealPlans]);
+
   const loadMealPlans = async () => {
     setLoading(true);
     await fetchMealPlans(sessionToken!);
@@ -30,6 +45,15 @@ export default function MealPlanScreen() {
   };
 
   const generateAIMealPlan = async () => {
+    if (pantryItems.length === 0) {
+      Alert.alert(
+        'Empty Pantry',
+        'Add some ingredients to your pantry first so the AI can create a personalized meal plan!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       setGenerating(true);
       const today = new Date();
@@ -38,14 +62,14 @@ export default function MealPlanScreen() {
       const response = await axios.post(
         `${BACKEND_URL}/api/meal-plans/generate`,
         { week_start_date: weekStart },
-        { headers: { Authorization: `Bearer ${sessionToken}` } }
+        { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 60000 }
       );
 
       setSelectedPlan(response.data);
       await loadMealPlans();
     } catch (error) {
       console.error('Error generating meal plan:', error);
-      alert('Failed to generate meal plan. Please try again.');
+      Alert.alert('Error', 'Failed to generate meal plan. Please try again.');
     } finally {
       setGenerating(false);
     }
@@ -58,102 +82,145 @@ export default function MealPlanScreen() {
     );
   };
 
+  const getMealColor = (mealType: string) => {
+    switch (mealType) {
+      case 'breakfast': return ['#f97316', '#ea580c'];
+      case 'lunch': return ['#22c55e', '#16a34a'];
+      case 'dinner': return ['#8b5cf6', '#7c3aed'];
+      default: return ['#6b7280', '#4b5563'];
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Weekly Meal Plan</Text>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <Image source={{ uri: HERO_IMAGE }} style={styles.heroImage} />
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.heroOverlay}>
+            <Text style={styles.heroTitle}>Meal Planner</Text>
+            <Text style={styles.heroSubtitle}>AI-powered weekly meal plans</Text>
+          </LinearGradient>
+        </View>
+
+        {/* Generate Button */}
+        <View style={styles.generateSection}>
           <TouchableOpacity
             style={styles.generateButton}
             onPress={generateAIMealPlan}
             disabled={generating}
+            activeOpacity={0.9}
           >
-            {generating ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <>
-                <Ionicons name="sparkles" size={20} color="white" />
-                <Text style={styles.generateButtonText}>Generate with AI</Text>
-              </>
-            )}
+            <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.generateGradient}>
+              {generating ? (
+                <>
+                  <ActivityIndicator color="white" size="small" />
+                  <Text style={styles.generateText}>Creating Your Plan...</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="sparkles" size={24} color="white" />
+                  <Text style={styles.generateText}>Generate AI Meal Plan</Text>
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
+          <Text style={styles.generateHint}>
+            Based on your pantry ({pantryItems.length} items)
+          </Text>
         </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4CAF50" />
+            <ActivityIndicator size="large" color="#22c55e" />
+            <Text style={styles.loadingText}>Loading meal plans...</Text>
           </View>
         ) : selectedPlan ? (
-          <View style={styles.calendarContainer}>
-            {DAYS.map((day) => (
+          <View style={styles.planContainer}>
+            {/* Plan Header */}
+            <View style={styles.planHeader}>
+              <View style={styles.planInfo}>
+                <Ionicons name="calendar" size={24} color="#22c55e" />
+                <View>
+                  <Text style={styles.planTitle}>Week of {selectedPlan.week_start_date}</Text>
+                  <Text style={styles.planMeals}>{selectedPlan.meals?.length || 0} meals planned</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Days */}
+            {DAYS.map((day, dayIndex) => (
               <View key={day} style={styles.dayCard}>
-                <Text style={styles.dayTitle}>{day}</Text>
-                {MEAL_TYPES.map((mealType) => {
-                  const meal = getMealForDayAndType(day, mealType);
-                  return (
-                    <View key={mealType} style={styles.mealSlot}>
-                      <View style={styles.mealHeader}>
-                        <Ionicons
-                          name={
-                            mealType === 'breakfast'
-                              ? 'sunny'
-                              : mealType === 'lunch'
-                              ? 'partly-sunny'
-                              : 'moon'
-                          }
-                          size={16}
-                          color="#666"
-                        />
-                        <Text style={styles.mealType}>
-                          {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-                        </Text>
+                <View style={styles.dayHeader}>
+                  <Text style={styles.dayTitle}>{day}</Text>
+                  <Text style={styles.dayNumber}>{dayIndex + 1}</Text>
+                </View>
+                
+                <View style={styles.mealsContainer}>
+                  {MEAL_TYPES.map((mealType) => {
+                    const meal = getMealForDayAndType(day, mealType);
+                    const [color1, color2] = getMealColor(mealType);
+                    
+                    return (
+                      <View key={mealType} style={styles.mealSlot}>
+                        <LinearGradient colors={[color1, color2]} style={styles.mealIcon}>
+                          <Ionicons name={MEAL_ICONS[mealType]} size={16} color="white" />
+                        </LinearGradient>
+                        <View style={styles.mealInfo}>
+                          <Text style={styles.mealType}>
+                            {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                          </Text>
+                          {meal ? (
+                            <Text style={styles.mealName} numberOfLines={1}>
+                              {meal.recipe_name}
+                            </Text>
+                          ) : (
+                            <Text style={styles.emptyMeal}>Not planned</Text>
+                          )}
+                        </View>
                       </View>
-                      {meal ? (
-                        <Text style={styles.mealName}>{meal.recipe_name}</Text>
-                      ) : (
-                        <Text style={styles.emptyMeal}>Not planned</Text>
-                      )}
-                    </View>
-                  );
-                })}
+                    );
+                  })}
+                </View>
               </View>
             ))}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No meal plan yet</Text>
-            <Text style={styles.emptySubtext}>
-              Generate an AI-powered meal plan based on your pantry
+            <View style={styles.emptyIconBg}>
+              <Ionicons name="calendar-outline" size={64} color="#d1d5db" />
+            </View>
+            <Text style={styles.emptyTitle}>No Meal Plan Yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Generate an AI-powered meal plan based on the ingredients in your pantry
             </Text>
           </View>
         )}
 
-        {/* Meal Plans History */}
-        {mealPlans.length > 0 && (
+        {/* Previous Plans */}
+        {mealPlans.length > 1 && (
           <View style={styles.historySection}>
             <Text style={styles.sectionTitle}>Previous Plans</Text>
-            {mealPlans.slice(0, 3).map((plan) => (
-              <TouchableOpacity
-                key={plan.plan_id}
-                style={styles.historyCard}
-                onPress={() => setSelectedPlan(plan)}
-              >
-                <Ionicons name="calendar" size={24} color="#4CAF50" />
-                <View style={styles.historyInfo}>
-                  <Text style={styles.historyTitle}>
-                    Week of {plan.week_start_date}
-                  </Text>
-                  <Text style={styles.historyMeals}>
-                    {plan.meals.length} meals planned
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
-              </TouchableOpacity>
-            ))}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {mealPlans.slice(1, 5).map((plan) => (
+                <TouchableOpacity
+                  key={plan.plan_id}
+                  style={[
+                    styles.historyCard,
+                    selectedPlan?.plan_id === plan.plan_id && styles.historyCardActive
+                  ]}
+                  onPress={() => setSelectedPlan(plan)}
+                >
+                  <Ionicons name="calendar" size={24} color="#22c55e" />
+                  <Text style={styles.historyDate}>{plan.week_start_date}</Text>
+                  <Text style={styles.historyMeals}>{plan.meals?.length || 0} meals</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
+
+        <View style={{ height: 100 }} />
       </ScrollView>
     </View>
   );
@@ -162,133 +229,247 @@ export default function MealPlanScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8fafc',
   },
   scrollView: {
     flex: 1,
   },
-  header: {
-    padding: 16,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+  // Hero
+  heroSection: {
+    height: 180,
+    position: 'relative',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    justifyContent: 'flex-end',
+    padding: 20,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: 'white',
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
+  },
+  // Generate
+  generateSection: {
+    padding: 16,
+    marginTop: -30,
   },
   generateButton: {
-    backgroundColor: '#4CAF50',
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  generateGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 12,
-    gap: 8,
+    paddingVertical: 18,
+    gap: 12,
   },
-  generateButtonText: {
+  generateText: {
+    fontSize: 17,
+    fontWeight: '700',
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
+  generateHint: {
+    fontSize: 13,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  // Loading
   loadingContainer: {
-    padding: 48,
+    padding: 60,
     alignItems: 'center',
   },
-  calendarContainer: {
+  loadingText: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 12,
+  },
+  // Plan
+  planContainer: {
     padding: 16,
   },
-  dayCard: {
+  planHeader: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  planInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  planTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  planMeals: {
+    fontSize: 13,
+    color: '#6b7280',
+  },
+  // Day Cards
+  dayCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  dayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
   },
   dayTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  dayNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9ca3af',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  mealsContainer: {
+    gap: 12,
   },
   mealSlot: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  mealHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    gap: 12,
+  },
+  mealIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mealInfo: {
+    flex: 1,
   },
   mealType: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   mealName: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 24,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginTop: 2,
   },
   emptyMeal: {
     fontSize: 14,
-    color: '#999',
+    color: '#9ca3af',
     fontStyle: 'italic',
-    marginLeft: 24,
+    marginTop: 2,
   },
+  // Empty State
   emptyState: {
     alignItems: 'center',
     padding: 48,
   },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#999',
-    marginTop: 16,
+  emptyIconBg: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  emptySubtext: {
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
     fontSize: 14,
-    color: '#ccc',
-    marginTop: 8,
+    color: '#6b7280',
     textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 280,
   },
+  // History
   historySection: {
     padding: 16,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 16,
   },
   historyCard: {
     backgroundColor: 'white',
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    gap: 12,
+    marginRight: 12,
+    alignItems: 'center',
+    minWidth: 120,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  historyInfo: {
-    flex: 1,
+  historyCardActive: {
+    borderColor: '#22c55e',
+    backgroundColor: '#f0fdf4',
   },
-  historyTitle: {
-    fontSize: 16,
+  historyDate: {
+    fontSize: 13,
     fontWeight: '600',
-    color: '#333',
+    color: '#1f2937',
+    marginTop: 8,
   },
   historyMeals: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
+    color: '#6b7280',
     marginTop: 2,
   },
 });
