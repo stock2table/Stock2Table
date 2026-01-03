@@ -430,31 +430,31 @@ export default function PantryScreen() {
                         </View>
                       </View>
                       <View style={styles.itemActions}>
-                        <Pressable 
-                          style={({ pressed }) => [styles.editBtn, pressed && styles.btnPressed]}
+                        <TouchableOpacity 
+                          style={styles.editBtn}
                           onPress={() => {
                             console.log('Edit pressed for:', item.name);
                             openEditModal(item);
                           }}
-                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          activeOpacity={0.6}
                         >
                           <Ionicons name="pencil" size={18} color="#6b7280" />
-                        </Pressable>
-                        <Pressable 
-                          style={({ pressed }) => [styles.deleteBtn, pressed && styles.btnPressed]}
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.deleteBtn}
                           onPress={() => {
                             console.log('Delete pressed for:', item.name, item.item_id);
                             handleDeleteItem(item);
                           }}
                           disabled={deletingId === item.item_id}
-                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          activeOpacity={0.6}
                         >
                           {deletingId === item.item_id ? (
                             <ActivityIndicator size="small" color="#ef4444" />
                           ) : (
                             <Ionicons name="trash" size={18} color="#ef4444" />
                           )}
-                        </Pressable>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   ))}
