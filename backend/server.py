@@ -46,6 +46,26 @@ class User(BaseModel):
     subscription_tier: str = "free"  # free, premium, pro
     created_at: datetime
 
+class UserPreferences(BaseModel):
+    user_id: str
+    dietary_restrictions: List[str] = []  # vegetarian, vegan, gluten-free, etc.
+    favorite_cuisines: List[str] = []  # Italian, Mexican, Indian, etc.
+    cooking_skill: str = "intermediate"  # beginner, intermediate, advanced
+    serving_size: int = 4
+    max_cook_time: int = 60  # minutes
+    allergies: List[str] = []
+    disliked_ingredients: List[str] = []
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserActivity(BaseModel):
+    activity_id: str = Field(default_factory=lambda: f"activity_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    activity_type: str  # recipe_view, recipe_cook, recipe_save, ingredient_add, search
+    item_id: Optional[str] = None
+    item_name: Optional[str] = None
+    metadata: Dict[str, Any] = {}
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class SessionDataResponse(BaseModel):
     id: str
     email: str
@@ -83,6 +103,7 @@ class Recipe(BaseModel):
     dietary_tags: List[str]  # vegetarian, vegan, gluten-free, etc.
     image_url: str
     nutritional_info: Optional[Dict[str, Any]] = None
+    video_url: Optional[str] = None
 
 class FamilyMember(BaseModel):
     member_id: str = Field(default_factory=lambda: f"member_{uuid.uuid4().hex[:12]}")
