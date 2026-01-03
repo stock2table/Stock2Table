@@ -533,7 +533,23 @@ export default function PantryScreen() {
             {editingItem && (
               <TouchableOpacity 
                 style={styles.deleteButton} 
-                onPress={() => confirmDelete(editingItem)}
+                onPress={() => {
+                  // Direct delete - no state changes, no confirmation
+                  const itemId = editingItem.item_id;
+                  const itemName = editingItem.name;
+                  setShowAddModal(false);
+                  
+                  axios.delete(
+                    `${BACKEND_URL}/api/pantry/${itemId}`,
+                    { headers: { Authorization: `Bearer ${sessionToken}` } }
+                  ).then(() => {
+                    console.log('Deleted:', itemName);
+                    fetchPantry(sessionToken!);
+                  }).catch((err) => {
+                    console.error('Delete failed:', err);
+                  });
+                }}
+                activeOpacity={0.5}
               >
                 <Ionicons name="trash" size={20} color="#ef4444" />
                 <Text style={styles.deleteButtonText}>Delete This Item</Text>
