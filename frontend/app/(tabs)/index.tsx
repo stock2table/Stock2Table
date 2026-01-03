@@ -596,7 +596,8 @@ const styles = StyleSheet.create({
   aiSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   aiArrow: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
   
-  recCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', padding: 16, borderRadius: 16, marginBottom: 10, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
+  recCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', padding: 12, borderRadius: 16, marginBottom: 10, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
+  recImage: { width: 70, height: 70, borderRadius: 12, marginRight: 12, backgroundColor: '#f3f4f6' },
   recContent: { flex: 1 },
   recName: { fontSize: 16, fontWeight: '700', color: '#1f2937', marginBottom: 4 },
   recReason: { fontSize: 13, color: '#6b7280', marginBottom: 8, lineHeight: 18 },
