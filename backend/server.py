@@ -683,45 +683,53 @@ async def get_video_tutorials(current_user: User = Depends(require_auth)):
 
 @api_router.get("/discover/suggestion")
 async def get_daily_suggestion(current_user: User = Depends(require_auth)):
-    """Get AI-powered daily suggestion - uses cache for fast response"""
+    """Get AI-powered daily suggestion with missing ingredients"""
     try:
-        # Check cache first (user-specific)
-        cached = get_cached("suggestions", current_user.user_id)
-        if cached:
-            logger.info(f"Returning cached suggestion for user {current_user.user_id}")
-            return {"suggestion": cached}
-        
-        # Get user's pantry items for personalization
+        # Get user's pantry items
         pantry_items = await db.pantry_items.find(
             {"user_id": current_user.user_id},
             {"_id": 0, "name": 1}
-        ).to_list(50)
+        ).to_list(100)
+        pantry_names = [p.get('name', '') for p in pantry_items]
         
         # Get user preferences
         prefs = await db.user_preferences.find_one({"user_id": current_user.user_id}, {"_id": 0})
         
-        # Select a suggestion based on pantry/preferences
-        import random
-        suggestion = random.choice(PRECOMPUTED_SUGGESTIONS).copy()
+        # Find best matching suggestion based on pantry and preferences
+        best_suggestion = None
+        best_score = -1
         
-        # Personalize reason if we have context
-        if pantry_items:
-            pantry_names = [p.get('name', '').lower() for p in pantry_items[:5]]
-            suggestion["reason"] = f"Based on your pantry items and cooking preferences"
+        for s in PRECOMPUTED_SUGGESTIONS:
+            suggestion = s.copy()
+            ingredients = s.get('ingredients', [])
+            missing = calculate_missing_ingredients(ingredients, pantry_names)
+            
+            # Score: more ingredients in pantry = better
+            score = len(ingredients) - len(missing)
+            
+            # Bonus for matching cuisine preference
+            if prefs and prefs.get('favorite_cuisines'):
+                if s.get('cuisine', '').lower() in [c.lower() for c in prefs.get('favorite_cuisines', [])]:
+                    score += 3
+            
+            if score > best_score:
+                best_score = score
+                suggestion['missing_ingredients'] = missing
+                suggestion['have_ingredients'] = len(ingredients) - len(missing)
+                suggestion['total_ingredients'] = len(ingredients)
+                suggestion['can_make'] = len(missing) == 0
+                
+                # Update reason based on pantry
+                if len(missing) == 0:
+                    suggestion['reason'] = "You have all ingredients! Ready to cook"
+                elif len(missing) <= 2:
+                    suggestion['reason'] = f"Almost ready - just need {', '.join(missing[:2])}"
+                else:
+                    suggestion['reason'] = suggestion.get('reason', 'Recommended for you')
+                
+                best_suggestion = suggestion
         
-        if prefs and prefs.get('favorite_cuisines'):
-            cuisines = prefs.get('favorite_cuisines', [])
-            # Try to match cuisine
-            for s in PRECOMPUTED_SUGGESTIONS:
-                if s.get('cuisine', '').lower() in [c.lower() for c in cuisines]:
-                    suggestion = s.copy()
-                    suggestion["reason"] = f"Matches your love for {s.get('cuisine')} cuisine"
-                    break
-        
-        # Cache for 4 hours
-        set_cached("suggestions", suggestion, current_user.user_id, SUGGESTION_CACHE_DURATION)
-        
-        return {"suggestion": suggestion}
+        return {"suggestion": best_suggestion or PRECOMPUTED_SUGGESTIONS[0]}
     
     except Exception as e:
         logger.error(f"Daily suggestion error: {str(e)}")
