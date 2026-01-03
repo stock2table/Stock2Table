@@ -15,6 +15,9 @@ import base64
 from PIL import Image
 import io
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+import asyncio
+from functools import lru_cache
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -27,6 +30,63 @@ EMERGENT_LLM_KEY = os.getenv('EMERGENT_LLM_KEY', '')
 # MongoDB connection
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
+
+# ==================== IN-MEMORY CACHE ====================
+# Simple in-memory cache for fast responses
+CACHE = {
+    "trending": {"data": None, "expires": None},
+    "videos": {"data": None, "expires": None},
+    "suggestions": {},  # user_id -> {data, expires}
+    "recommendations": {},  # user_id -> {data, expires}
+}
+CACHE_DURATION = timedelta(minutes=30)  # Cache for 30 minutes
+SUGGESTION_CACHE_DURATION = timedelta(hours=4)  # Daily suggestion cache
+
+def get_cached(key: str, user_id: str = None):
+    """Get cached data if not expired"""
+    now = datetime.now(timezone.utc)
+    if user_id:
+        cache_entry = CACHE.get(key, {}).get(user_id)
+    else:
+        cache_entry = CACHE.get(key)
+    
+    if cache_entry and cache_entry.get("expires") and cache_entry["expires"] > now:
+        return cache_entry["data"]
+    return None
+
+def set_cached(key: str, data: Any, user_id: str = None, duration: timedelta = None):
+    """Set cache with expiration"""
+    expires = datetime.now(timezone.utc) + (duration or CACHE_DURATION)
+    if user_id:
+        if key not in CACHE:
+            CACHE[key] = {}
+        CACHE[key][user_id] = {"data": data, "expires": expires}
+    else:
+        CACHE[key] = {"data": data, "expires": expires}
+
+# Pre-computed trending dishes (fast fallback)
+PRECOMPUTED_TRENDING = [
+    {"id": "t1", "name": "Korean Fried Chicken", "cuisine": "Korean", "time": 45, "calories": 580, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=400&q=80"},
+    {"id": "t2", "name": "Butter Chicken", "cuisine": "Indian", "time": 40, "calories": 490, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80"},
+    {"id": "t3", "name": "Tacos Al Pastor", "cuisine": "Mexican", "time": 35, "calories": 420, "rating": 4.7, "image_url": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80"},
+    {"id": "t4", "name": "Sushi Bowl", "cuisine": "Japanese", "time": 30, "calories": 380, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80"},
+    {"id": "t5", "name": "Margherita Pizza", "cuisine": "Italian", "time": 25, "calories": 450, "rating": 4.6, "image_url": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&q=80"},
+    {"id": "t6", "name": "Pad Thai", "cuisine": "Thai", "time": 30, "calories": 520, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&q=80"},
+]
+
+PRECOMPUTED_VIDEOS = [
+    {"id": "v1", "title": "Knife Skills Masterclass", "duration": "12:45", "thumbnail_url": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80", "video_url": "https://www.youtube.com/results?search_query=knife+skills+cooking", "estimated_views": "2.1M"},
+    {"id": "v2", "title": "Perfect Eggs 5 Ways", "duration": "8:30", "thumbnail_url": "https://images.unsplash.com/photo-1582169296194-e4d644c48063?w=400&q=80", "video_url": "https://www.youtube.com/results?search_query=how+to+cook+eggs", "estimated_views": "1.8M"},
+    {"id": "v3", "title": "Homemade Pasta", "duration": "15:20", "thumbnail_url": "https://images.unsplash.com/photo-1556761223-4c4282c73f77?w=400&q=80", "video_url": "https://www.youtube.com/results?search_query=homemade+pasta+recipe", "estimated_views": "950K"},
+    {"id": "v4", "title": "Sushi at Home", "duration": "18:45", "thumbnail_url": "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&q=80", "video_url": "https://www.youtube.com/results?search_query=how+to+make+sushi", "estimated_views": "3.2M"},
+]
+
+PRECOMPUTED_SUGGESTIONS = [
+    {"name": "Honey Garlic Salmon", "description": "A perfectly glazed salmon with sweet honey and aromatic garlic.", "cuisine": "American", "prep_time": 10, "cook_time": 20, "calories": 420, "rating": 4.9, "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80", "reason": "Quick and nutritious - perfect for a busy weeknight"},
+    {"name": "Chicken Stir Fry", "description": "Colorful vegetables and tender chicken in a savory sauce.", "cuisine": "Asian", "prep_time": 15, "cook_time": 15, "calories": 380, "rating": 4.7, "image_url": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80", "reason": "Quick, healthy, and uses common pantry ingredients"},
+    {"name": "Mediterranean Salad", "description": "Fresh, crunchy, and packed with Mediterranean flavors.", "cuisine": "Mediterranean", "prep_time": 10, "cook_time": 0, "calories": 280, "rating": 4.6, "image_url": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80", "reason": "Light and refreshing - no cooking needed"},
+    {"name": "Beef Tacos", "description": "Seasoned ground beef with fresh toppings in warm tortillas.", "cuisine": "Mexican", "prep_time": 10, "cook_time": 15, "calories": 450, "rating": 4.8, "image_url": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80", "reason": "Family favorite - customizable for everyone"},
+]
 
 # Create the main app
 app = FastAPI(title="Stock2Table API")
