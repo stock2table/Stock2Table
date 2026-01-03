@@ -628,8 +628,9 @@ const styles = StyleSheet.create({
   expiryBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fff7ed', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   expiryText: { fontSize: 11, fontWeight: '600', color: '#f97316' },
   itemActions: { flexDirection: 'row', paddingRight: 8, gap: 4 },
-  editBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
-  deleteBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fef2f2', justifyContent: 'center', alignItems: 'center' },
+  editBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
+  deleteBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#fef2f2', justifyContent: 'center', alignItems: 'center' },
+  btnPressed: { opacity: 0.6, transform: [{ scale: 0.95 }] },
   
   // Empty
   emptyContainer: { height: 280, borderRadius: 24, overflow: 'hidden', marginTop: 16 },
