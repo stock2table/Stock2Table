@@ -11,30 +11,73 @@ import * as Location from 'expo-location';
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
-// Grocery apps by region
-const GROCERY_APPS: Record<string, { name: string; logo: string; color: string; searchUrl: string }[]> = {
+// Comprehensive grocery apps by region with deep links
+const GROCERY_APPS: Record<string, { name: string; logo: string; color: string; searchUrl: string; appScheme?: string }[]> = {
   US: [
-    { name: 'Instacart', logo: '🛒', color: '#43b02a', searchUrl: 'https://www.instacart.com/store/search' },
-    { name: 'Walmart', logo: '🏪', color: '#0071ce', searchUrl: 'https://www.walmart.com/search?q=' },
-    { name: 'Amazon Fresh', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.com/s?k=' },
+    { name: 'Instacart', logo: '🛒', color: '#43b02a', searchUrl: 'https://www.instacart.com/store/search/', appScheme: 'instacart://' },
+    { name: 'Walmart', logo: '🏪', color: '#0071ce', searchUrl: 'https://www.walmart.com/search?q=', appScheme: 'walmart://' },
+    { name: 'Amazon Fresh', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.com/s?k=', appScheme: 'com.amazon.mobile.shopping://' },
     { name: 'Target', logo: '🎯', color: '#cc0000', searchUrl: 'https://www.target.com/s?searchTerm=' },
+    { name: 'Whole Foods', logo: '🥬', color: '#00674b', searchUrl: 'https://www.wholefoodsmarket.com/search?text=' },
+    { name: 'Kroger', logo: '🛍️', color: '#e31837', searchUrl: 'https://www.kroger.com/search?query=' },
   ],
   UK: [
     { name: 'Tesco', logo: '🛒', color: '#00539f', searchUrl: 'https://www.tesco.com/groceries/en-GB/search?query=' },
     { name: 'Sainsbury\'s', logo: '🍊', color: '#f06c00', searchUrl: 'https://www.sainsburys.co.uk/gol-ui/SearchResults/' },
     { name: 'ASDA', logo: '🏪', color: '#78be20', searchUrl: 'https://groceries.asda.com/search/' },
     { name: 'Ocado', logo: '📦', color: '#6d2d91', searchUrl: 'https://www.ocado.com/search?entry=' },
+    { name: 'Morrisons', logo: '🟢', color: '#006633', searchUrl: 'https://groceries.morrisons.com/search?entry=' },
+    { name: 'Waitrose', logo: '🥗', color: '#006400', searchUrl: 'https://www.waitrose.com/ecom/shop/search?searchTerm=' },
   ],
   IN: [
-    { name: 'BigBasket', logo: '🧺', color: '#84c225', searchUrl: 'https://www.bigbasket.com/ps/?q=' },
-    { name: 'Zepto', logo: '⚡', color: '#8025fa', searchUrl: 'https://www.zeptonow.com/search?query=' },
-    { name: 'Blinkit', logo: '🟡', color: '#f8cb46', searchUrl: 'https://blinkit.com/s/?q=' },
+    { name: 'Blinkit', logo: '🟡', color: '#f8cb46', searchUrl: 'https://blinkit.com/s/?q=', appScheme: 'blinkit://' },
+    { name: 'Zepto', logo: '⚡', color: '#8025fa', searchUrl: 'https://www.zeptonow.com/search?query=', appScheme: 'zepto://' },
+    { name: 'Instamart', logo: '🍅', color: '#fc8019', searchUrl: 'https://www.swiggy.com/instamart/search?query=', appScheme: 'swiggy://' },
+    { name: 'BigBasket', logo: '🧺', color: '#84c225', searchUrl: 'https://www.bigbasket.com/ps/?q=', appScheme: 'bigbasket://' },
     { name: 'JioMart', logo: '🛍️', color: '#0078ad', searchUrl: 'https://www.jiomart.com/search/' },
+    { name: 'Amazon Fresh', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.in/s?k=' },
+  ],
+  CA: [
+    { name: 'Instacart', logo: '🛒', color: '#43b02a', searchUrl: 'https://www.instacart.ca/store/search/' },
+    { name: 'Walmart', logo: '🏪', color: '#0071ce', searchUrl: 'https://www.walmart.ca/search?q=' },
+    { name: 'Loblaws', logo: '🍎', color: '#e11b22', searchUrl: 'https://www.loblaws.ca/search?search-bar=' },
+    { name: 'No Frills', logo: '💛', color: '#fcd500', searchUrl: 'https://www.nofrills.ca/search?search-bar=' },
+  ],
+  AU: [
+    { name: 'Woolworths', logo: '🥬', color: '#125930', searchUrl: 'https://www.woolworths.com.au/shop/search/products?searchTerm=' },
+    { name: 'Coles', logo: '🔴', color: '#ed1c24', searchUrl: 'https://www.coles.com.au/search?q=' },
+    { name: 'Amazon AU', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.com.au/s?k=' },
+  ],
+  DE: [
+    { name: 'REWE', logo: '🛒', color: '#cc071e', searchUrl: 'https://shop.rewe.de/productList?search=' },
+    { name: 'Edeka', logo: '💛', color: '#fff200', searchUrl: 'https://www.edeka.de/suche.html?query=' },
+    { name: 'Amazon DE', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.de/s?k=' },
+  ],
+  FR: [
+    { name: 'Carrefour', logo: '🛒', color: '#004e9f', searchUrl: 'https://www.carrefour.fr/s?q=' },
+    { name: 'Amazon FR', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.fr/s?k=' },
+  ],
+  AE: [
+    { name: 'Carrefour UAE', logo: '🛒', color: '#004e9f', searchUrl: 'https://www.carrefouruae.com/mafuae/en/search?keyword=' },
+    { name: 'Noon', logo: '💛', color: '#feee00', searchUrl: 'https://www.noon.com/uae-en/search?q=' },
+    { name: 'Amazon AE', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.ae/s?k=' },
   ],
   DEFAULT: [
     { name: 'Google Shopping', logo: '🔍', color: '#4285f4', searchUrl: 'https://www.google.com/search?tbm=shop&q=' },
     { name: 'Amazon', logo: '📦', color: '#ff9900', searchUrl: 'https://www.amazon.com/s?k=' },
   ],
+};
+
+const COUNTRY_NAMES: Record<string, string> = {
+  US: 'United States',
+  UK: 'United Kingdom',
+  IN: 'India',
+  CA: 'Canada',
+  AU: 'Australia',
+  DE: 'Germany',
+  FR: 'France',
+  AE: 'UAE',
+  DEFAULT: 'Global',
 };
 
 export default function ShoppingScreen() {
@@ -49,9 +92,12 @@ export default function ShoppingScreen() {
   const [newItemQty, setNewItemQty] = useState('1');
   const [newItemUnit, setNewItemUnit] = useState('pieces');
   const [region, setRegion] = useState('DEFAULT');
+  const [cityName, setCityName] = useState('');
+  const [countryName, setCountryName] = useState('Detecting...');
   const [showGroceryModal, setShowGroceryModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string>('');
   const [localItems, setLocalItems] = useState<any[]>([]);
+  const [locationLoading, setLocationLoading] = useState(true);
 
   useEffect(() => {
     if (sessionToken) {
@@ -75,19 +121,27 @@ export default function ShoppingScreen() {
 
   const detectRegion = async () => {
     try {
+      setLocationLoading(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const location = await Location.getCurrentPositionAsync({});
         const [address] = await Location.reverseGeocodeAsync(location.coords);
-        if (address?.isoCountryCode) {
-          const code = address.isoCountryCode;
+        if (address) {
+          const code = address.isoCountryCode || 'DEFAULT';
           if (GROCERY_APPS[code]) {
             setRegion(code);
           }
+          setCityName(address.city || address.region || '');
+          setCountryName(address.country || COUNTRY_NAMES[code] || 'Unknown');
         }
+      } else {
+        setCountryName('Location not available');
       }
     } catch (error) {
       console.log('Region detection failed, using default');
+      setCountryName('Location unavailable');
+    } finally {
+      setLocationLoading(false);
     }
   };
 
@@ -188,9 +242,25 @@ export default function ShoppingScreen() {
           <LinearGradient colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']} style={styles.heroOverlay}>
             <Text style={styles.heroTitle}>Shopping List</Text>
             <Text style={styles.heroSubtitle}>Your smart grocery companion</Text>
-            <View style={styles.regionBadge}>
-              <Ionicons name="location" size={14} color="white" />
-              <Text style={styles.regionText}>{region === 'DEFAULT' ? 'Global' : region}</Text>
+            
+            {/* Location Info */}
+            <View style={styles.locationCard}>
+              <View style={styles.locationIcon}>
+                <Ionicons name="location" size={20} color="#22c55e" />
+              </View>
+              <View style={styles.locationInfo}>
+                {locationLoading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <Text style={styles.locationCity}>{cityName || 'Your Location'}</Text>
+                    <Text style={styles.locationCountry}>{countryName}</Text>
+                  </>
+                )}
+              </View>
+              <TouchableOpacity style={styles.refreshLocationBtn} onPress={detectRegion}>
+                <Ionicons name="refresh" size={18} color="white" />
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </View>
@@ -249,9 +319,15 @@ export default function ShoppingScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Grocery Apps Quick Access */}
+        {/* Local Grocery Apps */}
         <View style={styles.groceryAppsSection}>
-          <Text style={styles.sectionTitle}>Shop With</Text>
+          <View style={styles.groceryHeader}>
+            <Text style={styles.sectionTitle}>Shop in {COUNTRY_NAMES[region] || 'Your Area'}</Text>
+            <View style={styles.regionTag}>
+              <Ionicons name="location" size={12} color="#22c55e" />
+              <Text style={styles.regionTagText}>{region}</Text>
+            </View>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {groceryApps.map((app, idx) => (
               <TouchableOpacity
@@ -425,13 +501,16 @@ export default function ShoppingScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Order "{selectedItem}"</Text>
+              <View>
+                <Text style={styles.modalTitle}>Order "{selectedItem}"</Text>
+                <Text style={styles.modalSubtitle}>from stores in {countryName}</Text>
+              </View>
               <TouchableOpacity onPress={() => setShowGroceryModal(false)}>
                 <Ionicons name="close" size={28} color="#6b7280" />
               </TouchableOpacity>
             </View>
             
-            <View style={styles.modalBody}>
+            <ScrollView style={styles.modalBody}>
               <Text style={styles.groceryPrompt}>Choose your preferred store:</Text>
               {groceryApps.map((app, idx) => (
                 <TouchableOpacity
@@ -443,11 +522,14 @@ export default function ShoppingScreen() {
                   <View style={[styles.groceryOptionIcon, { backgroundColor: app.color + '20' }]}>
                     <Text style={{ fontSize: 24 }}>{app.logo}</Text>
                   </View>
-                  <Text style={styles.groceryOptionName}>{app.name}</Text>
-                  <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                  <View style={styles.groceryOptionInfo}>
+                    <Text style={styles.groceryOptionName}>{app.name}</Text>
+                    <Text style={styles.groceryOptionDesc}>Search & order</Text>
+                  </View>
+                  <Ionicons name="open-outline" size={20} color="#22c55e" />
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -459,13 +541,18 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   scrollView: { flex: 1 },
   
-  heroSection: { height: 180, position: 'relative' },
+  heroSection: { height: 220, position: 'relative' },
   heroImage: { width: '100%', height: '100%' },
   heroOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%', justifyContent: 'flex-end', padding: 20, paddingBottom: 24 },
   heroTitle: { fontSize: 28, fontWeight: '800', color: 'white' },
   heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
-  regionBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginTop: 10 },
-  regionText: { fontSize: 12, fontWeight: '600', color: 'white' },
+  
+  locationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 12, marginTop: 14, gap: 10 },
+  locationIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  locationInfo: { flex: 1 },
+  locationCity: { fontSize: 16, fontWeight: '700', color: 'white' },
+  locationCountry: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+  refreshLocationBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
   
   statsContainer: { flexDirection: 'row', paddingHorizontal: 16, marginTop: -30, gap: 10 },
   statCard: { flex: 1, borderRadius: 16, overflow: 'hidden', elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6 },
@@ -480,11 +567,14 @@ const styles = StyleSheet.create({
   addButton: { width: 52, height: 52, borderRadius: 14, backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#22c55e' },
   
   groceryAppsSection: { padding: 16, paddingTop: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1f2937', marginBottom: 12 },
+  groceryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1f2937' },
+  regionTag: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#f0fdf4', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  regionTagText: { fontSize: 12, fontWeight: '600', color: '#22c55e' },
   groceryAppCard: { alignItems: 'center', marginRight: 16 },
-  groceryAppIcon: { width: 56, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
+  groceryAppIcon: { width: 60, height: 60, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
   groceryAppEmoji: { fontSize: 28 },
-  groceryAppName: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
+  groceryAppName: { fontSize: 11, fontWeight: '600', color: '#6b7280', textAlign: 'center', maxWidth: 70 },
   
   emptyState: { alignItems: 'center', padding: 32 },
   emptyImage: { width: width - 80, height: 160, borderRadius: 20, marginBottom: 20 },
@@ -515,9 +605,10 @@ const styles = StyleSheet.create({
   historyItems: { fontSize: 13, fontWeight: '600', color: '#1f2937', marginTop: 8 },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '80%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   modalTitle: { fontSize: 20, fontWeight: '700', color: '#1f2937' },
+  modalSubtitle: { fontSize: 13, color: '#6b7280', marginTop: 2 },
   modalBody: { padding: 20 },
   inputLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
   textInput: { backgroundColor: '#f9fafb', borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 12, padding: 14, fontSize: 15, color: '#1f2937', marginBottom: 16 },
@@ -528,5 +619,7 @@ const styles = StyleSheet.create({
   groceryPrompt: { fontSize: 14, color: '#6b7280', marginBottom: 16 },
   groceryOption: { flexDirection: 'row', alignItems: 'center', padding: 14, backgroundColor: '#f9fafb', borderRadius: 14, marginBottom: 10 },
   groceryOptionIcon: { width: 48, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  groceryOptionName: { flex: 1, fontSize: 16, fontWeight: '600', color: '#1f2937' },
+  groceryOptionInfo: { flex: 1 },
+  groceryOptionName: { fontSize: 16, fontWeight: '600', color: '#1f2937' },
+  groceryOptionDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
 });
