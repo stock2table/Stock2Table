@@ -481,6 +481,285 @@ Make the instructions detailed and easy to follow. Include 6-10 steps. Be specif
         logger.error(f"Recipe details generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate recipe details: {str(e)}")
 
+# ==================== USER PREFERENCES ENDPOINTS ====================
+
+class UserPreferencesUpdate(BaseModel):
+    dietary_restrictions: Optional[List[str]] = None
+    favorite_cuisines: Optional[List[str]] = None
+    cooking_skill: Optional[str] = None
+    serving_size: Optional[int] = None
+    max_cook_time: Optional[int] = None
+    allergies: Optional[List[str]] = None
+    disliked_ingredients: Optional[List[str]] = None
+
+@api_router.get("/preferences")
+async def get_user_preferences(current_user: User = Depends(require_auth)):
+    """Get user preferences"""
+    prefs = await db.user_preferences.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    if not prefs:
+        # Return default preferences
+        return {
+            "user_id": current_user.user_id,
+            "dietary_restrictions": [],
+            "favorite_cuisines": [],
+            "cooking_skill": "intermediate",
+            "serving_size": 4,
+            "max_cook_time": 60,
+            "allergies": [],
+            "disliked_ingredients": []
+        }
+    return prefs
+
+@api_router.put("/preferences")
+async def update_user_preferences(prefs: UserPreferencesUpdate, current_user: User = Depends(require_auth)):
+    """Update user preferences"""
+    update_data = {k: v for k, v in prefs.dict().items() if v is not None}
+    update_data["user_id"] = current_user.user_id
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.user_preferences.update_one(
+        {"user_id": current_user.user_id},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return await get_user_preferences(current_user)
+
+# ==================== ACTIVITY TRACKING ENDPOINTS ====================
+
+class ActivityCreate(BaseModel):
+    activity_type: str  # recipe_view, recipe_cook, recipe_save, search
+    item_id: Optional[str] = None
+    item_name: Optional[str] = None
+    metadata: Dict[str, Any] = {}
+
+@api_router.post("/activity")
+async def track_activity(activity: ActivityCreate, current_user: User = Depends(require_auth)):
+    """Track user activity for learning"""
+    activity_record = UserActivity(
+        user_id=current_user.user_id,
+        **activity.dict()
+    )
+    await db.user_activities.insert_one(activity_record.dict())
+    return {"message": "Activity tracked"}
+
+@api_router.get("/activity/history")
+async def get_activity_history(limit: int = 50, current_user: User = Depends(require_auth)):
+    """Get user activity history"""
+    activities = await db.user_activities.find(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    return activities
+
+# ==================== DYNAMIC CONTENT ENDPOINTS ====================
+
+@api_router.get("/discover/trending")
+async def get_trending_content(current_user: User = Depends(require_auth)):
+    """Get AI-generated trending dishes based on user preferences and global trends"""
+    try:
+        # Get user preferences
+        prefs = await db.user_preferences.find_one({"user_id": current_user.user_id}, {"_id": 0})
+        
+        # Get user activity for personalization
+        recent_views = await db.user_activities.find(
+            {"user_id": current_user.user_id, "activity_type": "recipe_view"},
+            {"_id": 0}
+        ).sort("created_at", -1).limit(10).to_list(10)
+        
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            model="gpt-5.2"
+        )
+        
+        user_context = ""
+        if prefs:
+            user_context = f"""
+User preferences:
+- Dietary restrictions: {', '.join(prefs.get('dietary_restrictions', [])) or 'None'}
+- Favorite cuisines: {', '.join(prefs.get('favorite_cuisines', [])) or 'All cuisines'}
+- Cooking skill: {prefs.get('cooking_skill', 'intermediate')}
+- Max cook time: {prefs.get('max_cook_time', 60)} minutes
+"""
+        if recent_views:
+            viewed_names = [v.get('item_name', '') for v in recent_views if v.get('item_name')]
+            if viewed_names:
+                user_context += f"- Recently viewed: {', '.join(viewed_names[:5])}\n"
+
+        prompt = f"""Generate 6 trending dishes from around the world that are currently popular on social media and food blogs.
+{user_context}
+For each dish, provide a JSON array with objects containing:
+- id: unique string id
+- name: dish name
+- cuisine: cuisine type (Korean, Mexican, Japanese, Italian, Indian, Thai, American, Mediterranean, etc.)
+- description: appetizing 1-sentence description
+- time: total cooking time in minutes
+- calories: estimated calories per serving
+- difficulty: easy/medium/hard
+- rating: rating out of 5 (4.5-5.0 range)
+- image_query: search term for finding an image (e.g., "korean fried chicken crispy")
+- video_search: YouTube search query for tutorial
+
+Consider current food trends like:
+- Viral TikTok recipes
+- Seasonal ingredients
+- Health-conscious options
+- Comfort food classics with modern twists
+
+Respond with ONLY a JSON array, no markdown formatting."""
+
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        import json
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        
+        trending = json.loads(response_text)
+        
+        # Add image URLs using Unsplash
+        for dish in trending:
+            query = dish.get('image_query', dish.get('name', 'food'))
+            dish['image_url'] = f"https://source.unsplash.com/800x600/?{query.replace(' ', '+')},food"
+            dish['video_url'] = f"https://www.youtube.com/results?search_query={dish.get('video_search', dish['name']).replace(' ', '+')}"
+        
+        return {"trending": trending}
+    
+    except Exception as e:
+        logger.error(f"Trending content error: {str(e)}")
+        # Return fallback trending
+        return {"trending": []}
+
+@api_router.get("/discover/videos")
+async def get_video_tutorials(current_user: User = Depends(require_auth)):
+    """Get AI-generated video tutorial suggestions"""
+    try:
+        # Get user preferences and activity
+        prefs = await db.user_preferences.find_one({"user_id": current_user.user_id}, {"_id": 0})
+        
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            model="gpt-5.2"
+        )
+        
+        skill_level = prefs.get('cooking_skill', 'intermediate') if prefs else 'intermediate'
+        
+        prompt = f"""Generate 6 cooking video tutorial suggestions for a {skill_level} cook.
+
+Include a mix of:
+- Fundamental techniques (knife skills, sauces, etc.)
+- Popular recipe tutorials
+- Quick tips and hacks
+- Cuisine-specific techniques
+
+For each video, provide a JSON array with objects containing:
+- id: unique string id
+- title: engaging video title
+- description: brief description
+- duration: estimated duration (e.g., "12:45")
+- difficulty: beginner/intermediate/advanced
+- category: technique/recipe/tips/cuisine
+- thumbnail_query: search term for thumbnail image
+- video_search: YouTube search query
+- estimated_views: realistic view count string (e.g., "2.5M", "850K")
+
+Respond with ONLY a JSON array, no markdown formatting."""
+
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        import json
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        
+        videos = json.loads(response_text)
+        
+        # Add URLs
+        for video in videos:
+            query = video.get('thumbnail_query', video.get('title', 'cooking'))
+            video['thumbnail_url'] = f"https://source.unsplash.com/400x225/?{query.replace(' ', '+')},cooking"
+            video['video_url'] = f"https://www.youtube.com/results?search_query={video.get('video_search', video['title']).replace(' ', '+')}"
+        
+        return {"videos": videos}
+    
+    except Exception as e:
+        logger.error(f"Video tutorials error: {str(e)}")
+        return {"videos": []}
+
+@api_router.get("/discover/suggestion")
+async def get_daily_suggestion(current_user: User = Depends(require_auth)):
+    """Get personalized daily recipe suggestion"""
+    try:
+        # Get user data
+        prefs = await db.user_preferences.find_one({"user_id": current_user.user_id}, {"_id": 0})
+        pantry = await db.pantry_items.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(1000)
+        
+        # Get recent activity to avoid suggesting same things
+        recent = await db.user_activities.find(
+            {"user_id": current_user.user_id, "activity_type": {"$in": ["recipe_view", "recipe_cook"]}},
+            {"_id": 0, "item_name": 1}
+        ).sort("created_at", -1).limit(7).to_list(7)
+        recent_names = [r.get('item_name', '') for r in recent if r.get('item_name')]
+        
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            model="gpt-5.2"
+        )
+        
+        pantry_items = [p.get('name', '') for p in pantry]
+        
+        context = f"""
+User's pantry items: {', '.join(pantry_items) if pantry_items else 'Empty pantry'}
+Dietary restrictions: {', '.join(prefs.get('dietary_restrictions', [])) if prefs else 'None'}
+Favorite cuisines: {', '.join(prefs.get('favorite_cuisines', [])) if prefs else 'Any'}
+Cooking skill: {prefs.get('cooking_skill', 'intermediate') if prefs else 'intermediate'}
+Recently made/viewed (avoid suggesting): {', '.join(recent_names) if recent_names else 'Nothing recent'}
+"""
+
+        prompt = f"""Suggest ONE perfect recipe for today based on this context:
+{context}
+
+Provide a JSON object with:
+- name: recipe name
+- description: appetizing 2-sentence description
+- cuisine: cuisine type
+- prep_time: prep time in minutes
+- cook_time: cook time in minutes
+- difficulty: easy/medium/hard
+- servings: number of servings
+- calories: estimated calories per serving
+- rating: rating (4.5-5.0)
+- image_query: search term for image
+- video_search: YouTube search query
+- reason: personalized reason why this is suggested today
+
+Respond with ONLY a JSON object, no markdown."""
+
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        import json
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        
+        suggestion = json.loads(response_text)
+        
+        query = suggestion.get('image_query', suggestion.get('name', 'food'))
+        suggestion['image_url'] = f"https://source.unsplash.com/800x600/?{query.replace(' ', '+')},food"
+        suggestion['video_url'] = f"https://www.youtube.com/results?search_query={suggestion.get('video_search', suggestion['name']).replace(' ', '+')}"
+        
+        return {"suggestion": suggestion}
+    
+    except Exception as e:
+        logger.error(f"Daily suggestion error: {str(e)}")
+        return {"suggestion": None}
+
 # ==================== FAMILY MEMBER ENDPOINTS ====================
 
 @api_router.get("/family", response_model=List[FamilyMember])
