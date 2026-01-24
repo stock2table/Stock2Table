@@ -15,17 +15,44 @@ const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 
 // Get day name from date string
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr + 'T00:00:00');
-  const dayName = DAY_NAMES[date.getDay()];
-  const month = date.toLocaleDateString('en-US', { month: 'short' });
-  const day = date.getDate();
-  return { dayName, formatted: `${dayName}, ${month} ${day}` };
+  try {
+    if (!dateStr || typeof dateStr !== 'string') {
+      return { dayName: 'Unknown', formatted: 'Unknown Date' };
+    }
+    
+    // Handle different date formats
+    let date: Date;
+    if (dateStr.includes('T')) {
+      date = new Date(dateStr);
+    } else if (dateStr.includes('-')) {
+      // YYYY-MM-DD format
+      date = new Date(dateStr + 'T12:00:00');
+    } else {
+      // Assume it's a day name like "Monday"
+      return { dayName: dateStr, formatted: dateStr };
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return { dayName: dateStr, formatted: dateStr };
+    }
+    
+    const dayName = DAY_NAMES[date.getDay()];
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const day = date.getDate();
+    return { dayName, formatted: `${dayName}, ${month} ${day}` };
+  } catch (error) {
+    console.error('Date formatting error:', error, 'for date:', dateStr);
+    return { dayName: 'Unknown', formatted: dateStr || 'Unknown Date' };
+  }
 };
 
 // Get unique dates from meals
 const getUniqueDates = (meals: any[]) => {
-  if (!meals || meals.length === 0) return [];
-  const dates = [...new Set(meals.map(m => m.day))].sort();
+  if (!meals || !Array.isArray(meals) || meals.length === 0) return [];
+  // Filter out undefined/null days and get unique values
+  const validDays = meals.filter(m => m && m.day).map(m => m.day);
+  const dates = [...new Set(validDays)].sort();
   return dates;
 };
 
