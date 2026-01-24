@@ -421,6 +421,7 @@ const styles = StyleSheet.create({
   mealInfo: { flex: 1 },
   mealType: { fontSize: 11, fontWeight: '600', color: '#9ca3af', textTransform: 'uppercase' },
   mealName: { fontSize: 14, fontWeight: '600', color: '#1f2937', marginTop: 2 },
+  ingredientCount: { fontSize: 11, color: '#22c55e', marginTop: 2 },
   emptyMeal: { fontSize: 13, color: '#d1d5db', fontStyle: 'italic', marginTop: 2 },
 
   emptyState: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 40 },
