@@ -155,8 +155,17 @@ export default function MealPlanScreen() {
   }, [sessionToken]);
 
   useEffect(() => {
-    if (mealPlans.length > 0 && !selectedPlan) {
-      setSelectedPlan(mealPlans[0]);
+    if (mealPlans.length > 0) {
+      // If we have a selected plan, update it with the latest data from the server
+      if (selectedPlan) {
+        const updatedPlan = mealPlans.find(p => p.plan_id === selectedPlan.plan_id);
+        if (updatedPlan) {
+          setSelectedPlan(updatedPlan);
+        }
+      } else {
+        // No plan selected, select the first one
+        setSelectedPlan(mealPlans[0]);
+      }
     }
   }, [mealPlans]);
 
