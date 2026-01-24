@@ -138,6 +138,15 @@ export default function MealPlanScreen() {
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
   const [additionalIngredients, setAdditionalIngredients] = useState('');
   const [customIngredientsList, setCustomIngredientsList] = useState<string[]>([]);
+  
+  // Modal state for adding new meals
+  const [addMealModalVisible, setAddMealModalVisible] = useState(false);
+  const [addMealDate, setAddMealDate] = useState('');
+  const [newMealName, setNewMealName] = useState('');
+  const [newMealType, setNewMealType] = useState('lunch');
+  const [newMealIngredients, setNewMealIngredients] = useState('');
+  const [newMealIngredientsList, setNewMealIngredientsList] = useState<string[]>([]);
+  const [savingMeal, setSavingMeal] = useState(false);
 
   useEffect(() => {
     if (sessionToken) {
