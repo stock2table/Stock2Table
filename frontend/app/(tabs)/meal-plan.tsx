@@ -106,10 +106,28 @@ export default function MealPlanScreen() {
   };
 
   const getMealForDayAndType = (day: string, mealType: string) => {
-    if (!selectedPlan) return null;
-    return selectedPlan.meals.find(
-      (m: any) => m.day === day && m.meal_type === mealType
-    );
+    if (!selectedPlan || !selectedPlan.meals) {
+      console.log('No selected plan or meals array');
+      return null;
+    }
+    
+    // Log for debugging
+    console.log(`Looking for meal: day=${day}, type=${mealType}`);
+    console.log('Available meals:', selectedPlan.meals);
+    
+    // Try multiple matching strategies
+    const meal = selectedPlan.meals.find((m: any) => {
+      // Case-insensitive matching for both day and meal_type
+      const dayMatch = m.day?.toLowerCase() === day.toLowerCase();
+      const typeMatch = m.meal_type?.toLowerCase() === mealType.toLowerCase();
+      return dayMatch && typeMatch;
+    });
+    
+    if (meal) {
+      console.log(`Found meal for ${day} ${mealType}:`, meal.recipe_name);
+    }
+    
+    return meal;
   };
 
   const getMealColor = (mealType: string) => {
