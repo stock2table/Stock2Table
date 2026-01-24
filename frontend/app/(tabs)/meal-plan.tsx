@@ -105,6 +105,12 @@ export default function MealPlanScreen() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  
+  // Modal state for customizing meals
+  const [mealModalVisible, setMealModalVisible] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<any>(null);
+  const [additionalIngredients, setAdditionalIngredients] = useState('');
+  const [customIngredientsList, setCustomIngredientsList] = useState<string[]>([]);
 
   useEffect(() => {
     if (sessionToken) {
