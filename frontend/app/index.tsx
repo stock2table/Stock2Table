@@ -57,6 +57,7 @@ export default function Index() {
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#22c55e" />
       <Text style={styles.text}>Loading...</Text>
+      <Text style={[styles.text, { fontSize: 12, marginTop: 8, color: '#999' }]}>{status}</Text>
     </View>
   );
 }
