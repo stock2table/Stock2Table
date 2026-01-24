@@ -357,7 +357,7 @@ export default function MealPlanScreen() {
                         <TouchableOpacity 
                           key={mealType} 
                           style={styles.mealSlot}
-                          onPress={() => meal && navigateToRecipe(meal)}
+                          onPress={() => meal && openMealModal(meal)}
                           activeOpacity={meal ? 0.7 : 1}
                           disabled={!meal}
                         >
@@ -380,7 +380,7 @@ export default function MealPlanScreen() {
                                   {meal.recipe_name}
                                 </Text>
                                 <Text style={styles.ingredientCount}>
-                                  {meal.ingredients_needed?.length || 0} ingredients
+                                  {meal.ingredients_needed?.length || 0} ingredients • Tap to customize
                                 </Text>
                               </>
                             ) : (
