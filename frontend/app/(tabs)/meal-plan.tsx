@@ -971,4 +971,22 @@ const styles = StyleSheet.create({
   getRecipeBtn: { flex: 2, borderRadius: 12, overflow: 'hidden' },
   getRecipeBtnGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
   getRecipeBtnText: { fontSize: 15, fontWeight: '700', color: 'white' },
+  cancelBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', paddingVertical: 14, borderRadius: 12 },
+  cancelBtnText: { fontSize: 15, fontWeight: '600', color: '#6b7280' },
+
+  // Add Meal Modal Styles
+  addMealDateSection: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16, backgroundColor: '#f0fdf4', marginHorizontal: 16, marginTop: 16, borderRadius: 12 },
+  addMealDateText: { fontSize: 15, fontWeight: '600', color: '#15803d' },
+  mealTypeSection: { padding: 16 },
+  mealTypeButtons: { flexDirection: 'row', gap: 10 },
+  mealTypeButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, backgroundColor: '#f3f4f6' },
+  mealTypeButtonActive: { backgroundColor: '#22c55e' },
+  mealTypeButtonText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
+  mealTypeButtonTextActive: { color: 'white' },
+  inputSection: { padding: 16, paddingTop: 0 },
+  mealNameInput: { backgroundColor: '#f9fafb', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, borderWidth: 1, borderColor: '#e5e7eb' },
+  pantryHint: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 8 },
+  pantryHintText: { fontSize: 13, color: '#6b7280' },
+  pantryTag: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#f0fdf4', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#dcfce7' },
+  pantryTagText: { fontSize: 12, color: '#15803d' },
 });
