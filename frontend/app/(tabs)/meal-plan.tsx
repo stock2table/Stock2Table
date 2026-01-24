@@ -522,6 +522,46 @@ export default function MealPlanScreen() {
                         </TouchableOpacity>
                       );
                     })}
+                    
+                    {/* Show additional custom meals */}
+                    {mealsForDay
+                      .filter((meal: any) => meal.is_custom)
+                      .map((meal: any, idx: number) => {
+                        const [color1, color2] = getMealColor(meal.meal_type || 'lunch');
+                        const mealImage = getMealImageByName(meal.recipe_name, meal.meal_type || 'lunch');
+                        
+                        return (
+                          <TouchableOpacity 
+                            key={`custom-${idx}`} 
+                            style={[styles.mealSlot, styles.customMealSlot]}
+                            onPress={() => openMealModal(meal)}
+                            activeOpacity={0.7}
+                          >
+                            {mealImage && (
+                              <Image 
+                                source={{ uri: mealImage }} 
+                                style={styles.mealThumbnail} 
+                              />
+                            )}
+                            <LinearGradient colors={[color1, color2]} style={styles.mealIcon}>
+                              <Ionicons name={MEAL_ICONS[meal.meal_type] || 'restaurant'} size={16} color="white" />
+                            </LinearGradient>
+                            <View style={styles.mealInfo}>
+                              <View style={styles.customMealLabel}>
+                                <Ionicons name="star" size={10} color="#8b5cf6" />
+                                <Text style={styles.customMealLabelText}>Custom</Text>
+                              </View>
+                              <Text style={styles.mealName} numberOfLines={2}>
+                                {meal.recipe_name}
+                              </Text>
+                              <Text style={styles.ingredientCount}>
+                                {meal.ingredients_needed?.length || 0} ingredients • Tap for recipe
+                              </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#8b5cf6" />
+                          </TouchableOpacity>
+                        );
+                      })}
                   </View>
                 </View>
               );
