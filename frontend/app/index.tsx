@@ -8,28 +8,49 @@ export default function Index() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [status, setStatus] = useState('Initializing...');
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
+      console.log('Index: checking auth status', { loading, user: !!user });
+      setStatus(`Loading: ${loading}, User: ${user ? 'Yes' : 'No'}`);
+      
       if (!loading) {
-        if (user) {
-          // Check if user has completed onboarding
-          const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
-          
-          if (onboardingComplete === 'true') {
-            router.replace('/(tabs)');
+        try {
+          if (user) {
+            setStatus('User authenticated, checking onboarding...');
+            // Check if user has completed onboarding
+            const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
+            console.log('Onboarding complete:', onboardingComplete);
+            
+            if (onboardingComplete === 'true') {
+              setStatus('Navigating to home...');
+              console.log('Navigating to tabs');
+              router.replace('/(tabs)');
+            } else {
+              setStatus('Navigating to onboarding...');
+              console.log('Navigating to onboarding');
+              router.replace('/onboarding');
+            }
           } else {
-            // New user - show onboarding
-            router.replace('/onboarding');
+            setStatus('No user, going to login...');
+            console.log('No user, navigating to login');
+            router.replace('/login');
           }
-        } else {
-          router.replace('/login');
+        } catch (error) {
+          console.error('Navigation error:', error);
+          setStatus(`Error: ${error}`);
         }
         setCheckingOnboarding(false);
       }
     };
 
-    checkOnboardingStatus();
+    // Add a small delay to ensure router is ready
+    const timer = setTimeout(() => {
+      checkOnboardingStatus();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [user, loading]);
 
   return (
