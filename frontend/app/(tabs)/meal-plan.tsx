@@ -265,7 +265,7 @@ export default function MealPlanScreen() {
                 
                 <View style={styles.mealsContainer}>
                   {MEAL_TYPES.map((mealType, mealIndex) => {
-                    const meal = getMealForDayAndType(day, mealType);
+                    const meal = getMealForDayAndType(day, mealType, dayIndex);
                     const [color1, color2] = getMealColor(mealType);
                     
                     return (
