@@ -10,21 +10,23 @@ import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 
-// Helper to get day name from date string
-const getDayNameFromDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return DAYS[date.getDay() === 0 ? 6 : date.getDay() - 1]; // Adjust for Sunday
+// Get day name from date string
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr + 'T00:00:00');
+  const dayName = DAY_NAMES[date.getDay()];
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const day = date.getDate();
+  return { dayName, formatted: `${dayName}, ${month} ${day}` };
 };
 
-// Helper to get date string for a specific day offset from week start
-const getDateForDayIndex = (weekStartDate: string, dayIndex: number) => {
-  const startDate = new Date(weekStartDate);
-  const targetDate = new Date(startDate);
-  targetDate.setDate(startDate.getDate() + dayIndex);
-  return targetDate.toISOString().split('T')[0];
+// Get unique dates from meals
+const getUniqueDates = (meals: any[]) => {
+  if (!meals || meals.length === 0) return [];
+  const dates = [...new Set(meals.map(m => m.day))].sort();
+  return dates;
 };
 
 const MEAL_ICONS: any = {
@@ -33,21 +35,65 @@ const MEAL_ICONS: any = {
   dinner: 'moon',
 };
 
-// Reliable food images for each meal type
-const MEAL_IMAGES: Record<string, string[]> = {
-  breakfast: [
-    'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=300&q=80',
-    'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=300&q=80',
-    'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=300&q=80',
-  ],
-  lunch: [
-    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&q=80',
-    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&q=80',
-    'https://images.unsplash.com/photo-1547592180-85f173990554?w=300&q=80',
-  ],
-  dinner: [
-    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&q=80',
-    'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&q=80',
+// Reliable food images based on recipe name keywords
+const getMealImageByName = (recipeName: string, mealType: string) => {
+  const name = recipeName.toLowerCase();
+  
+  // Breakfast images
+  if (name.includes('egg') || name.includes('scrambled')) {
+    return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80';
+  }
+  if (name.includes('toast') || name.includes('avocado')) {
+    return 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&q=80';
+  }
+  if (name.includes('cereal') || name.includes('yogurt')) {
+    return 'https://images.unsplash.com/photo-1517673400267-0251440c45dc?w=400&q=80';
+  }
+  if (name.includes('bagel')) {
+    return 'https://images.unsplash.com/photo-1585445490387-f47934b73b54?w=400&q=80';
+  }
+  if (name.includes('pancake') || name.includes('waffle')) {
+    return 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=80';
+  }
+  
+  // Lunch/Dinner images
+  if (name.includes('salad')) {
+    return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80';
+  }
+  if (name.includes('pasta') || name.includes('spaghetti')) {
+    return 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&q=80';
+  }
+  if (name.includes('curry') || name.includes('dal') || name.includes('lentil')) {
+    return 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&q=80';
+  }
+  if (name.includes('chicken') || name.includes('nugget')) {
+    return 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80';
+  }
+  if (name.includes('rice')) {
+    return 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?w=400&q=80';
+  }
+  if (name.includes('stir fry') || name.includes('vegetable')) {
+    return 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=400&q=80';
+  }
+  if (name.includes('soup') || name.includes('stew')) {
+    return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&q=80';
+  }
+  if (name.includes('sandwich') || name.includes('burger') || name.includes('patty')) {
+    return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80';
+  }
+  if (name.includes('chickpea') || name.includes('chana')) {
+    return 'https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?w=400&q=80';
+  }
+  
+  // Default images by meal type
+  const defaults: Record<string, string> = {
+    breakfast: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&q=80',
+    lunch: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
+    dinner: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
+  };
+  
+  return defaults[mealType] || defaults.lunch;
+};
     'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=300&q=80',
   ],
 };
