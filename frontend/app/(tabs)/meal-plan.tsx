@@ -220,10 +220,22 @@ export default function MealPlanScreen() {
                 <Ionicons name="calendar" size={24} color="#22c55e" />
                 <View>
                   <Text style={styles.planTitle}>Week of {selectedPlan.week_start_date}</Text>
-                  <Text style={styles.planMeals}>{selectedPlan.meals?.length || 0} meals planned</Text>
+                  <Text style={styles.planMeals}>
+                    {selectedPlan.meals?.length || 0} meals planned
+                    {selectedPlan.meals?.length > 0 && ` (${selectedPlan.meals.map((m: any) => m.day).filter((v: any, i: number, a: any) => a.indexOf(v) === i).length} days)`}
+                  </Text>
                 </View>
               </View>
             </View>
+
+            {/* Debug Info - Remove in production */}
+            {selectedPlan.meals && selectedPlan.meals.length > 0 && (
+              <View style={styles.debugInfo}>
+                <Text style={styles.debugText}>
+                  Sample meal: {JSON.stringify(selectedPlan.meals[0])}
+                </Text>
+              </View>
+            )}
 
             {/* Days */}
             {DAYS.map((day, dayIndex) => (
