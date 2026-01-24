@@ -908,7 +908,8 @@ const styles = StyleSheet.create({
   dayCard: { backgroundColor: 'white', borderRadius: 16, marginBottom: 12, overflow: 'hidden', elevation: 2 },
   dayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#f9fafb' },
   dayTitle: { fontSize: 16, fontWeight: '700', color: '#1f2937' },
-  dayNumber: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#e5e7eb', justifyContent: 'center', alignItems: 'center', fontSize: 13, fontWeight: '600', color: '#6b7280', textAlign: 'center', lineHeight: 28 },
+  dayNumber: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  addMealButton: { padding: 4 },
 
   mealsContainer: { padding: 12, gap: 10 },
   mealSlot: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f9fafb', borderRadius: 12, gap: 12 },
