@@ -493,6 +493,8 @@ class RecipeDetailsRequest(BaseModel):
     recipe_name: str
     available_ingredients: List[str] = []
     missing_ingredients: List[str] = []
+    required_ingredients: List[str] = []
+    custom_additions: List[str] = []
 
 @api_router.post("/recipes/generate-details")
 async def generate_recipe_details(request: RecipeDetailsRequest, current_user: User = Depends(require_auth)):
