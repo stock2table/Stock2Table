@@ -13,6 +13,20 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 
+// Helper to get day name from date string
+const getDayNameFromDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return DAYS[date.getDay() === 0 ? 6 : date.getDay() - 1]; // Adjust for Sunday
+};
+
+// Helper to get date string for a specific day offset from week start
+const getDateForDayIndex = (weekStartDate: string, dayIndex: number) => {
+  const startDate = new Date(weekStartDate);
+  const targetDate = new Date(startDate);
+  targetDate.setDate(startDate.getDate() + dayIndex);
+  return targetDate.toISOString().split('T')[0];
+};
+
 const MEAL_ICONS: any = {
   breakfast: 'sunny',
   lunch: 'partly-sunny',
