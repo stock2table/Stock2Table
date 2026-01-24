@@ -269,28 +269,34 @@ export default function MealPlanScreen() {
         { headers: { Authorization: `Bearer ${sessionToken}` } }
       );
 
-      // Update local state
+      // Update local state immediately for instant feedback
+      const updatedMeals = [...(selectedPlan.meals || []), newMeal];
       setSelectedPlan({
         ...selectedPlan,
-        meals: [...(selectedPlan.meals || []), newMeal],
+        meals: updatedMeals,
       });
 
       setAddMealModalVisible(false);
+      
+      // Also refresh from server to ensure consistency
+      await fetchMealPlans(sessionToken!);
+      
       Alert.alert('Success', 'Meal added successfully!');
     } catch (error) {
       console.error('Error adding meal:', error);
       // Still add locally even if API fails
+      const newMeal = {
+        day: addMealDate,
+        meal_type: newMealType,
+        recipe_name: newMealName.trim(),
+        ingredients_needed: newMealIngredientsList.length > 0 
+          ? newMealIngredientsList 
+          : pantryItems.slice(0, 3).map((p: any) => p.name),
+        is_custom: true,
+      };
       setSelectedPlan({
         ...selectedPlan,
-        meals: [...(selectedPlan.meals || []), {
-          day: addMealDate,
-          meal_type: newMealType,
-          recipe_name: newMealName.trim(),
-          ingredients_needed: newMealIngredientsList.length > 0 
-            ? newMealIngredientsList 
-            : pantryItems.slice(0, 3).map((p: any) => p.name),
-          is_custom: true,
-        }],
+        meals: [...(selectedPlan.meals || []), newMeal],
       });
       setAddMealModalVisible(false);
     } finally {
