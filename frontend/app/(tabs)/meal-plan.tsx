@@ -933,6 +933,9 @@ const styles = StyleSheet.create({
   dayTitle: { fontSize: 16, fontWeight: '700', color: '#1f2937' },
   dayNumber: { fontSize: 12, color: '#6b7280', marginTop: 2 },
   addMealButton: { padding: 4 },
+  noMealsPlaceholder: { padding: 24, alignItems: 'center' },
+  noMealsText: { fontSize: 14, color: '#9ca3af' },
+  noMealsHint: { fontSize: 12, color: '#d1d5db', marginTop: 4 },
 
   mealsContainer: { padding: 12, gap: 10 },
   mealSlot: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f9fafb', borderRadius: 12, gap: 12 },
