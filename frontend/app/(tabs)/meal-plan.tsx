@@ -435,6 +435,141 @@ export default function MealPlanScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Meal Customization Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={mealModalVisible}
+        onRequestClose={() => setMealModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity 
+                onPress={() => setMealModalVisible(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Customize Your Meal</Text>
+              <View style={{ width: 32 }} />
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {/* Meal Info */}
+              {selectedMeal && (
+                <View style={styles.mealPreview}>
+                  <Image 
+                    source={{ uri: getMealImageByName(selectedMeal.recipe_name, selectedMeal.meal_type) }}
+                    style={styles.mealPreviewImage}
+                  />
+                  <Text style={styles.mealPreviewTitle}>{selectedMeal.recipe_name}</Text>
+                  <Text style={styles.mealPreviewType}>
+                    {selectedMeal.meal_type?.charAt(0).toUpperCase() + selectedMeal.meal_type?.slice(1)}
+                  </Text>
+                </View>
+              )}
+
+              {/* Planned Ingredients */}
+              <View style={styles.ingredientsSection}>
+                <Text style={styles.sectionTitle}>Planned Ingredients</Text>
+                <View style={styles.ingredientTags}>
+                  {selectedMeal?.ingredients_needed?.map((ingredient: string, idx: number) => (
+                    <View key={idx} style={styles.ingredientTag}>
+                      <Ionicons name="checkmark-circle" size={14} color="#22c55e" />
+                      <Text style={styles.ingredientTagText}>{ingredient}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Add Custom Ingredients */}
+              <View style={styles.customSection}>
+                <Text style={styles.sectionTitle}>Add Extra Ingredients</Text>
+                <Text style={styles.sectionHint}>
+                  Add your own ingredients to customize this recipe
+                </Text>
+                
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.ingredientInput}
+                    placeholder="e.g., cheese, spinach, mushrooms"
+                    placeholderTextColor="#9ca3af"
+                    value={additionalIngredients}
+                    onChangeText={setAdditionalIngredients}
+                    onSubmitEditing={addCustomIngredient}
+                    returnKeyType="done"
+                  />
+                  <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={addCustomIngredient}
+                    disabled={!additionalIngredients.trim()}
+                  >
+                    <Ionicons name="add" size={24} color="white" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Custom Ingredients List */}
+                {customIngredientsList.length > 0 && (
+                  <View style={styles.customIngredientsList}>
+                    <Text style={styles.customIngredientsLabel}>Your additions:</Text>
+                    <View style={styles.ingredientTags}>
+                      {customIngredientsList.map((ingredient, idx) => (
+                        <TouchableOpacity 
+                          key={idx} 
+                          style={[styles.ingredientTag, styles.customTag]}
+                          onPress={() => removeCustomIngredient(ingredient)}
+                        >
+                          <Ionicons name="add-circle" size={14} color="#8b5cf6" />
+                          <Text style={[styles.ingredientTagText, { color: '#8b5cf6' }]}>
+                            {ingredient}
+                          </Text>
+                          <Ionicons name="close-circle" size={14} color="#8b5cf6" />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            {/* Action Buttons */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.quickRecipeBtn}
+                onPress={() => {
+                  setMealModalVisible(false);
+                  navigateToRecipe(selectedMeal);
+                }}
+              >
+                <Ionicons name="flash" size={20} color="#22c55e" />
+                <Text style={styles.quickRecipeBtnText}>Quick Recipe</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.getRecipeBtn}
+                onPress={getCustomRecipe}
+              >
+                <LinearGradient 
+                  colors={['#22c55e', '#16a34a']} 
+                  style={styles.getRecipeBtnGradient}
+                >
+                  <Ionicons name="restaurant" size={20} color="white" />
+                  <Text style={styles.getRecipeBtnText}>
+                    Get Custom Recipe
+                    {customIngredientsList.length > 0 && ` (+${customIngredientsList.length})`}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
