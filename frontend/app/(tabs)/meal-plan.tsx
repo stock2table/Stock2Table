@@ -119,27 +119,31 @@ export default function MealPlanScreen() {
     }
   };
 
-  const getMealForDayAndType = (day: string, mealType: string) => {
+  const getMealForDayAndType = (day: string, mealType: string, dayIndex: number) => {
     if (!selectedPlan || !selectedPlan.meals) {
-      console.log('No selected plan or meals array');
       return null;
     }
     
-    // Log for debugging
-    console.log(`Looking for meal: day=${day}, type=${mealType}`);
-    console.log('Available meals:', selectedPlan.meals);
+    // Calculate the target date for this day
+    const targetDate = getDateForDayIndex(selectedPlan.week_start_date, dayIndex);
     
     // Try multiple matching strategies
     const meal = selectedPlan.meals.find((m: any) => {
-      // Case-insensitive matching for both day and meal_type
-      const dayMatch = m.day?.toLowerCase() === day.toLowerCase();
+      // Check if day is a date string (YYYY-MM-DD format)
+      const isDateFormat = m.day && m.day.includes('-') && m.day.length >= 10;
+      
+      let dayMatch = false;
+      if (isDateFormat) {
+        // Match by date string
+        dayMatch = m.day === targetDate;
+      } else {
+        // Match by day name (case-insensitive)
+        dayMatch = m.day?.toLowerCase() === day.toLowerCase();
+      }
+      
       const typeMatch = m.meal_type?.toLowerCase() === mealType.toLowerCase();
       return dayMatch && typeMatch;
     });
-    
-    if (meal) {
-      console.log(`Found meal for ${day} ${mealType}:`, meal.recipe_name);
-    }
     
     return meal;
   };
