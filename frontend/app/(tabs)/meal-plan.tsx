@@ -181,17 +181,66 @@ export default function MealPlanScreen() {
     );
   };
 
-  // Navigate to recipe detail or create one
-  const navigateToMeal = (meal: any) => {
+  // Open meal customization modal
+  const openMealModal = (meal: any) => {
     if (meal) {
-      // For now, just show the meal details in an alert
-      // In the future, you could navigate to a recipe detail page
-      Alert.alert(
-        meal.recipe_name,
-        `Ingredients needed:\n${meal.ingredients_needed?.join('\n• ') || 'No ingredients listed'}`,
-        [{ text: 'OK' }]
-      );
+      setSelectedMeal(meal);
+      setAdditionalIngredients('');
+      setCustomIngredientsList([]);
+      setMealModalVisible(true);
     }
+  };
+
+  // Add ingredient to custom list
+  const addCustomIngredient = () => {
+    const ingredient = additionalIngredients.trim();
+    if (ingredient && !customIngredientsList.includes(ingredient)) {
+      setCustomIngredientsList([...customIngredientsList, ingredient]);
+      setAdditionalIngredients('');
+    }
+  };
+
+  // Remove ingredient from custom list
+  const removeCustomIngredient = (ingredient: string) => {
+    setCustomIngredientsList(customIngredientsList.filter(i => i !== ingredient));
+  };
+
+  // Get recipe with all ingredients (planned + custom)
+  const getCustomRecipe = () => {
+    if (!selectedMeal) return;
+    
+    // Combine planned ingredients with custom ones
+    const allIngredients = [
+      ...(selectedMeal.ingredients_needed || []),
+      ...customIngredientsList
+    ];
+    
+    // Track activity
+    try {
+      axios.post(`${BACKEND_URL}/api/activity`, {
+        activity_type: 'recipe_view',
+        item_name: selectedMeal.recipe_name
+      }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+    } catch (error) {}
+    
+    setMealModalVisible(false);
+    
+    // Navigate to AI recipe screen with all ingredients
+    router.push({
+      pathname: '/ai-recipe',
+      params: { 
+        recipe: JSON.stringify({
+          name: selectedMeal.recipe_name,
+          meal_type: selectedMeal.meal_type,
+          available_ingredients: [
+            ...pantryItems.map((p: any) => p.name),
+            ...customIngredientsList
+          ],
+          required_ingredients: allIngredients,
+          custom_additions: customIngredientsList,
+        })
+      }
+    });
   };
 
   const getMealColor = (mealType: string): [string, string] => {
