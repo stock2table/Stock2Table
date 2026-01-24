@@ -238,10 +238,7 @@ export default function MealPlanScreen() {
                 <Ionicons name="calendar" size={24} color="#22c55e" />
                 <View>
                   <Text style={styles.planTitle}>Week of {selectedPlan.week_start_date}</Text>
-                  <Text style={styles.planMeals}>
-                    {selectedPlan.meals?.length || 0} meals planned
-                    {selectedPlan.meals?.length > 0 && ` (${selectedPlan.meals.map((m: any) => m.day).filter((v: any, i: number, a: any) => a.indexOf(v) === i).length} days)`}
-                  </Text>
+                  <Text style={styles.planMeals}>{selectedPlan.meals?.length || 0} meals planned</Text>
                 </View>
               </View>
             </View>
