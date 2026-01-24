@@ -491,64 +491,18 @@ export default function MealPlanScreen() {
                   </View>
                   
                   <View style={styles.mealsContainer}>
-                    {/* Show standard meal types first */}
-                    {MEAL_TYPES.map((mealType) => {
-                      const meal = getMealForDateAndType(dateStr, mealType);
-                      const [color1, color2] = getMealColor(mealType);
-                      const mealImage = meal ? getMealImageByName(meal.recipe_name, mealType) : null;
-                      
-                      return (
-                        <TouchableOpacity 
-                          key={mealType} 
-                          style={styles.mealSlot}
-                          onPress={() => meal && openMealModal(meal)}
-                          activeOpacity={meal ? 0.7 : 1}
-                          disabled={!meal}
-                        >
-                          {meal && mealImage && (
-                            <Image 
-                              source={{ uri: mealImage }} 
-                              style={styles.mealThumbnail} 
-                            />
-                          )}
-                          <LinearGradient colors={[color1, color2]} style={styles.mealIcon}>
-                            <Ionicons name={MEAL_ICONS[mealType]} size={16} color="white" />
-                          </LinearGradient>
-                          <View style={styles.mealInfo}>
-                            <Text style={styles.mealType}>
-                              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-                            </Text>
-                            {meal ? (
-                              <>
-                                <Text style={styles.mealName} numberOfLines={2}>
-                                  {meal.recipe_name}
-                                </Text>
-                                <Text style={styles.ingredientCount}>
-                                  {meal.ingredients_needed?.length || 0} ingredients • Tap to customize
-                                </Text>
-                              </>
-                            ) : (
-                              <Text style={styles.emptyMeal}>Not planned</Text>
-                            )}
-                          </View>
-                          {meal && (
-                            <Ionicons name="chevron-forward" size={18} color="#22c55e" />
-                          )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                    
-                    {/* Show additional custom meals */}
-                    {mealsForDay
-                      .filter((meal: any) => meal.is_custom)
-                      .map((meal: any, idx: number) => {
-                        const [color1, color2] = getMealColor(meal.meal_type || 'lunch');
-                        const mealImage = getMealImageByName(meal.recipe_name, meal.meal_type || 'lunch');
+                    {/* Show ALL meals for this day */}
+                    {mealsForDay.length > 0 ? (
+                      mealsForDay.map((meal: any, mealIdx: number) => {
+                        const mealType = meal.meal_type || 'lunch';
+                        const [color1, color2] = getMealColor(mealType);
+                        const mealImage = getMealImageByName(meal.recipe_name, mealType);
+                        const isCustom = meal.is_custom === true;
                         
                         return (
                           <TouchableOpacity 
-                            key={`custom-${idx}`} 
-                            style={[styles.mealSlot, styles.customMealSlot]}
+                            key={`meal-${mealIdx}`} 
+                            style={[styles.mealSlot, isCustom && styles.customMealSlot]}
                             onPress={() => openMealModal(meal)}
                             activeOpacity={0.7}
                           >
@@ -559,24 +513,36 @@ export default function MealPlanScreen() {
                               />
                             )}
                             <LinearGradient colors={[color1, color2]} style={styles.mealIcon}>
-                              <Ionicons name={MEAL_ICONS[meal.meal_type] || 'restaurant'} size={16} color="white" />
+                              <Ionicons name={MEAL_ICONS[mealType] || 'restaurant'} size={16} color="white" />
                             </LinearGradient>
                             <View style={styles.mealInfo}>
-                              <View style={styles.customMealLabel}>
-                                <Ionicons name="star" size={10} color="#8b5cf6" />
-                                <Text style={styles.customMealLabelText}>Custom</Text>
-                              </View>
+                              {isCustom ? (
+                                <View style={styles.customMealLabel}>
+                                  <Ionicons name="star" size={10} color="#8b5cf6" />
+                                  <Text style={styles.customMealLabelText}>Custom • {mealType.charAt(0).toUpperCase() + mealType.slice(1)}</Text>
+                                </View>
+                              ) : (
+                                <Text style={styles.mealType}>
+                                  {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                                </Text>
+                              )}
                               <Text style={styles.mealName} numberOfLines={2}>
                                 {meal.recipe_name}
                               </Text>
-                              <Text style={styles.ingredientCount}>
+                              <Text style={[styles.ingredientCount, isCustom && { color: '#8b5cf6' }]}>
                                 {meal.ingredients_needed?.length || 0} ingredients • Tap for recipe
                               </Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={18} color="#8b5cf6" />
+                            <Ionicons name="chevron-forward" size={18} color={isCustom ? '#8b5cf6' : '#22c55e'} />
                           </TouchableOpacity>
                         );
-                      })}
+                      })
+                    ) : (
+                      <View style={styles.noMealsPlaceholder}>
+                        <Text style={styles.noMealsText}>No meals planned for this day</Text>
+                        <Text style={styles.noMealsHint}>Tap + to add a meal</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               );
