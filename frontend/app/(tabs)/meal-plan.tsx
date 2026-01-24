@@ -460,8 +460,18 @@ export default function MealPlanScreen() {
               return (
                 <View key={dateStr} style={styles.dayCard}>
                   <View style={styles.dayHeader}>
-                    <Text style={styles.dayTitle}>{formatted}</Text>
-                    <Text style={styles.dayNumber}>Day {dayIndex + 1}</Text>
+                    <View>
+                      <Text style={styles.dayTitle}>{formatted}</Text>
+                      <Text style={styles.dayNumber}>Day {dayIndex + 1}</Text>
+                    </View>
+                    {/* Add Meal Button */}
+                    <TouchableOpacity 
+                      style={styles.addMealButton}
+                      onPress={() => openAddMealModal(dateStr)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add-circle" size={28} color="#22c55e" />
+                    </TouchableOpacity>
                   </View>
                   
                   <View style={styles.mealsContainer}>
