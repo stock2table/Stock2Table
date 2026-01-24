@@ -94,9 +94,6 @@ const getMealImageByName = (recipeName: string, mealType: string) => {
   
   return defaults[mealType] || defaults.lunch;
 };
-    'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=300&q=80',
-  ],
-};
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1493770348161-369560ae357d?w=800&q=80';
 
@@ -124,7 +121,6 @@ export default function MealPlanScreen() {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      // Fetch pantry first, then meal plans
       await fetchPantry(sessionToken!);
       await fetchMealPlans(sessionToken!);
     } catch (error) {
@@ -165,33 +161,31 @@ export default function MealPlanScreen() {
     }
   };
 
-  const getMealForDayAndType = (day: string, mealType: string, dayIndex: number) => {
-    if (!selectedPlan || !selectedPlan.meals) {
-      return null;
+  // Get meals for a specific date
+  const getMealsForDate = (dateStr: string) => {
+    if (!selectedPlan || !selectedPlan.meals) return [];
+    return selectedPlan.meals.filter((m: any) => m.day === dateStr);
+  };
+
+  // Get a specific meal for date and type
+  const getMealForDateAndType = (dateStr: string, mealType: string) => {
+    if (!selectedPlan || !selectedPlan.meals) return null;
+    return selectedPlan.meals.find((m: any) => 
+      m.day === dateStr && m.meal_type?.toLowerCase() === mealType.toLowerCase()
+    );
+  };
+
+  // Navigate to recipe detail or create one
+  const navigateToMeal = (meal: any) => {
+    if (meal) {
+      // For now, just show the meal details in an alert
+      // In the future, you could navigate to a recipe detail page
+      Alert.alert(
+        meal.recipe_name,
+        `Ingredients needed:\n${meal.ingredients_needed?.join('\n• ') || 'No ingredients listed'}`,
+        [{ text: 'OK' }]
+      );
     }
-    
-    // Calculate the target date for this day
-    const targetDate = getDateForDayIndex(selectedPlan.week_start_date, dayIndex);
-    
-    // Try multiple matching strategies
-    const meal = selectedPlan.meals.find((m: any) => {
-      // Check if day is a date string (YYYY-MM-DD format)
-      const isDateFormat = m.day && m.day.includes('-') && m.day.length >= 10;
-      
-      let dayMatch = false;
-      if (isDateFormat) {
-        // Match by date string
-        dayMatch = m.day === targetDate;
-      } else {
-        // Match by day name (case-insensitive)
-        dayMatch = m.day?.toLowerCase() === day.toLowerCase();
-      }
-      
-      const typeMatch = m.meal_type?.toLowerCase() === mealType.toLowerCase();
-      return dayMatch && typeMatch;
-    });
-    
-    return meal;
   };
 
   const getMealColor = (mealType: string) => {
