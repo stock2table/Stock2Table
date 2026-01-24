@@ -32,18 +32,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
-    checkExistingSession();
+    const init = async () => {
+      // First check for auth redirect (session_id in URL)
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        const url = window.location.href;
+        console.log('Checking URL for session_id:', url);
+        if (url.includes('session_id=')) {
+          await processAuthRedirect(url);
+          // Clean up URL after processing
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+          return; // Don't check existing session if we just processed auth
+        }
+      }
+      await checkExistingSession();
+    };
+    init();
   }, []);
 
   // Handle deep linking for mobile auth
   useEffect(() => {
+    if (Platform.OS === 'web') return; // Skip on web
+    
     const handleDeepLink = async (event: { url: string }) => {
+      console.log('Deep link received:', event.url);
       await processAuthRedirect(event.url);
     };
 
     // Check for cold start (app opened from killed state)
     Linking.getInitialURL().then((url) => {
       if (url) {
+        console.log('Initial URL:', url);
         processAuthRedirect(url);
       }
     });
