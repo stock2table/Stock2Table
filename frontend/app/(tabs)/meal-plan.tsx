@@ -697,6 +697,185 @@ export default function MealPlanScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Add New Meal Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={addMealModalVisible}
+        onRequestClose={() => setAddMealModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity 
+                onPress={() => setAddMealModalVisible(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Add New Meal</Text>
+              <View style={{ width: 32 }} />
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {/* Date Display */}
+              <View style={styles.addMealDateSection}>
+                <Ionicons name="calendar" size={20} color="#22c55e" />
+                <Text style={styles.addMealDateText}>
+                  {addMealDate ? formatDate(addMealDate).formatted : 'Select a date'}
+                </Text>
+              </View>
+
+              {/* Meal Type Selection */}
+              <View style={styles.mealTypeSection}>
+                <Text style={styles.sectionTitle}>Meal Type</Text>
+                <View style={styles.mealTypeButtons}>
+                  {MEAL_TYPES.map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.mealTypeButton,
+                        newMealType === type && styles.mealTypeButtonActive
+                      ]}
+                      onPress={() => setNewMealType(type)}
+                    >
+                      <Ionicons 
+                        name={MEAL_ICONS[type]} 
+                        size={18} 
+                        color={newMealType === type ? 'white' : '#6b7280'} 
+                      />
+                      <Text style={[
+                        styles.mealTypeButtonText,
+                        newMealType === type && styles.mealTypeButtonTextActive
+                      ]}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Meal Name Input */}
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Meal Name</Text>
+                <TextInput
+                  style={styles.mealNameInput}
+                  placeholder="e.g., Grilled Chicken Salad, Pasta Primavera..."
+                  placeholderTextColor="#9ca3af"
+                  value={newMealName}
+                  onChangeText={setNewMealName}
+                />
+              </View>
+
+              {/* Ingredients Section */}
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Ingredients (Optional)</Text>
+                <Text style={styles.sectionHint}>
+                  Add ingredients for your meal, or we'll suggest from your pantry
+                </Text>
+                
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.ingredientInput}
+                    placeholder="e.g., chicken breast, olive oil..."
+                    placeholderTextColor="#9ca3af"
+                    value={newMealIngredients}
+                    onChangeText={setNewMealIngredients}
+                    onSubmitEditing={addNewMealIngredient}
+                    returnKeyType="done"
+                  />
+                  <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={addNewMealIngredient}
+                    disabled={!newMealIngredients.trim()}
+                  >
+                    <Ionicons name="add" size={24} color="white" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Added Ingredients List */}
+                {newMealIngredientsList.length > 0 && (
+                  <View style={styles.customIngredientsList}>
+                    <View style={styles.ingredientTags}>
+                      {newMealIngredientsList.map((ingredient, idx) => (
+                        <TouchableOpacity 
+                          key={idx} 
+                          style={[styles.ingredientTag, styles.customTag]}
+                          onPress={() => removeNewMealIngredient(ingredient)}
+                        >
+                          <Text style={[styles.ingredientTagText, { color: '#8b5cf6' }]}>
+                            {ingredient}
+                          </Text>
+                          <Ionicons name="close-circle" size={14} color="#8b5cf6" />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Pantry Suggestions */}
+                {pantryItems.length > 0 && newMealIngredientsList.length === 0 && (
+                  <View style={styles.pantryHint}>
+                    <Ionicons name="bulb" size={16} color="#f59e0b" />
+                    <Text style={styles.pantryHintText}>
+                      Quick add from pantry: 
+                    </Text>
+                  </View>
+                )}
+                {pantryItems.length > 0 && newMealIngredientsList.length === 0 && (
+                  <View style={styles.ingredientTags}>
+                    {pantryItems.slice(0, 6).map((item: any, idx: number) => (
+                      <TouchableOpacity 
+                        key={idx} 
+                        style={styles.pantryTag}
+                        onPress={() => setNewMealIngredientsList([...newMealIngredientsList, item.name])}
+                      >
+                        <Ionicons name="add" size={12} color="#22c55e" />
+                        <Text style={styles.pantryTagText}>{item.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            {/* Save Button */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.cancelBtn}
+                onPress={() => setAddMealModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.getRecipeBtn, { flex: 2 }]}
+                onPress={saveNewMeal}
+                disabled={savingMeal || !newMealName.trim()}
+              >
+                <LinearGradient 
+                  colors={newMealName.trim() ? ['#22c55e', '#16a34a'] : ['#d1d5db', '#9ca3af']} 
+                  style={styles.getRecipeBtnGradient}
+                >
+                  {savingMeal ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle" size={20} color="white" />
+                      <Text style={styles.getRecipeBtnText}>Add Meal</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
