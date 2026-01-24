@@ -380,4 +380,6 @@ const styles = StyleSheet.create({
   historyCardActive: { borderColor: '#22c55e', backgroundColor: '#f0fdf4' },
   historyDate: { fontSize: 13, fontWeight: '600', color: '#1f2937', marginTop: 8 },
   historyMeals: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  debugInfo: { backgroundColor: '#fef3c7', padding: 12, marginHorizontal: 16, marginBottom: 12, borderRadius: 8 },
+  debugText: { fontSize: 10, color: '#92400e', fontFamily: 'monospace' },
 });
