@@ -843,6 +843,54 @@ Format: {{\"meals\": [{{\"day\": \"Monday\", \"meal_type\": \"breakfast\", \"rec
         logger.error(f"Meal plan generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate meal plan: {str(e)}")
 
+class AddMealRequest(BaseModel):
+    day: str
+    meal_type: str
+    recipe_name: str
+    ingredients_needed: List[str] = []
+    is_custom: bool = True
+
+@api_router.post("/meal-plans/{plan_id}/add-meal")
+async def add_meal_to_plan(plan_id: str, request: AddMealRequest, current_user: User = Depends(require_auth)):
+    """Add a custom meal to an existing meal plan"""
+    try:
+        # Find the meal plan
+        meal_plan = await db.meal_plans.find_one({"plan_id": plan_id, "user_id": current_user.user_id})
+        if not meal_plan:
+            raise HTTPException(status_code=404, detail="Meal plan not found")
+        
+        # Create the new meal
+        new_meal = {
+            "day": request.day,
+            "meal_type": request.meal_type,
+            "recipe_name": request.recipe_name,
+            "ingredients_needed": request.ingredients_needed,
+            "is_custom": request.is_custom
+        }
+        
+        # Add the meal to the plan
+        await db.meal_plans.update_one(
+            {"plan_id": plan_id, "user_id": current_user.user_id},
+            {"$push": {"meals": new_meal}}
+        )
+        
+        # Track activity
+        await db.activity_logs.insert_one({
+            "user_id": current_user.user_id,
+            "activity_type": "meal_added",
+            "item_name": request.recipe_name,
+            "details": {"plan_id": plan_id, "meal_type": request.meal_type},
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        return {"status": "success", "meal": new_meal}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Add meal error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to add meal: {str(e)}")
+
 # ==================== SHOPPING LIST ENDPOINTS ====================
 
 @api_router.get("/shopping-lists", response_model=List[ShoppingList])
