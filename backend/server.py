@@ -503,13 +503,21 @@ async def generate_recipe_details(request: RecipeDetailsRequest, current_user: U
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
             session_id=f"trending_{uuid.uuid4().hex[:8]}",
-            system_message="You are a culinary expert. Generate trending recipe suggestions."
+            system_message="You are a culinary expert. Generate detailed recipe instructions."
         ).with_model("openai", "gpt-4.1-mini")
+        
+        # Build custom additions text
+        custom_text = ""
+        if request.custom_additions:
+            custom_text = f"\nUser's custom additions to include: {', '.join(request.custom_additions)}"
         
         prompt = f"""Generate a detailed recipe for: {request.recipe_name}
 
 Available ingredients: {', '.join(request.available_ingredients) if request.available_ingredients else 'Not specified'}
 Missing ingredients to buy: {', '.join(request.missing_ingredients) if request.missing_ingredients else 'None'}
+Required ingredients for this recipe: {', '.join(request.required_ingredients) if request.required_ingredients else 'Standard recipe ingredients'}{custom_text}
+
+{"IMPORTANT: The user wants to ADD these extra ingredients: " + ', '.join(request.custom_additions) + ". Please incorporate them into the recipe creatively!" if request.custom_additions else ""}
 
 Respond with a JSON object containing:
 {{
@@ -520,7 +528,7 @@ Respond with a JSON object containing:
     "servings": 4,
     "difficulty": "easy|medium|hard",
     "ingredients": [
-        {{"name": "ingredient name", "quantity": "1", "unit": "cup"}}
+        {{"name": "ingredient name", "quantity": "1", "unit": "cup", "custom": false}}
     ],
     "instructions": [
         "Step 1: Detailed instruction...",
@@ -530,7 +538,8 @@ Respond with a JSON object containing:
     "tips": ["Chef tip 1", "Chef tip 2"]
 }}
 
-Make the instructions detailed and easy to follow. Include 6-10 steps. Be specific with quantities and cooking times."""
+Make the instructions detailed and easy to follow. Include 6-10 steps. Be specific with quantities and cooking times.
+{"Mark custom ingredients with 'custom': true in the ingredients array." if request.custom_additions else ""}"""
 
         response = await chat.send_message(UserMessage(text=prompt))
         
