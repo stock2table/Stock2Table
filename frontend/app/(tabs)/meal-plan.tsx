@@ -188,18 +188,13 @@ export default function MealPlanScreen() {
     }
   };
 
-  const getMealColor = (mealType: string) => {
+  const getMealColor = (mealType: string): [string, string] => {
     switch (mealType) {
       case 'breakfast': return ['#f97316', '#ea580c'];
       case 'lunch': return ['#22c55e', '#16a34a'];
       case 'dinner': return ['#8b5cf6', '#7c3aed'];
       default: return ['#6b7280', '#4b5563'];
     }
-  };
-
-  const getMealImage = (mealType: string, index: number) => {
-    const images = MEAL_IMAGES[mealType] || MEAL_IMAGES.dinner;
-    return images[index % images.length];
   };
 
   const navigateToRecipe = (meal: any) => {
@@ -225,6 +220,9 @@ export default function MealPlanScreen() {
       }
     });
   };
+
+  // Get unique dates from the selected plan
+  const planDates = selectedPlan?.meals ? getUniqueDates(selectedPlan.meals) : [];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -270,7 +268,7 @@ export default function MealPlanScreen() {
             <ActivityIndicator size="large" color="#22c55e" />
             <Text style={styles.loadingText}>Loading meal plans...</Text>
           </View>
-        ) : selectedPlan ? (
+        ) : selectedPlan && planDates.length > 0 ? (
           <View style={styles.planContainer}>
             {/* Plan Header */}
             <View style={styles.planHeader}>
@@ -283,57 +281,67 @@ export default function MealPlanScreen() {
               </View>
             </View>
 
-            {/* Days */}
-            {DAYS.map((day, dayIndex) => (
-              <View key={day} style={styles.dayCard}>
-                <View style={styles.dayHeader}>
-                  <Text style={styles.dayTitle}>{day}</Text>
-                  <Text style={styles.dayNumber}>{dayIndex + 1}</Text>
-                </View>
-                
-                <View style={styles.mealsContainer}>
-                  {MEAL_TYPES.map((mealType, mealIndex) => {
-                    const meal = getMealForDayAndType(day, mealType, dayIndex);
-                    const [color1, color2] = getMealColor(mealType);
-                    
-                    return (
-                      <TouchableOpacity 
-                        key={mealType} 
-                        style={styles.mealSlot}
-                        onPress={() => meal && navigateToRecipe(meal)}
-                        activeOpacity={meal ? 0.7 : 1}
-                        disabled={!meal}
-                      >
-                        {meal && (
-                          <Image 
-                            source={{ uri: getMealImage(mealType, dayIndex + mealIndex) }} 
-                            style={styles.mealThumbnail} 
-                          />
-                        )}
-                        <LinearGradient colors={[color1, color2]} style={styles.mealIcon}>
-                          <Ionicons name={MEAL_ICONS[mealType]} size={16} color="white" />
-                        </LinearGradient>
-                        <View style={styles.mealInfo}>
-                          <Text style={styles.mealType}>
-                            {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-                          </Text>
-                          {meal ? (
-                            <Text style={styles.mealName} numberOfLines={1}>
-                              {meal.recipe_name}
-                            </Text>
-                          ) : (
-                            <Text style={styles.emptyMeal}>Not planned</Text>
+            {/* Days - Using actual dates from the plan */}
+            {planDates.map((dateStr: string, dayIndex: number) => {
+              const { dayName, formatted } = formatDate(dateStr);
+              
+              return (
+                <View key={dateStr} style={styles.dayCard}>
+                  <View style={styles.dayHeader}>
+                    <Text style={styles.dayTitle}>{formatted}</Text>
+                    <Text style={styles.dayNumber}>Day {dayIndex + 1}</Text>
+                  </View>
+                  
+                  <View style={styles.mealsContainer}>
+                    {MEAL_TYPES.map((mealType) => {
+                      const meal = getMealForDateAndType(dateStr, mealType);
+                      const [color1, color2] = getMealColor(mealType);
+                      const mealImage = meal ? getMealImageByName(meal.recipe_name, mealType) : null;
+                      
+                      return (
+                        <TouchableOpacity 
+                          key={mealType} 
+                          style={styles.mealSlot}
+                          onPress={() => meal && navigateToRecipe(meal)}
+                          activeOpacity={meal ? 0.7 : 1}
+                          disabled={!meal}
+                        >
+                          {meal && mealImage && (
+                            <Image 
+                              source={{ uri: mealImage }} 
+                              style={styles.mealThumbnail} 
+                            />
                           )}
-                        </View>
-                        {meal && (
-                          <Ionicons name="chevron-forward" size={18} color="#22c55e" />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
+                          <LinearGradient colors={[color1, color2]} style={styles.mealIcon}>
+                            <Ionicons name={MEAL_ICONS[mealType]} size={16} color="white" />
+                          </LinearGradient>
+                          <View style={styles.mealInfo}>
+                            <Text style={styles.mealType}>
+                              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                            </Text>
+                            {meal ? (
+                              <>
+                                <Text style={styles.mealName} numberOfLines={2}>
+                                  {meal.recipe_name}
+                                </Text>
+                                <Text style={styles.ingredientCount}>
+                                  {meal.ingredients_needed?.length || 0} ingredients
+                                </Text>
+                              </>
+                            ) : (
+                              <Text style={styles.emptyMeal}>Not planned</Text>
+                            )}
+                          </View>
+                          {meal && (
+                            <Ionicons name="chevron-forward" size={18} color="#22c55e" />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         ) : (
           <View style={styles.emptyState}>
