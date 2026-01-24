@@ -27,35 +27,55 @@ export default function AIRecipeScreen() {
     try {
       setLoading(true);
       
+      // Prepare ingredients - combine all available sources
+      const allIngredients = [
+        ...(rec.available_ingredients || []),
+        ...(rec.custom_additions || []),
+      ];
+      
       // Call AI to generate detailed recipe instructions
       const response = await axios.post(
         `${BACKEND_URL}/api/recipes/generate-details`,
-        { recipe_name: rec.name, available_ingredients: rec.available_ingredients || [], missing_ingredients: rec.missing_ingredients || [] },
+        { 
+          recipe_name: rec.name, 
+          available_ingredients: allIngredients, 
+          missing_ingredients: rec.missing_ingredients || [],
+          required_ingredients: rec.required_ingredients || [],
+          custom_additions: rec.custom_additions || [],
+        },
         { headers: { Authorization: `Bearer ${sessionToken}` }, timeout: 60000 }
       );
       
       setRecipeDetails({
         ...rec,
         ...response.data,
+        custom_additions: rec.custom_additions || [],
         image_url: response.data.image_url || `https://source.unsplash.com/800x600/?${encodeURIComponent(rec.name)},food`,
       });
     } catch (error) {
       // Fallback to basic recipe structure
+      const customAdditions = rec.custom_additions || [];
       setRecipeDetails({
         ...rec,
+        custom_additions: customAdditions,
         image_url: `https://source.unsplash.com/800x600/?${encodeURIComponent(rec.name)},food`,
         prep_time: 15,
         cook_time: 30,
         servings: 4,
         difficulty: 'medium',
-        ingredients: [...(rec.available_ingredients || []).map((i: string) => ({ name: i, quantity: '1', unit: 'as needed' })), ...(rec.missing_ingredients || []).map((i: string) => ({ name: i, quantity: '1', unit: 'as needed', missing: true }))],
+        ingredients: [
+          ...(rec.available_ingredients || []).map((i: string) => ({ name: i, quantity: '1', unit: 'as needed' })), 
+          ...(rec.missing_ingredients || []).map((i: string) => ({ name: i, quantity: '1', unit: 'as needed', missing: true })),
+          ...customAdditions.map((i: string) => ({ name: i, quantity: '1', unit: 'as needed', custom: true })),
+        ],
         instructions: [
           'Gather all ingredients and prepare your workspace.',
           `Prepare ${rec.name} according to traditional methods.`,
+          customAdditions.length > 0 ? `Add your custom ingredients: ${customAdditions.join(', ')} to enhance the dish.` : null,
           'Season to taste and adjust flavors as needed.',
           'Plate beautifully and serve hot.',
           'Enjoy your homemade meal!'
-        ],
+        ].filter(Boolean),
         nutritional_info: { calories: 400, protein: 20, carbs: 45, fat: 18 },
         tips: ['Adjust seasoning to your taste', 'Can be prepared ahead of time', 'Pairs well with a fresh salad'],
       });
