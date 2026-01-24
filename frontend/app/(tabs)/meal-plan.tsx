@@ -456,13 +456,14 @@ export default function MealPlanScreen() {
             {/* Days - Using actual dates from the plan */}
             {planDates.map((dateStr: string, dayIndex: number) => {
               const { dayName, formatted } = formatDate(dateStr);
+              const mealsForDay = getMealsForDate(dateStr);
               
               return (
                 <View key={dateStr} style={styles.dayCard}>
                   <View style={styles.dayHeader}>
                     <View>
                       <Text style={styles.dayTitle}>{formatted}</Text>
-                      <Text style={styles.dayNumber}>Day {dayIndex + 1}</Text>
+                      <Text style={styles.dayNumber}>Day {dayIndex + 1} • {mealsForDay.length} meals</Text>
                     </View>
                     {/* Add Meal Button */}
                     <TouchableOpacity 
@@ -475,6 +476,7 @@ export default function MealPlanScreen() {
                   </View>
                   
                   <View style={styles.mealsContainer}>
+                    {/* Show standard meal types first */}
                     {MEAL_TYPES.map((mealType) => {
                       const meal = getMealForDateAndType(dateStr, mealType);
                       const [color1, color2] = getMealColor(mealType);
