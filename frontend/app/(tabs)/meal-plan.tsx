@@ -217,6 +217,87 @@ export default function MealPlanScreen() {
     );
   };
 
+  // Open add meal modal for a specific date
+  const openAddMealModal = (dateStr: string) => {
+    setAddMealDate(dateStr);
+    setNewMealName('');
+    setNewMealType('lunch');
+    setNewMealIngredients('');
+    setNewMealIngredientsList([]);
+    setAddMealModalVisible(true);
+  };
+
+  // Add ingredient to new meal
+  const addNewMealIngredient = () => {
+    const ingredient = newMealIngredients.trim();
+    if (ingredient && !newMealIngredientsList.includes(ingredient)) {
+      setNewMealIngredientsList([...newMealIngredientsList, ingredient]);
+      setNewMealIngredients('');
+    }
+  };
+
+  // Remove ingredient from new meal
+  const removeNewMealIngredient = (ingredient: string) => {
+    setNewMealIngredientsList(newMealIngredientsList.filter(i => i !== ingredient));
+  };
+
+  // Save new custom meal
+  const saveNewMeal = async () => {
+    if (!newMealName.trim()) {
+      Alert.alert('Error', 'Please enter a meal name');
+      return;
+    }
+
+    try {
+      setSavingMeal(true);
+      
+      // Add the meal to the current plan
+      const newMeal = {
+        day: addMealDate,
+        meal_type: newMealType,
+        recipe_name: newMealName.trim(),
+        ingredients_needed: newMealIngredientsList.length > 0 
+          ? newMealIngredientsList 
+          : pantryItems.slice(0, 3).map((p: any) => p.name),
+        is_custom: true,
+      };
+
+      // Update the plan via API
+      const response = await axios.post(
+        `${BACKEND_URL}/api/meal-plans/${selectedPlan.plan_id}/add-meal`,
+        newMeal,
+        { headers: { Authorization: `Bearer ${sessionToken}` } }
+      );
+
+      // Update local state
+      setSelectedPlan({
+        ...selectedPlan,
+        meals: [...(selectedPlan.meals || []), newMeal],
+      });
+
+      setAddMealModalVisible(false);
+      Alert.alert('Success', 'Meal added successfully!');
+    } catch (error) {
+      console.error('Error adding meal:', error);
+      // Still add locally even if API fails
+      setSelectedPlan({
+        ...selectedPlan,
+        meals: [...(selectedPlan.meals || []), {
+          day: addMealDate,
+          meal_type: newMealType,
+          recipe_name: newMealName.trim(),
+          ingredients_needed: newMealIngredientsList.length > 0 
+            ? newMealIngredientsList 
+            : pantryItems.slice(0, 3).map((p: any) => p.name),
+          is_custom: true,
+        }],
+      });
+      setAddMealModalVisible(false);
+    } finally {
+      setSavingMeal(false);
+    }
+  };
+
   // Open meal customization modal
   const openMealModal = (meal: any) => {
     if (meal) {
