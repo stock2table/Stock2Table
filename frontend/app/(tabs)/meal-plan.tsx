@@ -955,6 +955,7 @@ const styles = StyleSheet.create({
 
   mealsContainer: { padding: 12, gap: 10 },
   mealSlot: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f9fafb', borderRadius: 12, gap: 12 },
+  customMealSlot: { backgroundColor: '#faf5ff', borderWidth: 1, borderColor: '#e9d5ff' },
   mealThumbnail: { width: 50, height: 50, borderRadius: 10, backgroundColor: '#e5e7eb' },
   mealIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   mealInfo: { flex: 1 },
@@ -962,6 +963,8 @@ const styles = StyleSheet.create({
   mealName: { fontSize: 14, fontWeight: '600', color: '#1f2937', marginTop: 2 },
   ingredientCount: { fontSize: 11, color: '#22c55e', marginTop: 2 },
   emptyMeal: { fontSize: 13, color: '#d1d5db', fontStyle: 'italic', marginTop: 2 },
+  customMealLabel: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
+  customMealLabelText: { fontSize: 10, fontWeight: '600', color: '#8b5cf6', textTransform: 'uppercase' },
 
   emptyState: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 40 },
   emptyIconBg: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
