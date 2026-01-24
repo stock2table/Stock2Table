@@ -246,15 +246,6 @@ export default function MealPlanScreen() {
               </View>
             </View>
 
-            {/* Debug Info - Remove in production */}
-            {selectedPlan.meals && selectedPlan.meals.length > 0 && (
-              <View style={styles.debugInfo}>
-                <Text style={styles.debugText}>
-                  Sample meal: {JSON.stringify(selectedPlan.meals[0])}
-                </Text>
-              </View>
-            )}
-
             {/* Days */}
             {DAYS.map((day, dayIndex) => (
               <View key={day} style={styles.dayCard}>
