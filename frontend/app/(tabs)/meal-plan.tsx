@@ -625,4 +625,43 @@ const styles = StyleSheet.create({
   historyCardActive: { borderColor: '#22c55e', backgroundColor: '#f0fdf4' },
   historyDate: { fontSize: 13, fontWeight: '600', color: '#1f2937', marginTop: 8 },
   historyMeals: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+
+  // Modal Styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%', paddingBottom: 20 },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  modalCloseBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1f2937' },
+  modalScroll: { maxHeight: 400 },
+
+  // Meal Preview
+  mealPreview: { alignItems: 'center', padding: 20, backgroundColor: '#f9fafb' },
+  mealPreviewImage: { width: 120, height: 120, borderRadius: 16, marginBottom: 12 },
+  mealPreviewTitle: { fontSize: 18, fontWeight: '700', color: '#1f2937', textAlign: 'center' },
+  mealPreviewType: { fontSize: 14, color: '#6b7280', marginTop: 4 },
+
+  // Ingredients Section
+  ingredientsSection: { padding: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1f2937', marginBottom: 8 },
+  sectionHint: { fontSize: 13, color: '#6b7280', marginBottom: 12 },
+  ingredientTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  ingredientTag: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#f0fdf4', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
+  ingredientTagText: { fontSize: 13, color: '#15803d' },
+  customTag: { backgroundColor: '#f3e8ff' },
+
+  // Custom Ingredients Section
+  customSection: { padding: 16, paddingTop: 0 },
+  inputRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  ingredientInput: { flex: 1, backgroundColor: '#f9fafb', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, borderWidth: 1, borderColor: '#e5e7eb' },
+  addButton: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#22c55e', alignItems: 'center', justifyContent: 'center' },
+  customIngredientsList: { marginTop: 12 },
+  customIngredientsLabel: { fontSize: 13, color: '#6b7280', marginBottom: 8 },
+
+  // Modal Actions
+  modalActions: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 16 },
+  quickRecipeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#f0fdf4', paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#22c55e' },
+  quickRecipeBtnText: { fontSize: 15, fontWeight: '600', color: '#22c55e' },
+  getRecipeBtn: { flex: 2, borderRadius: 12, overflow: 'hidden' },
+  getRecipeBtnGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
+  getRecipeBtnText: { fontSize: 15, fontWeight: '700', color: 'white' },
 });
