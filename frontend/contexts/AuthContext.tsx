@@ -105,14 +105,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const processAuthRedirect = async (url: string) => {
     try {
+      console.log('Processing auth redirect:', url);
+      
       // Parse session_id from URL (supports both # and ?)
       const sessionId = 
         url.split('#session_id=')[1]?.split('&')[0] ||
         url.split('?session_id=')[1]?.split('&')[0];
 
+      console.log('Extracted session_id:', sessionId ? 'present' : 'missing');
+      
       if (!sessionId) return;
 
       // Exchange session_id for session_token
+      console.log('Exchanging session_id for token...');
       const response = await axios.post(
         `${BACKEND_URL}/api/auth/session`,
         {},
@@ -120,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       const { session_token, email, name, picture, id } = response.data;
+      console.log('Got session token for user:', email);
 
       // Store session token
       await AsyncStorage.setItem('session_token', session_token);
@@ -127,9 +133,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Set user data
       await fetchUserData(session_token);
+      console.log('Auth redirect complete, user set');
 
     } catch (error) {
       console.error('Auth redirect error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
