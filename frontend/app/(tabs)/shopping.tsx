@@ -350,8 +350,8 @@ export default function ShoppingScreen() {
           <View style={styles.statCard}>
             <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.statGradient}>
               <Ionicons name="cart" size={22} color="white" />
-              <Text style={styles.statNumber}>{totalItems}</Text>
-              <Text style={styles.statLabel}>Total</Text>
+              <Text style={styles.statNumber}>{itemsToBuy}</Text>
+              <Text style={styles.statLabel}>Items to Buy</Text>
             </LinearGradient>
           </View>
           <View style={styles.statCard}>
