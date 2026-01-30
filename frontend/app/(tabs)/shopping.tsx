@@ -305,6 +305,7 @@ export default function ShoppingScreen() {
   const totalItems = localItems.length;
   const checkedCount = checkedItems.size;
   const inPantryCount = localItems.filter((item: any) => item.in_pantry).length;
+  const itemsToBuy = localItems.filter((item: any) => !item.in_pantry && !checkedItems.has(item.ingredient)).length;
   const groceryApps = GROCERY_APPS[region] || GROCERY_APPS.DEFAULT;
 
   return (
