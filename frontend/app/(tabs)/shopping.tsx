@@ -108,9 +108,60 @@ export default function ShoppingScreen() {
 
   useEffect(() => {
     if (selectedList?.items) {
-      setLocalItems(selectedList.items);
+      // Deduplicate items by ingredient name (case-insensitive)
+      const deduplicatedItems = deduplicateIngredients(selectedList.items);
+      setLocalItems(deduplicatedItems);
     }
   }, [selectedList]);
+
+  // Function to deduplicate ingredients and merge quantities
+  const deduplicateIngredients = (items: any[]) => {
+    const ingredientMap = new Map<string, any>();
+    
+    items.forEach((item: any) => {
+      // Normalize ingredient name (lowercase, trim)
+      const normalizedName = item.ingredient?.toLowerCase().trim() || '';
+      
+      if (!normalizedName) return;
+      
+      if (ingredientMap.has(normalizedName)) {
+        // Merge with existing item
+        const existing = ingredientMap.get(normalizedName);
+        
+        // Add quantities if units match, otherwise keep the larger quantity
+        if (existing.unit === item.unit) {
+          existing.quantity = (parseFloat(existing.quantity) || 0) + (parseFloat(item.quantity) || 0);
+        } else {
+          // Keep the larger quantity if units don't match
+          existing.quantity = Math.max(parseFloat(existing.quantity) || 0, parseFloat(item.quantity) || 0);
+        }
+        
+        // Merge recipe names
+        const existingRecipes = existing.recipe_name || '';
+        const newRecipe = item.recipe_name || '';
+        if (newRecipe && !existingRecipes.includes(newRecipe)) {
+          existing.recipe_name = existingRecipes 
+            ? `${existingRecipes}, ${newRecipe}` 
+            : newRecipe;
+        }
+        
+        // Keep in_pantry if any item has it
+        existing.in_pantry = existing.in_pantry || item.in_pantry;
+      } else {
+        // Add new item with proper capitalization
+        ingredientMap.set(normalizedName, {
+          ...item,
+          ingredient: item.ingredient?.charAt(0).toUpperCase() + item.ingredient?.slice(1).toLowerCase() || item.ingredient,
+          quantity: parseFloat(item.quantity) || 1,
+        });
+      }
+    });
+    
+    // Convert map back to array and sort alphabetically
+    return Array.from(ingredientMap.values()).sort((a, b) => 
+      a.ingredient.localeCompare(b.ingredient)
+    );
+  };
 
   const loadData = async () => {
     await Promise.all([
