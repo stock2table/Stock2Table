@@ -269,7 +269,9 @@ export default function ShoppingScreen() {
       recipe_name: 'Manual',
       in_pantry: false,
     };
-    setLocalItems([...localItems, newItem]);
+    // Re-deduplicate after adding to merge with any existing same ingredient
+    const updatedItems = deduplicateIngredients([...localItems, newItem]);
+    setLocalItems(updatedItems);
     setNewItemName('');
     setNewItemQty('1');
     setShowAddModal(false);
