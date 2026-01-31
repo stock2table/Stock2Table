@@ -942,16 +942,57 @@ export default function ShoppingScreen() {
                     onChangeText={setNewItemQty}
                   />
                 </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
+                <View style={{ flex: 1.5, marginLeft: 12 }}>
                   <Text style={styles.inputLabel}>Unit</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="pieces"
-                    placeholderTextColor="#9ca3af"
-                    value={newItemUnit}
-                    onChangeText={setNewItemUnit}
-                  />
+                  <View style={styles.unitDropdownContainer}>
+                    <ScrollView 
+                      horizontal 
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.unitScroll}
+                      contentContainerStyle={styles.unitScrollContent}
+                    >
+                      {UNITS.map((unit) => (
+                        <TouchableOpacity
+                          key={unit.value}
+                          style={[
+                            styles.unitChip,
+                            newItemUnit === unit.value && styles.unitChipActive
+                          ]}
+                          onPress={() => setNewItemUnit(unit.value)}
+                        >
+                          <Text style={[
+                            styles.unitChipText,
+                            newItemUnit === unit.value && styles.unitChipTextActive
+                          ]}>
+                            {unit.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
                 </View>
+              </View>
+
+              {/* Quick unit selection */}
+              <Text style={styles.quickUnitLabel}>Quick Select:</Text>
+              <View style={styles.quickUnitsGrid}>
+                {UNITS.slice(0, 8).map((unit) => (
+                  <TouchableOpacity
+                    key={unit.value}
+                    style={[
+                      styles.quickUnitBtn,
+                      newItemUnit === unit.value && styles.quickUnitBtnActive
+                    ]}
+                    onPress={() => setNewItemUnit(unit.value)}
+                  >
+                    <Text style={[
+                      styles.quickUnitText,
+                      newItemUnit === unit.value && styles.quickUnitTextActive
+                    ]}>
+                      {unit.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
               
               <TouchableOpacity style={styles.addItemBtn} onPress={addItem}>
