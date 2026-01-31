@@ -1168,4 +1168,18 @@ const styles = StyleSheet.create({
   groceryOptionInfo: { flex: 1 },
   groceryOptionName: { fontSize: 16, fontWeight: '600', color: '#1f2937' },
   groceryOptionDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+
+  // Print Modal Styles
+  printModalContent: { backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 24, width: '100%' },
+  printModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  printModalTitle: { fontSize: 20, fontWeight: '700', color: '#1f2937' },
+  printModalBody: { padding: 20 },
+  printModalSubtitle: { fontSize: 14, color: '#6b7280', marginBottom: 20, textAlign: 'center' },
+  printOption: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#f9fafb', borderRadius: 16, marginBottom: 12 },
+  printOptionIcon: { width: 56, height: 56, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  printOptionInfo: { flex: 1 },
+  printOptionTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937' },
+  printOptionDesc: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  printModalCancel: { marginHorizontal: 20, paddingVertical: 16, backgroundColor: '#f3f4f6', borderRadius: 14, alignItems: 'center' },
+  printModalCancelText: { fontSize: 16, fontWeight: '600', color: '#6b7280' },
 });
