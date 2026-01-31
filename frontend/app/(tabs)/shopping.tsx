@@ -306,43 +306,42 @@ export default function ShoppingScreen() {
     return ['#8b5cf6', '#7c3aed'];
   };
 
-  // Generate printable shopping list
-  const generatePrintableList = async () => {
-    try {
-      const today = new Date().toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
+  // Generate HTML for printable list
+  const generatePrintableHTML = () => {
+    const today = new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
 
-      // Separate items to buy from items already in pantry
-      const itemsToBuyList = localItems.filter((item: any) => !item.in_pantry && !checkedItems.has(item.ingredient));
-      const inPantryList = localItems.filter((item: any) => item.in_pantry);
-      const checkedList = localItems.filter((item: any) => checkedItems.has(item.ingredient));
+    // Separate items to buy from items already in pantry
+    const itemsToBuyList = localItems.filter((item: any) => !item.in_pantry && !checkedItems.has(item.ingredient));
+    const inPantryList = localItems.filter((item: any) => item.in_pantry);
+    const checkedList = localItems.filter((item: any) => checkedItems.has(item.ingredient));
 
-      // Categorize items
-      const categorizeItem = (ingredient: string) => {
-        const lower = ingredient.toLowerCase();
-        if (/vegetable|tomato|onion|lettuce|carrot|pepper|spinach|broccoli|garlic|potato/.test(lower)) return 'Vegetables';
-        if (/fruit|apple|orange|banana|berry|mango|grape|lemon|lime/.test(lower)) return 'Fruits';
-        if (/meat|chicken|beef|pork|fish|lamb|salmon|turkey|bacon/.test(lower)) return 'Meat & Seafood';
-        if (/dairy|milk|cheese|yogurt|cream|butter|egg/.test(lower)) return 'Dairy & Eggs';
-        if (/grain|bread|rice|pasta|flour|oat|cereal/.test(lower)) return 'Grains & Bread';
-        if (/oil|sauce|spice|salt|pepper|vinegar|sugar/.test(lower)) return 'Pantry Staples';
-        return 'Other';
-      };
+    // Categorize items
+    const categorizeItem = (ingredient: string) => {
+      const lower = ingredient.toLowerCase();
+      if (/vegetable|tomato|onion|lettuce|carrot|pepper|spinach|broccoli|garlic|potato/.test(lower)) return 'Vegetables';
+      if (/fruit|apple|orange|banana|berry|mango|grape|lemon|lime/.test(lower)) return 'Fruits';
+      if (/meat|chicken|beef|pork|fish|lamb|salmon|turkey|bacon/.test(lower)) return 'Meat & Seafood';
+      if (/dairy|milk|cheese|yogurt|cream|butter|egg/.test(lower)) return 'Dairy & Eggs';
+      if (/grain|bread|rice|pasta|flour|oat|cereal/.test(lower)) return 'Grains & Bread';
+      if (/oil|sauce|spice|salt|pepper|vinegar|sugar/.test(lower)) return 'Pantry Staples';
+      return 'Other';
+    };
 
-      // Group items by category
-      const groupedItems: Record<string, any[]> = {};
-      itemsToBuyList.forEach((item: any) => {
-        const category = categorizeItem(item.ingredient);
-        if (!groupedItems[category]) groupedItems[category] = [];
-        groupedItems[category].push(item);
-      });
+    // Group items by category
+    const groupedItems: Record<string, any[]> = {};
+    itemsToBuyList.forEach((item: any) => {
+      const category = categorizeItem(item.ingredient);
+      if (!groupedItems[category]) groupedItems[category] = [];
+      groupedItems[category].push(item);
+    });
 
-      // Generate HTML
-      const html = `
+    // Generate HTML
+    const html = `
         <!DOCTYPE html>
         <html>
         <head>
