@@ -107,11 +107,17 @@ export default function AddFamilyMemberScreen() {
         preferences: [],
       });
       
-      Alert.alert('Success', 'Family member added! They can now be included in meal planning.', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
+      // Show success message and navigate to profile page
+      Alert.alert(
+        '✅ Family Member Added!', 
+        `${name.trim()} has been added to your family. They will be included in meal planning.`,
+        [{ 
+          text: 'Go to Profile', 
+          onPress: () => router.replace('/(tabs)/profile')
+        }]
+      );
     } catch (error) {
-      Alert.alert('Error', 'Failed to add family member');
+      Alert.alert('Error', 'Failed to add family member. Please try again.');
     } finally {
       setSaving(false);
     }
