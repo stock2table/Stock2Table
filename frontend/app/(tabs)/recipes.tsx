@@ -575,6 +575,33 @@ export default function RecipesScreen() {
                 </View>
               )}
 
+              <Text style={styles.inputLabel}>Best For (Meal Type) *</Text>
+              <Text style={styles.mealTypeHint}>Select when this recipe is ideal to eat</Text>
+              <View style={styles.mealTypeContainer}>
+                {MEAL_TYPE_OPTIONS.map(option => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.mealTypeChip,
+                      selectedMealTypes.includes(option.id) && { backgroundColor: option.color, borderColor: option.color }
+                    ]}
+                    onPress={() => toggleMealType(option.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.mealTypeIcon}>{option.icon}</Text>
+                    <Text style={[
+                      styles.mealTypeText,
+                      selectedMealTypes.includes(option.id) && styles.mealTypeTextSelected
+                    ]}>
+                      {option.label}
+                    </Text>
+                    {selectedMealTypes.includes(option.id) && (
+                      <Ionicons name="checkmark-circle" size={18} color="white" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <Text style={styles.inputLabel}>Description (optional)</Text>
               <TextInput
                 style={[styles.youtubeInput, { height: 80, textAlignVertical: 'top' }]}
@@ -586,7 +613,7 @@ export default function RecipesScreen() {
               />
 
               <Text style={styles.youtubeHint}>
-                💡 Saved recipes will be considered when generating your weekly meal plan
+                💡 Recipes will be suggested for the selected meal types when generating your meal plan
               </Text>
             </ScrollView>
 
