@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, ActivityIndicator, Dimensions, Linking, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, ActivityIndicator, Dimensions, Linking, StatusBar, Modal, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,12 +23,21 @@ export default function RecipesScreen() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [recipes, setRecipes] = useState<any[]>([]);
   const [trendingRecipes, setTrendingRecipes] = useState<any[]>([]);
+  const [savedRecipes, setSavedRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'trending' | 'all'>('trending');
+  const [activeTab, setActiveTab] = useState<'trending' | 'saved' | 'all'>('trending');
+  
+  // Add YouTube recipe modal state
+  const [showAddYouTubeModal, setShowAddYouTubeModal] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeName, setYoutubeName] = useState('');
+  const [youtubeDescription, setYoutubeDescription] = useState('');
+  const [savingYoutube, setSavingYoutube] = useState(false);
 
   useEffect(() => {
     loadRecipes();
     loadTrendingRecipes();
+    loadSavedRecipes();
   }, [sessionToken]);
 
   const loadRecipes = async () => {
@@ -48,6 +57,17 @@ export default function RecipesScreen() {
       console.error('Error loading recipes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSavedRecipes = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/saved-recipes`, {
+        headers: { Authorization: `Bearer ${sessionToken}` }
+      });
+      setSavedRecipes(response.data || []);
+    } catch (error) {
+      console.error('Error loading saved recipes:', error);
     }
   };
 
