@@ -146,7 +146,8 @@ export default function RecipesScreen() {
         description: youtubeDescription.trim() || `Recipe from YouTube`,
         youtube_url: youtubeUrl.trim(),
         thumbnail: thumbnail,
-        source: 'youtube'
+        source: 'youtube',
+        meal_types: selectedMealTypes
       }, { headers: { Authorization: `Bearer ${sessionToken}` } });
 
       setSavedRecipes([response.data, ...savedRecipes]);
@@ -154,7 +155,12 @@ export default function RecipesScreen() {
       setYoutubeName('');
       setYoutubeUrl('');
       setYoutubeDescription('');
-      Alert.alert('Success', 'Recipe saved! It will be considered when generating your meal plan.');
+      setSelectedMealTypes([]);
+      
+      const mealTypeText = selectedMealTypes.length > 0 
+        ? `It will be suggested for ${selectedMealTypes.join(', ')} in your meal plan.`
+        : 'It will be considered when generating your meal plan.';
+      Alert.alert('Success', `Recipe saved! ${mealTypeText}`);
     } catch (error) {
       console.error('Error saving recipe:', error);
       Alert.alert('Error', 'Failed to save recipe. Please try again.');
