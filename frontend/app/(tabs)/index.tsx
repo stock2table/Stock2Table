@@ -1226,6 +1226,32 @@ const styles = StyleSheet.create({
   addToPantryGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
   addToPantryText: { fontSize: 15, fontWeight: '700', color: 'white' },
 
+  // Add More Cuisines Tab
+  addCuisineTab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#22c55e', borderStyle: 'dashed' },
+  addCuisineText: { fontSize: 13, fontWeight: '600', color: '#22c55e' },
+
+  // Cuisine Selection Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  cuisineModalContent: { backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '80%', paddingBottom: 20 },
+  cuisineModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  cuisineModalTitle: { fontSize: 20, fontWeight: '700', color: '#1f2937' },
+  cuisineModalSubtitle: { fontSize: 13, color: '#6b7280', paddingHorizontal: 20, paddingVertical: 12 },
+  cuisineModalScroll: { maxHeight: 400 },
+  cuisineOption: { flexDirection: 'row', alignItems: 'center', padding: 16, marginHorizontal: 16, marginVertical: 6, borderRadius: 16, backgroundColor: '#f9fafb', borderWidth: 2, borderColor: 'transparent' },
+  cuisineOptionEnabled: { backgroundColor: '#f0fdf4', borderColor: '#22c55e' },
+  cuisineOptionIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  cuisineOptionEmoji: { fontSize: 24 },
+  cuisineOptionInfo: { flex: 1, marginLeft: 14 },
+  cuisineOptionName: { fontSize: 16, fontWeight: '600', color: '#1f2937' },
+  cuisineOptionCount: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  cuisineCheckbox: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: '#d1d5db', alignItems: 'center', justifyContent: 'center' },
+  cuisineCheckboxEnabled: { backgroundColor: '#22c55e', borderColor: '#22c55e' },
+  cuisineModalFooter: { paddingHorizontal: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  cuisineModalHint: { fontSize: 13, color: '#6b7280', textAlign: 'center', marginBottom: 12 },
+  cuisineModalDoneBtn: { borderRadius: 14, overflow: 'hidden' },
+  cuisineModalDoneBtnGradient: { paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
+  cuisineModalDoneBtnText: { fontSize: 16, fontWeight: '700', color: 'white' },
+
   // Missing ingredients styles
   missingIngredientsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' },
   missingLabel: { fontSize: 11, color: '#f97316', fontWeight: '600' },
