@@ -100,6 +100,8 @@ export default function ShoppingScreen() {
   const [selectedItem, setSelectedItem] = useState<string>('');
   const [localItems, setLocalItems] = useState<any[]>([]);
   const [locationLoading, setLocationLoading] = useState(true);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printLoading, setPrintLoading] = useState(false);
 
   useEffect(() => {
     if (sessionToken) {
