@@ -31,6 +31,8 @@ interface FamilyMember {
   member_id: string;
   name: string;
   age?: number;
+  email?: string;
+  relationship?: string;
   dietary_restrictions: string[];
   allergies: string[];
   preferences: string[];
