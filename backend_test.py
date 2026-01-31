@@ -24,6 +24,17 @@ class BackendTester:
         # Since the external OAuth service is not available in test environment,
         # we'll create a test user and session directly in the database
         try:
+            # Install required packages
+            import subprocess
+            import sys
+            
+            try:
+                import motor
+            except ImportError:
+                print("   Installing motor for MongoDB access...")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "motor"])
+                import motor
+            
             import uuid
             from datetime import datetime, timedelta, timezone
             from motor.motor_asyncio import AsyncIOMotorClient
@@ -77,6 +88,8 @@ class BackendTester:
                 
         except Exception as e:
             print(f"❌ Authentication setup error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def get_auth_headers(self):
