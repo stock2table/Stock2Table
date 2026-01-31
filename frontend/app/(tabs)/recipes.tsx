@@ -456,9 +456,31 @@ export default function RecipesScreen() {
                       </View>
                       <View style={styles.savedRecipeInfo}>
                         <Text style={styles.savedRecipeName} numberOfLines={2}>{recipe.name}</Text>
-                        <Text style={styles.savedRecipeDesc} numberOfLines={1}>
-                          {recipe.description || 'YouTube Recipe'}
-                        </Text>
+                        {recipe.meal_types && recipe.meal_types.length > 0 ? (
+                          <View style={styles.mealTypeBadges}>
+                            {recipe.meal_types.map((type: string) => (
+                              <View key={type} style={[
+                                styles.mealTypeBadge,
+                                type === 'breakfast' && { backgroundColor: '#fff7ed' },
+                                type === 'lunch' && { backgroundColor: '#fefce8' },
+                                type === 'dinner' && { backgroundColor: '#f5f3ff' },
+                              ]}>
+                                <Text style={[
+                                  styles.mealTypeBadgeText,
+                                  type === 'breakfast' && { color: '#ea580c' },
+                                  type === 'lunch' && { color: '#ca8a04' },
+                                  type === 'dinner' && { color: '#7c3aed' },
+                                ]}>
+                                  {type === 'breakfast' ? '🌅' : type === 'lunch' ? '☀️' : '🌙'} {type.charAt(0).toUpperCase() + type.slice(1)}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
+                        ) : (
+                          <Text style={styles.savedRecipeDesc} numberOfLines={1}>
+                            {recipe.description || 'YouTube Recipe'}
+                          </Text>
+                        )}
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity 
