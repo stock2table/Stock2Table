@@ -152,6 +152,10 @@ export default function MealPlanScreen() {
   const [showWeeklyPrep, setShowWeeklyPrep] = useState(true);
   const [weeklyPrepTasks, setWeeklyPrepTasks] = useState<any[]>([]);
   const [completedPrepTasks, setCompletedPrepTasks] = useState<Set<string>>(new Set());
+  
+  // Pre-generate confirmation modal
+  const [showPreGenerateModal, setShowPreGenerateModal] = useState(false);
+  const [refreshingPantry, setRefreshingPantry] = useState(false);
 
   // Generate weekly prep suggestions based on meals
   const generateWeeklyPrep = (meals: any[]) => {
