@@ -1039,6 +1039,73 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Cuisine Selection Modal */}
+      <Modal
+        visible={showCuisineModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCuisineModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.cuisineModalContent}>
+            <View style={styles.cuisineModalHeader}>
+              <Text style={styles.cuisineModalTitle}>Choose Your Cuisines</Text>
+              <TouchableOpacity onPress={() => setShowCuisineModal(false)}>
+                <Ionicons name="close" size={28} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.cuisineModalSubtitle}>
+              Select the cuisines you want to see in Quick Stock. You can enable or disable anytime.
+            </Text>
+            
+            <ScrollView style={styles.cuisineModalScroll} showsVerticalScrollIndicator={false}>
+              {allCuisines.map((cuisine) => {
+                const data = CUISINE_ESSENTIALS[cuisine];
+                const isEnabled = enabledCuisines.has(cuisine);
+                return (
+                  <TouchableOpacity
+                    key={cuisine}
+                    style={[styles.cuisineOption, isEnabled && styles.cuisineOptionEnabled]}
+                    onPress={() => toggleCuisineEnabled(cuisine)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.cuisineOptionIcon, { backgroundColor: data.color[0] }]}>
+                      <Text style={styles.cuisineOptionEmoji}>{data.emoji}</Text>
+                    </View>
+                    <View style={styles.cuisineOptionInfo}>
+                      <Text style={styles.cuisineOptionName}>
+                        {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
+                      </Text>
+                      <Text style={styles.cuisineOptionCount}>
+                        {data.items.length} essential items
+                      </Text>
+                    </View>
+                    <View style={[styles.cuisineCheckbox, isEnabled && styles.cuisineCheckboxEnabled]}>
+                      {isEnabled && <Ionicons name="checkmark" size={16} color="white" />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            
+            <View style={styles.cuisineModalFooter}>
+              <Text style={styles.cuisineModalHint}>
+                {enabledCuisines.size} of {allCuisines.length} cuisines selected
+              </Text>
+              <TouchableOpacity
+                style={styles.cuisineModalDoneBtn}
+                onPress={() => setShowCuisineModal(false)}
+                activeOpacity={0.9}
+              >
+                <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.cuisineModalDoneBtnGradient}>
+                  <Text style={styles.cuisineModalDoneBtnText}>Done</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
