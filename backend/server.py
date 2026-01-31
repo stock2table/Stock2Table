@@ -818,8 +818,17 @@ async def generate_meal_plan(request: AIMealPlanRequest, current_user: User = De
         # Get family info
         family_members = await db.family_members.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(100)
         
+        # Get saved recipes (YouTube favorites)
+        saved_recipes = await db.saved_recipes.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(100)
+        
         pantry_list = ", ".join([item["name"] for item in pantry_items])
         family_size = len(family_members) + 1  # Include user
+        
+        # Build saved recipes list for prompt
+        saved_recipes_text = ""
+        if saved_recipes:
+            saved_recipes_list = ", ".join([r["name"] for r in saved_recipes])
+            saved_recipes_text = f"\n\nUser's favorite/saved recipes (TRY TO INCLUDE SOME OF THESE): {saved_recipes_list}"
         
         # Initialize AI chat
         chat = LlmChat(
@@ -830,9 +839,13 @@ async def generate_meal_plan(request: AIMealPlanRequest, current_user: User = De
         
         prompt = f"""Create a 7-day meal plan starting {request.week_start_date}.
 Family size: {family_size}
-Available ingredients: {pantry_list}
+Available ingredients: {pantry_list}{saved_recipes_text}
 
-Format: {{\"meals\": [{{\"day\": \"Monday\", \"meal_type\": \"breakfast\", \"recipe_name\": \"...\", \"ingredients_needed\": [...]}}]}}"""
+IMPORTANT: If the user has saved recipes, try to include at least 2-3 of them in the weekly plan.
+
+Format: {{\"meals\": [{{\"day\": \"{request.week_start_date}\", \"meal_type\": \"breakfast\", \"recipe_name\": \"...\", \"ingredients_needed\": [...]}}]}}
+
+Note: Use actual dates (YYYY-MM-DD format) for the "day" field, starting from {request.week_start_date}."""
         
         response = await chat.send_message(UserMessage(text=prompt))
         
