@@ -977,4 +977,29 @@ const styles = StyleSheet.create({
   nutritionText: { flex: 1 },
   nutritionTitle: { fontSize: 16, fontWeight: '700', color: 'white' },
   nutritionDesc: { fontSize: 12, color: 'rgba(255,255,255,0.9)', marginTop: 2 },
+
+  // Cuisine Essentials Styles
+  cuisineSubtitle: { fontSize: 13, color: '#6b7280', marginBottom: 12, marginTop: -6 },
+  cuisineTabs: { paddingBottom: 12, gap: 8 },
+  cuisineTab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: '#f3f4f6' },
+  cuisineTabEmoji: { fontSize: 16 },
+  cuisineTabText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
+  cuisineTabTextActive: { color: 'white' },
+  essentialsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  essentialItem: { width: (width - 56) / 4, aspectRatio: 1, backgroundColor: '#f9fafb', borderRadius: 12, alignItems: 'center', justifyContent: 'center', padding: 6, borderWidth: 2, borderColor: 'transparent', position: 'relative' },
+  essentialItemSelected: { backgroundColor: '#f0fdf4', borderColor: '#22c55e' },
+  essentialItemInPantry: { backgroundColor: '#f3f4f6', opacity: 0.7 },
+  essentialCheckmark: { position: 'absolute', top: 4, right: 4, width: 16, height: 16, borderRadius: 8, backgroundColor: '#22c55e', alignItems: 'center', justifyContent: 'center' },
+  essentialEmoji: { fontSize: 22, marginBottom: 4 },
+  essentialName: { fontSize: 10, fontWeight: '500', color: '#4b5563', textAlign: 'center' },
+  essentialNameSelected: { color: '#15803d', fontWeight: '600' },
+  essentialNameInPantry: { color: '#9ca3af', textDecorationLine: 'line-through' },
+  addToPantryBtn: { marginTop: 14, borderRadius: 14, overflow: 'hidden' },
+  addToPantryGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
+  addToPantryText: { fontSize: 15, fontWeight: '700', color: 'white' },
+
+  // Missing ingredients styles
+  missingIngredientsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' },
+  missingLabel: { fontSize: 11, color: '#f97316', fontWeight: '600' },
+  missingList: { fontSize: 11, color: 'rgba(255,255,255,0.8)', flex: 1 },
 });
