@@ -980,6 +980,104 @@ export default function ShoppingScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Print/Save/Share Modal */}
+      <Modal visible={showPrintModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.printModalContent}>
+            <View style={styles.printModalHeader}>
+              <Text style={styles.printModalTitle}>Print or Save List</Text>
+              <TouchableOpacity onPress={() => setShowPrintModal(false)}>
+                <Ionicons name="close" size={28} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.printModalBody}>
+              <Text style={styles.printModalSubtitle}>
+                {localItems.filter((item: any) => !item.in_pantry && !checkedItems.has(item.ingredient)).length} items to buy
+              </Text>
+
+              {/* Print Option */}
+              <TouchableOpacity 
+                style={styles.printOption} 
+                onPress={handlePrint}
+                disabled={printLoading}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.printOptionIcon, { backgroundColor: '#dbeafe' }]}>
+                  <Ionicons name="print" size={28} color="#3b82f6" />
+                </View>
+                <View style={styles.printOptionInfo}>
+                  <Text style={styles.printOptionTitle}>Print List</Text>
+                  <Text style={styles.printOptionDesc}>Send to connected printer</Text>
+                </View>
+                {printLoading ? (
+                  <ActivityIndicator color="#3b82f6" />
+                ) : (
+                  <Ionicons name="chevron-forward" size={24} color="#d1d5db" />
+                )}
+              </TouchableOpacity>
+
+              {/* Save as PDF Option */}
+              <TouchableOpacity 
+                style={styles.printOption} 
+                onPress={handleSaveAsPDF}
+                disabled={printLoading}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.printOptionIcon, { backgroundColor: '#fee2e2' }]}>
+                  <Ionicons name="document" size={28} color="#ef4444" />
+                </View>
+                <View style={styles.printOptionInfo}>
+                  <Text style={styles.printOptionTitle}>Save as PDF</Text>
+                  <Text style={styles.printOptionDesc}>Download to your device</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#d1d5db" />
+              </TouchableOpacity>
+
+              {/* Share Option */}
+              <TouchableOpacity 
+                style={styles.printOption} 
+                onPress={handleShare}
+                disabled={printLoading}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.printOptionIcon, { backgroundColor: '#dcfce7' }]}>
+                  <Ionicons name="share-social" size={28} color="#22c55e" />
+                </View>
+                <View style={styles.printOptionInfo}>
+                  <Text style={styles.printOptionTitle}>Share List</Text>
+                  <Text style={styles.printOptionDesc}>Send via message or email</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#d1d5db" />
+              </TouchableOpacity>
+
+              {/* Copy to Clipboard Option */}
+              <TouchableOpacity 
+                style={styles.printOption} 
+                onPress={handleCopyText}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.printOptionIcon, { backgroundColor: '#fef3c7' }]}>
+                  <Ionicons name="copy" size={28} color="#f59e0b" />
+                </View>
+                <View style={styles.printOptionInfo}>
+                  <Text style={styles.printOptionTitle}>Copy to Clipboard</Text>
+                  <Text style={styles.printOptionDesc}>Copy as text to paste anywhere</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#d1d5db" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.printModalCancel} 
+              onPress={() => setShowPrintModal(false)}
+            >
+              <Text style={styles.printModalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
