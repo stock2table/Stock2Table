@@ -227,6 +227,7 @@ class SavedRecipe(BaseModel):
     youtube_url: Optional[str] = None
     thumbnail: Optional[str] = None
     source: str = "youtube"
+    meal_types: List[str] = []  # ["breakfast", "lunch", "dinner"]
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SavedRecipeCreate(BaseModel):
@@ -235,6 +236,7 @@ class SavedRecipeCreate(BaseModel):
     youtube_url: Optional[str] = None
     thumbnail: Optional[str] = None
     source: str = "youtube"
+    meal_types: List[str] = []  # ["breakfast", "lunch", "dinner"]
 
 class ScanImageRequest(BaseModel):
     image_base64: str
