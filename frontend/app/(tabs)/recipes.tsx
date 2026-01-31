@@ -932,6 +932,188 @@ const styles = StyleSheet.create({
   emptySubtext: { 
     fontSize: 14, 
     color: '#d1d5db', 
-    marginTop: 4 
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 40
+  },
+
+  // Tab badge
+  tabBadge: {
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  tabBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'white',
+  },
+
+  // Saved Recipes
+  addYouTubeButton: {
+    marginBottom: 16,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  addYouTubeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 10,
+  },
+  addYouTubeText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: 'white',
+  },
+  savedInfo: {
+    fontSize: 13,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontStyle: 'italic',
+  },
+  savedRecipesGrid: {
+    gap: 12,
+  },
+  savedRecipeCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+  },
+  savedRecipeContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  savedRecipeImage: {
+    width: 80,
+    height: 80,
+  },
+  savedYouTubeBadge: {
+    position: 'absolute',
+    left: 6,
+    top: 6,
+    backgroundColor: '#ef4444',
+    borderRadius: 6,
+    padding: 4,
+  },
+  savedRecipeInfo: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  savedRecipeName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  savedRecipeDesc: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  deleteRecipeBtn: {
+    padding: 16,
+  },
+
+  // YouTube Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  youtubeModalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+  },
+  youtubeModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  youtubeModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  youtubeModalBody: {
+    padding: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  youtubeInput: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    marginBottom: 16,
+  },
+  videoPreview: {
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  videoPreviewImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#e5e7eb',
+  },
+  videoPreviewBadge: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -25,
+    marginLeft: -25,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  youtubeHint: {
+    fontSize: 13,
+    color: '#6b7280',
+    backgroundColor: '#fef3c7',
+    padding: 12,
+    borderRadius: 10,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  saveYouTubeBtn: {
+    margin: 20,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  saveYouTubeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 10,
+  },
+  saveYouTubeBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'white',
   },
 });
