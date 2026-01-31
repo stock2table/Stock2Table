@@ -1186,4 +1186,57 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: 'white',
   },
+
+  // Meal Type Selector
+  mealTypeHint: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 12,
+  },
+  mealTypeContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  mealTypeChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+    gap: 6,
+  },
+  mealTypeIcon: {
+    fontSize: 18,
+  },
+  mealTypeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  mealTypeTextSelected: {
+    color: 'white',
+  },
+
+  // Meal Type Badges on Cards
+  mealTypeBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 6,
+  },
+  mealTypeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  mealTypeBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
 });
