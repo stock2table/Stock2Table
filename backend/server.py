@@ -182,6 +182,8 @@ class FamilyMember(BaseModel):
     user_id: str
     name: str
     age: Optional[int] = None
+    email: Optional[str] = None
+    relationship: Optional[str] = None
     dietary_restrictions: List[str] = []
     allergies: List[str] = []
     preferences: List[str] = []
@@ -189,6 +191,8 @@ class FamilyMember(BaseModel):
 class FamilyMemberCreate(BaseModel):
     name: str
     age: Optional[int] = None
+    email: Optional[str] = None
+    relationship: Optional[str] = None
     dietary_restrictions: List[str] = []
     allergies: List[str] = []
     preferences: List[str] = []
