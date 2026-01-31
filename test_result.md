@@ -198,6 +198,18 @@ backend:
         agent: "main"
         comment: "Generate from meal plan working"
 
+  - task: "Family Member API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive testing completed. POST /api/family and GET /api/family endpoints working correctly. All fields including email and relationship are properly saved and retrieved. Tested with various payloads including edge cases and validation scenarios. API handles authentication, data persistence, and field validation appropriately."
+
 frontend:
   - task: "Login Screen"
     implemented: true
