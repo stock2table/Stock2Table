@@ -417,7 +417,8 @@ export default function MealPlanScreen() {
     }
   };
 
-  const generateAIMealPlan = async () => {
+  // Show pre-generate modal instead of directly generating
+  const handleGeneratePlan = () => {
     if (pantryItems.length === 0) {
       Alert.alert(
         'Empty Pantry',
@@ -426,7 +427,40 @@ export default function MealPlanScreen() {
       );
       return;
     }
+    setShowPreGenerateModal(true);
+  };
 
+  // Refresh pantry and then generate
+  const refreshPantryAndGenerate = async () => {
+    setRefreshingPantry(true);
+    try {
+      await fetchPantry(sessionToken!);
+      setShowPreGenerateModal(false);
+      // Small delay to show the refreshed count
+      setTimeout(() => {
+        generateAIMealPlan();
+      }, 300);
+    } catch (error) {
+      console.error('Error refreshing pantry:', error);
+      Alert.alert('Error', 'Failed to refresh pantry. Please try again.');
+    } finally {
+      setRefreshingPantry(false);
+    }
+  };
+
+  // Go to pantry to update items
+  const goToPantryAndReturn = () => {
+    setShowPreGenerateModal(false);
+    router.push('/(tabs)/pantry');
+  };
+
+  // Skip refresh and generate directly
+  const skipRefreshAndGenerate = () => {
+    setShowPreGenerateModal(false);
+    generateAIMealPlan();
+  };
+
+  const generateAIMealPlan = async () => {
     try {
       setGenerating(true);
       const today = new Date();
