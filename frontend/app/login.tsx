@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import Logo from '../components/Logo';
 
 const { width, height } = Dimensions.get('window');
 
