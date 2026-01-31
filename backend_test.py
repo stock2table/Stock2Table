@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing Script for Stock2Table
-Tests the Saved Recipes API with meal_types field functionality
+Testing Delete Family Member API endpoint
 """
 
 import requests
