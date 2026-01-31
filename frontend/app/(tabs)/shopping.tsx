@@ -304,6 +304,248 @@ export default function ShoppingScreen() {
     return ['#8b5cf6', '#7c3aed'];
   };
 
+  // Generate printable shopping list
+  const generatePrintableList = async () => {
+    try {
+      const today = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+
+      // Separate items to buy from items already in pantry
+      const itemsToBuyList = localItems.filter((item: any) => !item.in_pantry && !checkedItems.has(item.ingredient));
+      const inPantryList = localItems.filter((item: any) => item.in_pantry);
+      const checkedList = localItems.filter((item: any) => checkedItems.has(item.ingredient));
+
+      // Categorize items
+      const categorizeItem = (ingredient: string) => {
+        const lower = ingredient.toLowerCase();
+        if (/vegetable|tomato|onion|lettuce|carrot|pepper|spinach|broccoli|garlic|potato/.test(lower)) return 'Vegetables';
+        if (/fruit|apple|orange|banana|berry|mango|grape|lemon|lime/.test(lower)) return 'Fruits';
+        if (/meat|chicken|beef|pork|fish|lamb|salmon|turkey|bacon/.test(lower)) return 'Meat & Seafood';
+        if (/dairy|milk|cheese|yogurt|cream|butter|egg/.test(lower)) return 'Dairy & Eggs';
+        if (/grain|bread|rice|pasta|flour|oat|cereal/.test(lower)) return 'Grains & Bread';
+        if (/oil|sauce|spice|salt|pepper|vinegar|sugar/.test(lower)) return 'Pantry Staples';
+        return 'Other';
+      };
+
+      // Group items by category
+      const groupedItems: Record<string, any[]> = {};
+      itemsToBuyList.forEach((item: any) => {
+        const category = categorizeItem(item.ingredient);
+        if (!groupedItems[category]) groupedItems[category] = [];
+        groupedItems[category].push(item);
+      });
+
+      // Generate HTML
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Shopping List</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+              color: #1f2937;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 3px solid #22c55e;
+            }
+            .header h1 {
+              font-size: 28px;
+              color: #22c55e;
+              margin-bottom: 8px;
+            }
+            .header .date {
+              color: #6b7280;
+              font-size: 14px;
+            }
+            .stats {
+              display: flex;
+              justify-content: center;
+              gap: 30px;
+              margin-bottom: 30px;
+            }
+            .stat {
+              text-align: center;
+              padding: 15px 25px;
+              background: #f9fafb;
+              border-radius: 10px;
+            }
+            .stat-number {
+              font-size: 24px;
+              font-weight: bold;
+              color: #22c55e;
+            }
+            .stat-label {
+              font-size: 12px;
+              color: #6b7280;
+              text-transform: uppercase;
+            }
+            .category {
+              margin-bottom: 25px;
+            }
+            .category-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 12px;
+              padding: 8px 12px;
+              background: #f3f4f6;
+              border-radius: 6px;
+              border-left: 4px solid #22c55e;
+            }
+            .items-list {
+              list-style: none;
+            }
+            .item {
+              display: flex;
+              align-items: center;
+              padding: 10px 0;
+              border-bottom: 1px dashed #e5e7eb;
+            }
+            .checkbox {
+              width: 20px;
+              height: 20px;
+              border: 2px solid #d1d5db;
+              border-radius: 4px;
+              margin-right: 12px;
+              flex-shrink: 0;
+            }
+            .item-name {
+              flex: 1;
+              font-size: 15px;
+            }
+            .item-quantity {
+              font-size: 13px;
+              color: #6b7280;
+              margin-left: 10px;
+            }
+            .item-recipe {
+              font-size: 11px;
+              color: #9ca3af;
+              margin-left: 10px;
+            }
+            .section-title {
+              font-size: 18px;
+              font-weight: bold;
+              margin: 30px 0 15px 0;
+              color: #374151;
+            }
+            .in-pantry-section {
+              background: #f0fdf4;
+              padding: 15px;
+              border-radius: 10px;
+              margin-top: 20px;
+            }
+            .in-pantry-title {
+              color: #15803d;
+              font-weight: 600;
+              margin-bottom: 10px;
+            }
+            .in-pantry-items {
+              color: #166534;
+              font-size: 13px;
+              line-height: 1.6;
+            }
+            .footer {
+              margin-top: 40px;
+              text-align: center;
+              color: #9ca3af;
+              font-size: 12px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+            }
+            @media print {
+              body { padding: 20px; }
+              .header { page-break-after: avoid; }
+              .category { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🛒 Shopping List</h1>
+            <div class="date">${today}</div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-number">${itemsToBuyList.length}</div>
+              <div class="stat-label">Items to Buy</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number">${inPantryList.length}</div>
+              <div class="stat-label">In Pantry</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number">${checkedList.length}</div>
+              <div class="stat-label">Already Got</div>
+            </div>
+          </div>
+
+          ${Object.entries(groupedItems).map(([category, items]) => `
+            <div class="category">
+              <div class="category-title">${category}</div>
+              <ul class="items-list">
+                ${items.map((item: any) => `
+                  <li class="item">
+                    <div class="checkbox"></div>
+                    <span class="item-name">${item.ingredient}</span>
+                    <span class="item-quantity">${item.quantity} ${item.unit || ''}</span>
+                    ${item.recipe_name ? `<span class="item-recipe">for ${item.recipe_name}</span>` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          `).join('')}
+
+          ${inPantryList.length > 0 ? `
+            <div class="in-pantry-section">
+              <div class="in-pantry-title">✓ Already in Your Pantry</div>
+              <div class="in-pantry-items">
+                ${inPantryList.map((item: any) => item.ingredient).join(' • ')}
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            Generated by Stock2Table • Your Smart Meal Planning Assistant
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Generate PDF
+      const { uri } = await Print.printToFileAsync({ html });
+      
+      // Check if sharing is available
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Save or Share Shopping List',
+          UTI: 'com.adobe.pdf'
+        });
+      } else {
+        // Fallback: just print
+        await Print.printAsync({ uri });
+      }
+    } catch (error) {
+      console.error('Print error:', error);
+      Alert.alert('Error', 'Failed to generate printable list. Please try again.');
+    }
+  };
+
   const totalItems = localItems.length;
   const checkedCount = checkedItems.size;
   const inPantryCount = localItems.filter((item: any) => item.in_pantry).length;
