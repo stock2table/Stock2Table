@@ -391,6 +391,66 @@ export default function RecipesScreen() {
               </View>
             )}
           </View>
+        ) : activeTab === 'saved' ? (
+          /* Saved Recipes Tab */
+          <View style={styles.contentSection}>
+            {/* Add YouTube Recipe Button */}
+            <TouchableOpacity 
+              style={styles.addYouTubeButton}
+              onPress={() => setShowAddYouTubeModal(true)}
+              activeOpacity={0.9}
+            >
+              <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.addYouTubeGradient}>
+                <Ionicons name="logo-youtube" size={24} color="white" />
+                <Text style={styles.addYouTubeText}>Save Recipe from YouTube</Text>
+                <Ionicons name="add-circle" size={24} color="white" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <Text style={styles.savedInfo}>
+              Saved recipes will be used when generating your weekly meal plan
+            </Text>
+
+            {savedRecipes.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="bookmark-outline" size={64} color="#d1d5db" />
+                <Text style={styles.emptyText}>No saved recipes yet</Text>
+                <Text style={styles.emptySubtext}>Save your favorite YouTube recipes to use in meal planning</Text>
+              </View>
+            ) : (
+              <View style={styles.savedRecipesGrid}>
+                {savedRecipes.map((recipe, idx) => (
+                  <View key={recipe.recipe_id || idx} style={styles.savedRecipeCard}>
+                    <TouchableOpacity
+                      style={styles.savedRecipeContent}
+                      onPress={() => recipe.youtube_url && Linking.openURL(recipe.youtube_url)}
+                      activeOpacity={0.9}
+                    >
+                      <Image 
+                        source={{ uri: recipe.thumbnail || 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&q=80' }} 
+                        style={styles.savedRecipeImage}
+                      />
+                      <View style={styles.savedYouTubeBadge}>
+                        <Ionicons name="logo-youtube" size={16} color="white" />
+                      </View>
+                      <View style={styles.savedRecipeInfo}>
+                        <Text style={styles.savedRecipeName} numberOfLines={2}>{recipe.name}</Text>
+                        <Text style={styles.savedRecipeDesc} numberOfLines={1}>
+                          {recipe.description || 'YouTube Recipe'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.deleteRecipeBtn}
+                      onPress={() => deleteSavedRecipe(recipe.recipe_id)}
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         ) : (
           /* All Recipes Tab */
           <View style={styles.contentSection}>
