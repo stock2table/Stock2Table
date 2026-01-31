@@ -527,23 +527,137 @@ export default function ShoppingScreen() {
         </html>
       `;
 
-      // Generate PDF
-      const { uri } = await Print.printToFileAsync({ html });
+    return html;
+  };
+
+  // Print the shopping list
+  const handlePrint = async () => {
+    try {
+      setPrintLoading(true);
+      const html = generatePrintableHTML();
       
-      // Check if sharing is available
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Save or Share Shopping List',
-          UTI: 'com.adobe.pdf'
-        });
+      if (Platform.OS === 'web') {
+        // For web, open print dialog
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+          }, 250);
+        }
       } else {
-        // Fallback: just print
-        await Print.printAsync({ uri });
+        // For native, use expo-print
+        await Print.printAsync({ html });
       }
+      setShowPrintModal(false);
     } catch (error) {
       console.error('Print error:', error);
-      Alert.alert('Error', 'Failed to generate printable list. Please try again.');
+      Alert.alert('Error', 'Failed to print. Please try again.');
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
+  // Save as PDF
+  const handleSaveAsPDF = async () => {
+    try {
+      setPrintLoading(true);
+      const html = generatePrintableHTML();
+      
+      if (Platform.OS === 'web') {
+        // For web, download as HTML (PDF generation not available)
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `shopping-list-${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        Alert.alert('Downloaded', 'Shopping list saved! Open it in a browser and print to PDF.');
+      } else {
+        // For native, generate PDF and share
+        const { uri } = await Print.printToFileAsync({ html });
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Save Shopping List PDF',
+            UTI: 'com.adobe.pdf'
+          });
+        }
+      }
+      setShowPrintModal(false);
+    } catch (error) {
+      console.error('Save PDF error:', error);
+      Alert.alert('Error', 'Failed to save PDF. Please try again.');
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
+  // Share shopping list
+  const handleShare = async () => {
+    try {
+      setPrintLoading(true);
+      
+      // Create simple text version for sharing
+      const itemsToBuyList = localItems.filter((item: any) => !item.in_pantry && !checkedItems.has(item.ingredient));
+      const textList = `🛒 Shopping List\n${new Date().toLocaleDateString()}\n\n` +
+        itemsToBuyList.map((item: any) => `☐ ${item.ingredient} (${item.quantity} ${item.unit || ''})`).join('\n') +
+        `\n\n📱 Created with Stock2Table`;
+      
+      if (Platform.OS === 'web') {
+        // For web, use clipboard
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(textList);
+          Alert.alert('Copied!', 'Shopping list copied to clipboard. You can now paste it anywhere.');
+        } else {
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = textList;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          Alert.alert('Copied!', 'Shopping list copied to clipboard.');
+        }
+      } else {
+        // For native, use sharing
+        const html = generatePrintableHTML();
+        const { uri } = await Print.printToFileAsync({ html });
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Share Shopping List'
+          });
+        }
+      }
+      setShowPrintModal(false);
+    } catch (error) {
+      console.error('Share error:', error);
+      Alert.alert('Error', 'Failed to share. Please try again.');
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
+  // Copy to clipboard (text version)
+  const handleCopyText = async () => {
+    try {
+      const itemsToBuyList = localItems.filter((item: any) => !item.in_pantry && !checkedItems.has(item.ingredient));
+      const textList = `🛒 Shopping List - ${new Date().toLocaleDateString()}\n\n` +
+        itemsToBuyList.map((item: any) => `• ${item.ingredient} (${item.quantity} ${item.unit || ''})`).join('\n');
+      
+      if (Platform.OS === 'web' && navigator.clipboard) {
+        await navigator.clipboard.writeText(textList);
+      }
+      Alert.alert('Copied!', 'Shopping list copied to clipboard.');
+      setShowPrintModal(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy to clipboard.');
     }
   };
 
