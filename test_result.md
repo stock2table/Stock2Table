@@ -209,6 +209,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Comprehensive testing completed. POST /api/family and GET /api/family endpoints working correctly. All fields including email and relationship are properly saved and retrieved. Tested with various payloads including edge cases and validation scenarios. API handles authentication, data persistence, and field validation appropriately."
+      - working: true
+        agent: "testing"
+        comment: "DELETE Family Member API endpoint testing completed successfully. Tested DELETE /api/family/{member_id} endpoint with comprehensive test suite: 1) Successfully created test family member for deletion testing, 2) DELETE request returned 200 status with proper success message, 3) Verified deletion by confirming member no longer exists in GET /api/family response, 4) Tested edge case of deleting non-existent member (correctly returned 404), 5) Authentication working properly with Bearer token. All 4 test scenarios passed. The DELETE endpoint correctly removes family members from database and handles error cases appropriately."
 
   - task: "Saved Recipes API with meal_types"
     implemented: true
