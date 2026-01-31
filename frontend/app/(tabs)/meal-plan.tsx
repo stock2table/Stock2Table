@@ -147,6 +147,238 @@ export default function MealPlanScreen() {
   const [newMealIngredients, setNewMealIngredients] = useState('');
   const [newMealIngredientsList, setNewMealIngredientsList] = useState<string[]>([]);
   const [savingMeal, setSavingMeal] = useState(false);
+  
+  // Weekly prep state
+  const [showWeeklyPrep, setShowWeeklyPrep] = useState(true);
+  const [weeklyPrepTasks, setWeeklyPrepTasks] = useState<any[]>([]);
+  const [completedPrepTasks, setCompletedPrepTasks] = useState<Set<string>>(new Set());
+
+  // Generate weekly prep suggestions based on meals
+  const generateWeeklyPrep = (meals: any[]) => {
+    if (!meals || meals.length === 0) return [];
+    
+    const prepTasks: any[] = [];
+    const addedTasks = new Set<string>();
+    
+    // Analyze all meal names and ingredients
+    const allIngredients: string[] = [];
+    const allRecipeNames: string[] = [];
+    
+    meals.forEach(meal => {
+      if (meal.recipe_name) allRecipeNames.push(meal.recipe_name.toLowerCase());
+      if (meal.ingredients_needed) {
+        meal.ingredients_needed.forEach((ing: string) => allIngredients.push(ing.toLowerCase()));
+      }
+    });
+    
+    const ingredientSet = new Set(allIngredients);
+    const recipeText = allRecipeNames.join(' ');
+    
+    // Protein prep tasks
+    if (recipeText.includes('chicken') || ingredientSet.has('chicken')) {
+      if (!addedTasks.has('chicken')) {
+        prepTasks.push({
+          id: 'chicken',
+          icon: '🍗',
+          title: 'Prep Chicken',
+          description: 'Trim, marinate, or pre-cook chicken for multiple meals',
+          timeEstimate: '20-30 min',
+          category: 'protein',
+          tip: 'Marinate overnight for best flavor'
+        });
+        addedTasks.add('chicken');
+      }
+    }
+    
+    if (recipeText.includes('beef') || recipeText.includes('steak') || ingredientSet.has('beef')) {
+      if (!addedTasks.has('beef')) {
+        prepTasks.push({
+          id: 'beef',
+          icon: '🥩',
+          title: 'Prep Beef',
+          description: 'Portion and season beef, or prepare for marinating',
+          timeEstimate: '15-20 min',
+          category: 'protein',
+          tip: 'Bring to room temperature before cooking'
+        });
+        addedTasks.add('beef');
+      }
+    }
+    
+    if (recipeText.includes('fish') || recipeText.includes('salmon') || ingredientSet.has('salmon')) {
+      if (!addedTasks.has('fish')) {
+        prepTasks.push({
+          id: 'fish',
+          icon: '🐟',
+          title: 'Prep Fish',
+          description: 'Portion fish and prepare marinades',
+          timeEstimate: '10-15 min',
+          category: 'protein',
+          tip: 'Keep refrigerated until cooking day'
+        });
+        addedTasks.add('fish');
+      }
+    }
+    
+    // Vegetable prep tasks
+    const veggies = ['onion', 'garlic', 'carrot', 'celery', 'pepper', 'broccoli', 'spinach', 'tomato', 'cucumber'];
+    const hasVeggies = veggies.some(v => ingredientSet.has(v) || recipeText.includes(v));
+    
+    if (hasVeggies && !addedTasks.has('veggies')) {
+      prepTasks.push({
+        id: 'veggies',
+        icon: '🥬',
+        title: 'Wash & Chop Vegetables',
+        description: 'Pre-cut onions, garlic, carrots, and other vegetables',
+        timeEstimate: '30-45 min',
+        category: 'vegetables',
+        tip: 'Store in airtight containers for up to 5 days'
+      });
+      addedTasks.add('veggies');
+    }
+    
+    if ((ingredientSet.has('garlic') || recipeText.includes('garlic')) && !addedTasks.has('garlic')) {
+      prepTasks.push({
+        id: 'garlic',
+        icon: '🧄',
+        title: 'Mince Garlic',
+        description: 'Peel and mince garlic for the week',
+        timeEstimate: '10 min',
+        category: 'vegetables',
+        tip: 'Store in olive oil in the fridge'
+      });
+      addedTasks.add('garlic');
+    }
+    
+    // Grains & bases
+    if (recipeText.includes('rice') || ingredientSet.has('rice')) {
+      if (!addedTasks.has('rice')) {
+        prepTasks.push({
+          id: 'rice',
+          icon: '🍚',
+          title: 'Cook Rice Batch',
+          description: 'Prepare a large batch of rice for the week',
+          timeEstimate: '25-30 min',
+          category: 'grains',
+          tip: 'Portion into containers when cooled'
+        });
+        addedTasks.add('rice');
+      }
+    }
+    
+    if (recipeText.includes('quinoa') || ingredientSet.has('quinoa')) {
+      if (!addedTasks.has('quinoa')) {
+        prepTasks.push({
+          id: 'quinoa',
+          icon: '🌾',
+          title: 'Cook Quinoa',
+          description: 'Prepare quinoa for multiple meals',
+          timeEstimate: '20 min',
+          category: 'grains',
+          tip: 'Rinse well before cooking to remove bitterness'
+        });
+        addedTasks.add('quinoa');
+      }
+    }
+    
+    // Sauces & marinades
+    if (recipeText.includes('stir fry') || recipeText.includes('curry') || recipeText.includes('sauce')) {
+      if (!addedTasks.has('sauce')) {
+        prepTasks.push({
+          id: 'sauce',
+          icon: '🥫',
+          title: 'Make Sauces',
+          description: 'Prepare sauces and marinades in advance',
+          timeEstimate: '15-20 min',
+          category: 'sauces',
+          tip: 'Most sauces last 5-7 days refrigerated'
+        });
+        addedTasks.add('sauce');
+      }
+    }
+    
+    // Breakfast prep
+    const hasBreakfast = meals.some(m => m.meal_type === 'breakfast');
+    if (hasBreakfast) {
+      if ((recipeText.includes('egg') || ingredientSet.has('eggs')) && !addedTasks.has('eggs')) {
+        prepTasks.push({
+          id: 'eggs',
+          icon: '🥚',
+          title: 'Hard-Boil Eggs',
+          description: 'Boil eggs for quick breakfasts and salads',
+          timeEstimate: '15 min',
+          category: 'breakfast',
+          tip: 'Peel and store in water for freshness'
+        });
+        addedTasks.add('eggs');
+      }
+      
+      if ((recipeText.includes('oat') || recipeText.includes('granola')) && !addedTasks.has('oats')) {
+        prepTasks.push({
+          id: 'oats',
+          icon: '🥣',
+          title: 'Prep Overnight Oats',
+          description: 'Prepare 3-4 portions of overnight oats',
+          timeEstimate: '10 min',
+          category: 'breakfast',
+          tip: 'Add fresh toppings in the morning'
+        });
+        addedTasks.add('oats');
+      }
+    }
+    
+    // Salad prep
+    if (recipeText.includes('salad')) {
+      if (!addedTasks.has('salad')) {
+        prepTasks.push({
+          id: 'salad',
+          icon: '🥗',
+          title: 'Prep Salad Bases',
+          description: 'Wash and dry greens, prep toppings',
+          timeEstimate: '20 min',
+          category: 'salads',
+          tip: 'Store greens with paper towel to absorb moisture'
+        });
+        addedTasks.add('salad');
+      }
+    }
+    
+    // Always add these general tasks if there are enough meals
+    if (meals.length >= 7 && !addedTasks.has('pantry')) {
+      prepTasks.push({
+        id: 'pantry',
+        icon: '🗂️',
+        title: 'Organize Pantry',
+        description: 'Check stock and organize ingredients for easy access',
+        timeEstimate: '15 min',
+        category: 'organization',
+        tip: 'Put items you need first at the front'
+      });
+    }
+    
+    return prepTasks;
+  };
+
+  // Update prep tasks when plan changes
+  useEffect(() => {
+    if (selectedPlan?.meals) {
+      const tasks = generateWeeklyPrep(selectedPlan.meals);
+      setWeeklyPrepTasks(tasks);
+    }
+  }, [selectedPlan]);
+
+  // Toggle prep task completion
+  const togglePrepTask = (taskId: string) => {
+    setCompletedPrepTasks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     if (sessionToken) {
