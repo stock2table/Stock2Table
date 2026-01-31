@@ -775,6 +775,15 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               );
             })}
+            {/* Add More Cuisines Button */}
+            <TouchableOpacity
+              style={styles.addCuisineTab}
+              onPress={() => setShowCuisineModal(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add-circle" size={20} color="#22c55e" />
+              <Text style={styles.addCuisineText}>More</Text>
+            </TouchableOpacity>
           </ScrollView>
           
           {/* Items Grid */}
