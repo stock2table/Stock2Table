@@ -98,7 +98,199 @@ class BackendTester:
             return {}
         return {"Authorization": f"Bearer {self.session_token}"}
     
-    def test_add_family_member(self):
+    def test_saved_recipes_with_meal_types(self):
+        """Test Saved Recipes API with meal_types field"""
+        print("\n🍽️ Testing Saved Recipes API with meal_types field...")
+        
+        if not self.session_token:
+            print("❌ No session token available for testing")
+            return False
+        
+        # Test data as specified in the review request
+        test_recipes = [
+            {
+                "name": "Gordon Ramsay's Scrambled Eggs",
+                "description": "Perfect fluffy scrambled eggs",
+                "youtube_url": "https://www.youtube.com/watch?v=PUP7U5vTMM0",
+                "thumbnail": "https://img.youtube.com/vi/PUP7U5vTMM0/hqdefault.jpg",
+                "source": "youtube",
+                "meal_types": ["breakfast"]
+            },
+            {
+                "name": "Chicken Stir Fry",
+                "description": "Quick and healthy",
+                "youtube_url": "https://www.youtube.com/watch?v=test123",
+                "source": "youtube",
+                "meal_types": ["lunch", "dinner"]
+            },
+            {
+                "name": "Midnight Snack",
+                "description": "Simple late night treat",
+                "youtube_url": "https://www.youtube.com/watch?v=snack456",
+                "source": "youtube",
+                "meal_types": []  # Test empty array
+            }
+        ]
+        
+        created_recipe_ids = []
+        
+        # Test 1: POST /api/saved-recipes with single meal type
+        print("   📝 Test 1: POST /api/saved-recipes (single meal type)")
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/saved-recipes",
+                headers=self.get_auth_headers(),
+                json=test_recipes[0],
+                timeout=10
+            )
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print("   ✅ Recipe created successfully")
+                print(f"      Recipe ID: {data.get('recipe_id')}")
+                print(f"      Name: {data.get('name')}")
+                print(f"      Meal Types: {data.get('meal_types')}")
+                
+                # Verify meal_types field is present and correct
+                if data.get('meal_types') == ["breakfast"]:
+                    print("   ✅ meal_types field correctly saved")
+                    created_recipe_ids.append(data.get('recipe_id'))
+                else:
+                    print(f"   ❌ meal_types field incorrect. Expected: ['breakfast'], Got: {data.get('meal_types')}")
+                    return False
+            else:
+                print(f"   ❌ Failed to create recipe. Status: {response.status_code}")
+                print(f"      Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Error in Test 1: {str(e)}")
+            return False
+        
+        # Test 2: POST /api/saved-recipes with multiple meal types
+        print("   📝 Test 2: POST /api/saved-recipes (multiple meal types)")
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/saved-recipes",
+                headers=self.get_auth_headers(),
+                json=test_recipes[1],
+                timeout=10
+            )
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print("   ✅ Recipe created successfully")
+                print(f"      Recipe ID: {data.get('recipe_id')}")
+                print(f"      Name: {data.get('name')}")
+                print(f"      Meal Types: {data.get('meal_types')}")
+                
+                # Verify meal_types field is present and correct
+                if data.get('meal_types') == ["lunch", "dinner"]:
+                    print("   ✅ meal_types field correctly saved")
+                    created_recipe_ids.append(data.get('recipe_id'))
+                else:
+                    print(f"   ❌ meal_types field incorrect. Expected: ['lunch', 'dinner'], Got: {data.get('meal_types')}")
+                    return False
+            else:
+                print(f"   ❌ Failed to create recipe. Status: {response.status_code}")
+                print(f"      Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Error in Test 2: {str(e)}")
+            return False
+        
+        # Test 3: POST /api/saved-recipes with empty meal_types array
+        print("   📝 Test 3: POST /api/saved-recipes (empty meal_types)")
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/saved-recipes",
+                headers=self.get_auth_headers(),
+                json=test_recipes[2],
+                timeout=10
+            )
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print("   ✅ Recipe created successfully")
+                print(f"      Recipe ID: {data.get('recipe_id')}")
+                print(f"      Name: {data.get('name')}")
+                print(f"      Meal Types: {data.get('meal_types')}")
+                
+                # Verify meal_types field is present and correct (empty array)
+                if data.get('meal_types') == []:
+                    print("   ✅ Empty meal_types array correctly saved")
+                    created_recipe_ids.append(data.get('recipe_id'))
+                else:
+                    print(f"   ❌ meal_types field incorrect. Expected: [], Got: {data.get('meal_types')}")
+                    return False
+            else:
+                print(f"   ❌ Failed to create recipe. Status: {response.status_code}")
+                print(f"      Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Error in Test 3: {str(e)}")
+            return False
+        
+        # Test 4: GET /api/saved-recipes - Verify meal_types is returned
+        print("   📝 Test 4: GET /api/saved-recipes (verify meal_types in response)")
+        try:
+            response = requests.get(
+                f"{BACKEND_URL}/saved-recipes",
+                headers=self.get_auth_headers(),
+                timeout=10
+            )
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"   ✅ Retrieved {len(data)} saved recipes")
+                
+                # Find our created recipes and verify meal_types
+                found_recipes = 0
+                for recipe in data:
+                    if recipe.get('recipe_id') in created_recipe_ids:
+                        found_recipes += 1
+                        print(f"      Found recipe: {recipe.get('name')}")
+                        print(f"        Meal Types: {recipe.get('meal_types')}")
+                        
+                        # Verify meal_types field exists
+                        if 'meal_types' not in recipe:
+                            print(f"      ❌ meal_types field missing in GET response for {recipe.get('name')}")
+                            return False
+                        
+                        # Verify meal_types is a list
+                        if not isinstance(recipe.get('meal_types'), list):
+                            print(f"      ❌ meal_types should be a list, got {type(recipe.get('meal_types'))}")
+                            return False
+                
+                if found_recipes == len(created_recipe_ids):
+                    print("   ✅ All created recipes found in GET response with meal_types field")
+                else:
+                    print(f"   ❌ Only found {found_recipes} out of {len(created_recipe_ids)} created recipes")
+                    return False
+            else:
+                print(f"   ❌ Failed to get recipes. Status: {response.status_code}")
+                print(f"      Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Error in Test 4: {str(e)}")
+            return False
+        
+        # Store recipe IDs for cleanup
+        self.test_recipe_ids = created_recipe_ids
+        
+        print("   🎉 All Saved Recipes API tests with meal_types passed!")
+        return True
         """Test adding a family member with all fields"""
         print("\n👨‍👩‍👧‍👦 Testing Add Family Member API...")
         
