@@ -302,7 +302,7 @@ class BackendTester:
             return False
     def cleanup_test_data(self):
         """Clean up test data"""
-        # Clean up family member test data
+        # Clean up any remaining family member test data
         if hasattr(self, 'test_member_id') and self.test_member_id:
             print(f"\n🧹 Cleaning up family member test data...")
             try:
@@ -317,34 +317,18 @@ class BackendTester:
                     print(f"⚠️  Failed to clean up family member test data: {response.status_code}")
             except Exception as e:
                 print(f"⚠️  Family member cleanup error: {str(e)}")
-        
-        # Clean up saved recipes test data
-        if hasattr(self, 'test_recipe_ids') and self.test_recipe_ids:
-            print(f"\n🧹 Cleaning up saved recipes test data...")
-            for recipe_id in self.test_recipe_ids:
-                try:
-                    response = requests.delete(
-                        f"{BACKEND_URL}/saved-recipes/{recipe_id}",
-                        headers=self.get_auth_headers(),
-                        timeout=10
-                    )
-                    if response.status_code == 200:
-                        print(f"✅ Recipe {recipe_id} cleaned up successfully")
-                    else:
-                        print(f"⚠️  Failed to clean up recipe {recipe_id}: {response.status_code}")
-                except Exception as e:
-                    print(f"⚠️  Recipe cleanup error for {recipe_id}: {str(e)}")
     
     def run_all_tests(self):
         """Run all API tests"""
         print("=" * 60)
-        print("🧪 STOCK2TABLE SAVED RECIPES API TESTS")
+        print("🧪 DELETE FAMILY MEMBER API TESTS")
         print("=" * 60)
         
         results = {
             'health_check': False,
             'auth_session': False,
-            'saved_recipes_meal_types': False
+            'delete_family_member': False,
+            'delete_nonexistent_member': False
         }
         
         # Test 1: Health check
@@ -353,9 +337,13 @@ class BackendTester:
         # Test 2: Authentication
         results['auth_session'] = self.test_auth_session()
         
-        # Test 3: Saved Recipes with meal_types (only if auth works)
+        # Test 3: Delete Family Member (only if auth works)
         if results['auth_session']:
-            results['saved_recipes_meal_types'] = self.test_saved_recipes_with_meal_types()
+            results['delete_family_member'] = self.test_delete_family_member_api()
+        
+        # Test 4: Delete Non-existent Member (only if auth works)
+        if results['auth_session']:
+            results['delete_nonexistent_member'] = self.test_delete_nonexistent_member()
         
         # Cleanup
         self.cleanup_test_data()
