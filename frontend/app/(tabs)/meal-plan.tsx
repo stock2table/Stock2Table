@@ -697,7 +697,7 @@ export default function MealPlanScreen() {
         <View style={styles.generateSection}>
           <TouchableOpacity
             style={styles.generateButton}
-            onPress={generateAIMealPlan}
+            onPress={handleGeneratePlan}
             disabled={generating}
             activeOpacity={0.9}
           >
