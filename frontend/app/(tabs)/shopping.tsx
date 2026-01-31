@@ -751,7 +751,7 @@ export default function ShoppingScreen() {
           
           <TouchableOpacity
             style={styles.printButton}
-            onPress={generatePrintableList}
+            onPress={() => setShowPrintModal(true)}
             activeOpacity={0.9}
           >
             <Ionicons name="print" size={22} color="#3b82f6" />
