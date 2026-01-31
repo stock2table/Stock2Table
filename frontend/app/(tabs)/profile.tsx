@@ -244,42 +244,44 @@ export default function ProfileScreen() {
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {familyMembers.map((member) => (
-                <TouchableOpacity 
-                  key={member.member_id} 
-                  style={styles.familyCard}
-                  onLongPress={() => {
-                    Alert.alert(
-                      'Remove Family Member',
-                      `Remove ${member.name} from your family?`,
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { 
-                          text: 'Remove', 
-                          style: 'destructive',
-                          onPress: async () => {
-                            try {
-                              await axios.delete(`${BACKEND_URL}/api/family/${member.member_id}`, {
-                                headers: { Authorization: `Bearer ${sessionToken}` }
-                              });
-                              fetchFamilyMembers(sessionToken!);
-                              Alert.alert('Removed', `${member.name} has been removed.`);
-                            } catch (error) {
-                              Alert.alert('Error', 'Failed to remove family member');
+                <View key={member.member_id} style={styles.familyCard}>
+                  <TouchableOpacity
+                    style={styles.familyDeleteBtn}
+                    onPress={() => {
+                      Alert.alert(
+                        'Remove Family Member',
+                        `Remove ${member.name} from your family?`,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { 
+                            text: 'Remove', 
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                await axios.delete(`${BACKEND_URL}/api/family/${member.member_id}`, {
+                                  headers: { Authorization: `Bearer ${sessionToken}` }
+                                });
+                                fetchFamilyMembers(sessionToken!);
+                                Alert.alert('Removed', `${member.name} has been removed.`);
+                              } catch (error) {
+                                console.error('Delete error:', error);
+                                Alert.alert('Error', 'Failed to remove family member');
+                              }
                             }
                           }
-                        }
-                      ]
-                    );
-                  }}
-                  activeOpacity={0.8}
-                >
+                        ]
+                      );
+                    }}
+                  >
+                    <Ionicons name="close-circle" size={22} color="#ef4444" />
+                  </TouchableOpacity>
                   <LinearGradient colors={['#f3f4f6', '#e5e7eb']} style={styles.familyAvatar}>
                     <Ionicons name="person" size={28} color="#6b7280" />
                   </LinearGradient>
                   <Text style={styles.familyName}>{member.name}</Text>
                   {member.age && <Text style={styles.familyAge}>Age {member.age}</Text>}
-                  <Text style={styles.familyHint}>Hold to remove</Text>
-                </TouchableOpacity>
+                  {member.relationship && <Text style={styles.familyRelation}>{member.relationship}</Text>}
+                </View>
               ))}
             </ScrollView>
           )}
