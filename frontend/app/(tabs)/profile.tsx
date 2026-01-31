@@ -67,17 +67,38 @@ export default function ProfileScreen() {
 
   const detectRegion = async () => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const location = await Location.getCurrentPositionAsync({});
-        const [address] = await Location.reverseGeocodeAsync(location.coords);
-        if (address) {
-          setRegion(address.isoCountryCode || null);
-          setRegionName(`${address.city || address.region || ''}, ${address.country || ''}`);
+      // Try expo-location first (works on mobile)
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({});
+          const [address] = await Location.reverseGeocodeAsync(location.coords);
+          if (address) {
+            setRegion(address.isoCountryCode || null);
+            setRegionName(`${address.city || address.region || ''}, ${address.country || ''}`);
+            return;
+          }
         }
-      } else {
-        setRegionName('Location not available');
+      } catch (locError) {
+        console.log('Location API failed, trying IP-based detection');
       }
+      
+      // Fallback: IP-based geolocation (works on web)
+      try {
+        const ipResponse = await axios.get('https://ipapi.co/json/', { timeout: 5000 });
+        if (ipResponse.data) {
+          const city = ipResponse.data.city || '';
+          const country = ipResponse.data.country_name || '';
+          setRegion(ipResponse.data.country_code || null);
+          setRegionName(`${city}${city && country ? ', ' : ''}${country}` || 'Unknown location');
+          return;
+        }
+      } catch (ipError) {
+        console.log('IP detection failed');
+      }
+      
+      // Final fallback
+      setRegionName('Location unavailable');
     } catch (error) {
       setRegionName('Unable to detect');
     }
