@@ -32,7 +32,22 @@ export default function RecipesScreen() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [youtubeName, setYoutubeName] = useState('');
   const [youtubeDescription, setYoutubeDescription] = useState('');
+  const [selectedMealTypes, setSelectedMealTypes] = useState<string[]>([]);
   const [savingYoutube, setSavingYoutube] = useState(false);
+
+  const MEAL_TYPE_OPTIONS = [
+    { id: 'breakfast', label: 'Breakfast', icon: '🌅', color: '#f97316' },
+    { id: 'lunch', label: 'Lunch', icon: '☀️', color: '#eab308' },
+    { id: 'dinner', label: 'Dinner', icon: '🌙', color: '#8b5cf6' },
+  ];
+
+  const toggleMealType = (mealType: string) => {
+    setSelectedMealTypes(prev =>
+      prev.includes(mealType)
+        ? prev.filter(t => t !== mealType)
+        : [...prev, mealType]
+    );
+  };
 
   useEffect(() => {
     loadRecipes();
