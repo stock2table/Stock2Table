@@ -215,6 +215,23 @@ class ShoppingListCreate(BaseModel):
     meal_plan_id: Optional[str] = None
     items: List[Dict[str, Any]] = []
 
+class SavedRecipe(BaseModel):
+    recipe_id: str = Field(default_factory=lambda: f"saved_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    name: str
+    description: Optional[str] = None
+    youtube_url: Optional[str] = None
+    thumbnail: Optional[str] = None
+    source: str = "youtube"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SavedRecipeCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    youtube_url: Optional[str] = None
+    thumbnail: Optional[str] = None
+    source: str = "youtube"
+
 class ScanImageRequest(BaseModel):
     image_base64: str
 
