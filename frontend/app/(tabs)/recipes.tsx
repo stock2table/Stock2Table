@@ -345,11 +345,23 @@ export default function RecipesScreen() {
           <Text style={[styles.tabText, activeTab === 'trending' && styles.tabTextActive]}>Trending</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'saved' && styles.tabActive]}
+          onPress={() => setActiveTab('saved')}
+        >
+          <Ionicons name="bookmark" size={18} color={activeTab === 'saved' ? '#22c55e' : '#9ca3af'} />
+          <Text style={[styles.tabText, activeTab === 'saved' && styles.tabTextActive]}>My Saved</Text>
+          {savedRecipes.length > 0 && (
+            <View style={styles.tabBadge}>
+              <Text style={styles.tabBadgeText}>{savedRecipes.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'all' && styles.tabActive]}
           onPress={() => setActiveTab('all')}
         >
           <Ionicons name="restaurant" size={18} color={activeTab === 'all' ? '#22c55e' : '#9ca3af'} />
-          <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>All Recipes</Text>
+          <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>All</Text>
         </TouchableOpacity>
       </View>
 
