@@ -700,6 +700,85 @@ export default function MealPlanScreen() {
               </View>
             </View>
 
+            {/* Weekly Prep Section */}
+            {weeklyPrepTasks.length > 0 && (
+              <View style={styles.weeklyPrepSection}>
+                <TouchableOpacity 
+                  style={styles.weeklyPrepHeader}
+                  onPress={() => setShowWeeklyPrep(!showWeeklyPrep)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.weeklyPrepTitleRow}>
+                    <LinearGradient colors={['#f59e0b', '#d97706']} style={styles.prepIcon}>
+                      <Ionicons name="construct" size={18} color="white" />
+                    </LinearGradient>
+                    <View>
+                      <Text style={styles.weeklyPrepTitle}>Weekly Prep Tasks</Text>
+                      <Text style={styles.weeklyPrepSubtitle}>
+                        {completedPrepTasks.size}/{weeklyPrepTasks.length} completed • Do these ahead of time
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons 
+                    name={showWeeklyPrep ? 'chevron-up' : 'chevron-down'} 
+                    size={24} 
+                    color="#6b7280" 
+                  />
+                </TouchableOpacity>
+                
+                {showWeeklyPrep && (
+                  <View style={styles.prepTasksList}>
+                    {weeklyPrepTasks.map((task) => {
+                      const isCompleted = completedPrepTasks.has(task.id);
+                      return (
+                        <TouchableOpacity
+                          key={task.id}
+                          style={[styles.prepTaskCard, isCompleted && styles.prepTaskCompleted]}
+                          onPress={() => togglePrepTask(task.id)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.prepTaskCheckbox}>
+                            {isCompleted ? (
+                              <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.checkboxChecked}>
+                                <Ionicons name="checkmark" size={14} color="white" />
+                              </LinearGradient>
+                            ) : (
+                              <View style={styles.checkboxUnchecked} />
+                            )}
+                          </View>
+                          <Text style={styles.prepTaskEmoji}>{task.icon}</Text>
+                          <View style={styles.prepTaskContent}>
+                            <Text style={[styles.prepTaskTitle, isCompleted && styles.prepTaskTitleCompleted]}>
+                              {task.title}
+                            </Text>
+                            <Text style={styles.prepTaskDescription}>{task.description}</Text>
+                            <View style={styles.prepTaskMeta}>
+                              <View style={styles.prepTaskTime}>
+                                <Ionicons name="time-outline" size={12} color="#6b7280" />
+                                <Text style={styles.prepTaskTimeText}>{task.timeEstimate}</Text>
+                              </View>
+                              <View style={styles.prepTaskTip}>
+                                <Ionicons name="bulb-outline" size={12} color="#f59e0b" />
+                                <Text style={styles.prepTaskTipText}>{task.tip}</Text>
+                              </View>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    
+                    {/* Prep Summary */}
+                    <View style={styles.prepSummary}>
+                      <Ionicons name="information-circle" size={16} color="#6b7280" />
+                      <Text style={styles.prepSummaryText}>
+                        Complete these tasks on Sunday to save time during the week!
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
             {/* Days - Using actual dates from the plan */}
             {planDates.map((dateStr: string, dayIndex: number) => {
               const { dayName, formatted } = formatDate(dateStr);
