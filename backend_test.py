@@ -396,6 +396,23 @@ class BackendTester:
             except Exception as e:
                 print(f"⚠️  Cleanup error: {str(e)}")
     
+    def cleanup_test_data(self):
+        """Clean up test data"""
+        if hasattr(self, 'test_member_id') and self.test_member_id:
+            print(f"\n🧹 Cleaning up test data...")
+            try:
+                response = requests.delete(
+                    f"{BACKEND_URL}/family/{self.test_member_id}",
+                    headers=self.get_auth_headers(),
+                    timeout=10
+                )
+                if response.status_code == 200:
+                    print("✅ Test data cleaned up successfully")
+                else:
+                    print(f"⚠️  Failed to clean up test data: {response.status_code}")
+            except Exception as e:
+                print(f"⚠️  Cleanup error: {str(e)}")
+    
     def run_all_tests(self):
         """Run all family member API tests"""
         print("=" * 60)
