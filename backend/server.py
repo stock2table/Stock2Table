@@ -830,11 +830,38 @@ async def generate_meal_plan(request: AIMealPlanRequest, current_user: User = De
         pantry_list = ", ".join([item["name"] for item in pantry_items])
         family_size = len(family_members) + 1  # Include user
         
-        # Build saved recipes list for prompt
+        # Build saved recipes list for prompt with meal type info
         saved_recipes_text = ""
         if saved_recipes:
-            saved_recipes_list = ", ".join([r["name"] for r in saved_recipes])
-            saved_recipes_text = f"\n\nUser's favorite/saved recipes (TRY TO INCLUDE SOME OF THESE): {saved_recipes_list}"
+            # Group recipes by meal type for better AI understanding
+            breakfast_recipes = []
+            lunch_recipes = []
+            dinner_recipes = []
+            any_meal_recipes = []
+            
+            for r in saved_recipes:
+                meal_types = r.get("meal_types", [])
+                recipe_name = r.get("name", "")
+                
+                if not meal_types:  # No meal type specified, can be used for any meal
+                    any_meal_recipes.append(recipe_name)
+                else:
+                    if "breakfast" in meal_types:
+                        breakfast_recipes.append(recipe_name)
+                    if "lunch" in meal_types:
+                        lunch_recipes.append(recipe_name)
+                    if "dinner" in meal_types:
+                        dinner_recipes.append(recipe_name)
+            
+            saved_recipes_text = "\n\nUser's favorite/saved recipes:"
+            if breakfast_recipes:
+                saved_recipes_text += f"\n- FOR BREAKFAST: {', '.join(breakfast_recipes)}"
+            if lunch_recipes:
+                saved_recipes_text += f"\n- FOR LUNCH: {', '.join(lunch_recipes)}"
+            if dinner_recipes:
+                saved_recipes_text += f"\n- FOR DINNER: {', '.join(dinner_recipes)}"
+            if any_meal_recipes:
+                saved_recipes_text += f"\n- FOR ANY MEAL: {', '.join(any_meal_recipes)}"
         
         # Initialize AI chat
         chat = LlmChat(
@@ -847,7 +874,10 @@ async def generate_meal_plan(request: AIMealPlanRequest, current_user: User = De
 Family size: {family_size}
 Available ingredients: {pantry_list}{saved_recipes_text}
 
-IMPORTANT: If the user has saved recipes, try to include at least 2-3 of them in the weekly plan.
+IMPORTANT: 
+- If the user has saved recipes, MUST include them in the appropriate meal slots (breakfast recipes for breakfast, lunch recipes for lunch, dinner recipes for dinner).
+- Try to include at least 2-3 of the user's saved recipes in the weekly plan.
+- Recipes marked "FOR ANY MEAL" can be used for any meal type.
 
 Format: {{\"meals\": [{{\"day\": \"{request.week_start_date}\", \"meal_type\": \"breakfast\", \"recipe_name\": \"...\", \"ingredients_needed\": [...]}}]}}
 
