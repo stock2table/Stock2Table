@@ -1,0 +1,42 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#22c55e"/>
+  
+  <!-- Inner Circle (Plate) -->
+  <circle cx="256" cy="270" r="160" fill="white" opacity="0.95"/>
+  <circle cx="256" cy="270" r="140" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+  
+  <!-- Fork (Left) -->
+  <g transform="translate(130, 180)">
+    <rect x="20" y="60" width="8" height="120" rx="4" fill="#22c55e"/>
+    <rect x="8" y="0" width="6" height="50" rx="3" fill="#22c55e"/>
+    <rect x="18" y="0" width="6" height="55" rx="3" fill="#22c55e"/>
+    <rect x="28" y="0" width="6" height="50" rx="3" fill="#22c55e"/>
+    <path d="M8 50 Q24 70 40 50" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Knife (Right) -->
+  <g transform="translate(330, 180)">
+    <rect x="20" y="60" width="10" height="120" rx="5" fill="#22c55e"/>
+    <path d="M15 0 L35 0 L30 60 L20 60 Z" fill="#22c55e"/>
+  </g>
+  
+  <!-- Leaf/Fresh ingredient on plate -->
+  <g transform="translate(200, 220)">
+    <path d="M56 80 Q30 50 56 10 Q82 50 56 80" fill="#16a34a"/>
+    <path d="M56 80 L56 30" stroke="#15803d" stroke-width="3" stroke-linecap="round"/>
+    <path d="M56 50 Q40 40 35 55" stroke="#15803d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M56 40 Q72 30 77 45" stroke="#15803d" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Arrow indicating transformation (Stock → Table) -->
+  <g transform="translate(256, 140)">
+    <path d="M-40 0 L30 0" stroke="#166534" stroke-width="6" stroke-linecap="round"/>
+    <path d="M20 -12 L35 0 L20 12" stroke="#166534" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- Small ingredient dots around arrow -->
+  <circle cx="180" cy="130" r="8" fill="#fbbf24"/>
+  <circle cx="200" cy="145" r="6" fill="#ef4444"/>
+  <circle cx="175" cy="155" r="5" fill="#f97316"/>
+</svg>
