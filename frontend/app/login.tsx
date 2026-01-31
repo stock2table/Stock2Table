@@ -51,9 +51,7 @@ export default function LoginScreen() {
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
-            <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.logoGradient}>
-              <Ionicons name="leaf" size={32} color="white" />
-            </LinearGradient>
+            <Logo size={80} />
           </View>
           <Text style={styles.appName}>Stock2Table</Text>
           <Text style={styles.tagline}>From Pantry to Plate, Perfectly</Text>
