@@ -237,6 +237,72 @@ export default function HomeScreen() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingContent, setLoadingContent] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  
+  // Cuisine essentials state
+  const [selectedCuisine, setSelectedCuisine] = useState('indian');
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [addingToPantry, setAddingToPantry] = useState(false);
+
+  const cuisineList = Object.keys(CUISINE_ESSENTIALS);
+
+  const toggleEssentialItem = (itemName: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemName)) {
+        newSet.delete(itemName);
+      } else {
+        newSet.add(itemName);
+      }
+      return newSet;
+    });
+  };
+
+  const addSelectedToPantry = async () => {
+    if (selectedItems.size === 0) {
+      Alert.alert('No Items Selected', 'Please select items to add to your pantry.');
+      return;
+    }
+
+    try {
+      setAddingToPantry(true);
+      const cuisine = CUISINE_ESSENTIALS[selectedCuisine];
+      const itemsToAdd = cuisine.items.filter(item => selectedItems.has(item.name));
+      
+      // Add each item to pantry
+      for (const item of itemsToAdd) {
+        await axios.post(`${BACKEND_URL}/api/pantry`, {
+          name: item.name,
+          quantity: 1,
+          unit: item.unit,
+          category: 'Cuisine Essentials'
+        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+      }
+      
+      // Refresh pantry
+      await fetchPantry(sessionToken!);
+      
+      Alert.alert(
+        '✅ Added to Pantry!', 
+        `${selectedItems.size} ${selectedCuisine.charAt(0).toUpperCase() + selectedCuisine.slice(1)} essentials added to your pantry.`,
+        [{ text: 'Great!' }]
+      );
+      setSelectedItems(new Set());
+    } catch (error) {
+      console.error('Error adding to pantry:', error);
+      Alert.alert('Error', 'Failed to add items to pantry. Please try again.');
+    } finally {
+      setAddingToPantry(false);
+    }
+  };
+
+  const selectAllCuisineItems = () => {
+    const cuisine = CUISINE_ESSENTIALS[selectedCuisine];
+    if (selectedItems.size === cuisine.items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(cuisine.items.map(item => item.name)));
+    }
+  };
 
   useEffect(() => {
     if (sessionToken) {
