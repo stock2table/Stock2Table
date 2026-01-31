@@ -786,7 +786,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </ScrollView>
           
-          {/* Items Grid */}
+          {/* Items Grid - Compact Pills */}
           <View style={styles.essentialsGrid}>
             {CUISINE_ESSENTIALS[selectedCuisine].items.map((item, idx) => {
               const isItemSelected = selectedItems.has(item.name);
@@ -795,32 +795,27 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={idx}
                   style={[
-                    styles.essentialItem,
-                    isItemSelected && styles.essentialItemSelected,
-                    inPantry && styles.essentialItemInPantry,
+                    styles.essentialPill,
+                    isItemSelected && styles.essentialPillSelected,
+                    inPantry && styles.essentialPillInPantry,
                   ]}
                   onPress={() => !inPantry && toggleEssentialItem(item.name)}
                   activeOpacity={inPantry ? 1 : 0.7}
                   disabled={inPantry}
                 >
-                  {isItemSelected && !inPantry && (
-                    <View style={styles.essentialCheckmark}>
-                      <Ionicons name="checkmark" size={10} color="white" />
-                    </View>
-                  )}
-                  {inPantry && (
-                    <View style={[styles.essentialCheckmark, { backgroundColor: '#22c55e' }]}>
-                      <Ionicons name="checkmark" size={10} color="white" />
-                    </View>
-                  )}
-                  <Text style={styles.essentialEmoji}>{item.emoji}</Text>
+                  <Text style={styles.essentialPillEmoji}>{item.emoji}</Text>
                   <Text style={[
-                    styles.essentialName,
-                    isItemSelected && styles.essentialNameSelected,
-                    inPantry && styles.essentialNameInPantry,
-                  ]} numberOfLines={2}>
-                    {item.name}
+                    styles.essentialPillName,
+                    isItemSelected && styles.essentialPillNameSelected,
+                    inPantry && styles.essentialPillNameInPantry,
+                  ]} numberOfLines={1}>
+                    {item.name.split(' ')[0]}
                   </Text>
+                  {(isItemSelected || inPantry) && (
+                    <View style={[styles.essentialPillCheck, inPantry && styles.essentialPillCheckInPantry]}>
+                      <Ionicons name="checkmark" size={10} color="white" />
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             })}
