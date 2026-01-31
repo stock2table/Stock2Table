@@ -590,8 +590,9 @@ class BackendTester:
     
     def cleanup_test_data(self):
         """Clean up test data"""
+        # Clean up family member test data
         if hasattr(self, 'test_member_id') and self.test_member_id:
-            print(f"\n🧹 Cleaning up test data...")
+            print(f"\n🧹 Cleaning up family member test data...")
             try:
                 response = requests.delete(
                     f"{BACKEND_URL}/family/{self.test_member_id}",
@@ -599,25 +600,39 @@ class BackendTester:
                     timeout=10
                 )
                 if response.status_code == 200:
-                    print("✅ Test data cleaned up successfully")
+                    print("✅ Family member test data cleaned up successfully")
                 else:
-                    print(f"⚠️  Failed to clean up test data: {response.status_code}")
+                    print(f"⚠️  Failed to clean up family member test data: {response.status_code}")
             except Exception as e:
-                print(f"⚠️  Cleanup error: {str(e)}")
+                print(f"⚠️  Family member cleanup error: {str(e)}")
+        
+        # Clean up saved recipes test data
+        if hasattr(self, 'test_recipe_ids') and self.test_recipe_ids:
+            print(f"\n🧹 Cleaning up saved recipes test data...")
+            for recipe_id in self.test_recipe_ids:
+                try:
+                    response = requests.delete(
+                        f"{BACKEND_URL}/saved-recipes/{recipe_id}",
+                        headers=self.get_auth_headers(),
+                        timeout=10
+                    )
+                    if response.status_code == 200:
+                        print(f"✅ Recipe {recipe_id} cleaned up successfully")
+                    else:
+                        print(f"⚠️  Failed to clean up recipe {recipe_id}: {response.status_code}")
+                except Exception as e:
+                    print(f"⚠️  Recipe cleanup error for {recipe_id}: {str(e)}")
     
     def run_all_tests(self):
-        """Run all family member API tests"""
+        """Run all API tests"""
         print("=" * 60)
-        print("🧪 STOCK2TABLE FAMILY MEMBER API TESTS")
+        print("🧪 STOCK2TABLE SAVED RECIPES API TESTS")
         print("=" * 60)
         
         results = {
             'health_check': False,
             'auth_session': False,
-            'add_family_member': False,
-            'get_family_members': False,
-            'edge_cases': False,
-            'validation': False
+            'saved_recipes_meal_types': False
         }
         
         # Test 1: Health check
@@ -626,19 +641,9 @@ class BackendTester:
         # Test 2: Authentication
         results['auth_session'] = self.test_auth_session()
         
-        # Test 3: Add family member (only if auth works)
+        # Test 3: Saved Recipes with meal_types (only if auth works)
         if results['auth_session']:
-            results['add_family_member'] = self.test_add_family_member()
-            
-            # Test 4: Get family members (only if add works)
-            if results['add_family_member']:
-                results['get_family_members'] = self.test_get_family_members()
-                
-                # Test 5: Edge cases
-                results['edge_cases'] = self.test_add_family_member_edge_cases()
-                
-                # Test 6: Validation
-                results['validation'] = self.test_add_family_member_validation()
+            results['saved_recipes_meal_types'] = self.test_saved_recipes_with_meal_types()
         
         # Cleanup
         self.cleanup_test_data()
