@@ -637,10 +637,12 @@ const styles = StyleSheet.create({
   emptyFamilyText: { fontSize: 14, color: '#9ca3af', marginTop: 12, marginBottom: 16 },
   addFamilyBtn: { backgroundColor: '#f0fdf4', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
   addFamilyBtnText: { fontSize: 14, fontWeight: '600', color: '#22c55e' },
-  familyCard: { backgroundColor: '#f9fafb', borderRadius: 16, padding: 16, marginRight: 12, alignItems: 'center', minWidth: 100 },
+  familyCard: { backgroundColor: '#f9fafb', borderRadius: 16, padding: 16, marginRight: 12, alignItems: 'center', minWidth: 100, position: 'relative' },
+  familyDeleteBtn: { position: 'absolute', top: 4, right: 4, zIndex: 10, padding: 4 },
   familyAvatar: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   familyName: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
   familyAge: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  familyRelation: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
   familyHint: { fontSize: 10, color: '#9ca3af', marginTop: 4, textAlign: 'center' },
   
   settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f3f4f6', gap: 14 },
