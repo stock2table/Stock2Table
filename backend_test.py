@@ -406,7 +406,9 @@ class BackendTester:
             'health_check': False,
             'auth_session': False,
             'add_family_member': False,
-            'get_family_members': False
+            'get_family_members': False,
+            'edge_cases': False,
+            'validation': False
         }
         
         # Test 1: Health check
@@ -422,6 +424,12 @@ class BackendTester:
             # Test 4: Get family members (only if add works)
             if results['add_family_member']:
                 results['get_family_members'] = self.test_get_family_members()
+                
+                # Test 5: Edge cases
+                results['edge_cases'] = self.test_add_family_member_edge_cases()
+                
+                # Test 6: Validation
+                results['validation'] = self.test_add_family_member_validation()
         
         # Cleanup
         self.cleanup_test_data()
