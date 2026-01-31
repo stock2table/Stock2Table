@@ -509,6 +509,86 @@ export default function RecipesScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Add YouTube Recipe Modal */}
+      <Modal visible={showAddYouTubeModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.youtubeModalContent}>
+            <View style={styles.youtubeModalHeader}>
+              <Text style={styles.youtubeModalTitle}>Save YouTube Recipe</Text>
+              <TouchableOpacity onPress={() => setShowAddYouTubeModal(false)}>
+                <Ionicons name="close" size={28} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.youtubeModalBody}>
+              <Text style={styles.inputLabel}>Recipe Name *</Text>
+              <TextInput
+                style={styles.youtubeInput}
+                placeholder="e.g., Gordon Ramsay's Beef Wellington"
+                placeholderTextColor="#9ca3af"
+                value={youtubeName}
+                onChangeText={setYoutubeName}
+              />
+
+              <Text style={styles.inputLabel}>YouTube URL *</Text>
+              <TextInput
+                style={styles.youtubeInput}
+                placeholder="https://www.youtube.com/watch?v=..."
+                placeholderTextColor="#9ca3af"
+                value={youtubeUrl}
+                onChangeText={setYoutubeUrl}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+
+              {youtubeUrl && extractYouTubeId(youtubeUrl) && (
+                <View style={styles.videoPreview}>
+                  <Image 
+                    source={{ uri: getYouTubeThumbnail(youtubeUrl) }}
+                    style={styles.videoPreviewImage}
+                  />
+                  <View style={styles.videoPreviewBadge}>
+                    <Ionicons name="logo-youtube" size={20} color="white" />
+                  </View>
+                </View>
+              )}
+
+              <Text style={styles.inputLabel}>Description (optional)</Text>
+              <TextInput
+                style={[styles.youtubeInput, { height: 80, textAlignVertical: 'top' }]}
+                placeholder="Add notes about this recipe..."
+                placeholderTextColor="#9ca3af"
+                value={youtubeDescription}
+                onChangeText={setYoutubeDescription}
+                multiline
+              />
+
+              <Text style={styles.youtubeHint}>
+                💡 Saved recipes will be considered when generating your weekly meal plan
+              </Text>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.saveYouTubeBtn}
+              onPress={saveYouTubeRecipe}
+              disabled={savingYoutube}
+              activeOpacity={0.9}
+            >
+              <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.saveYouTubeGradient}>
+                {savingYoutube ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <>
+                    <Ionicons name="bookmark" size={20} color="white" />
+                    <Text style={styles.saveYouTubeBtnText}>Save Recipe</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
