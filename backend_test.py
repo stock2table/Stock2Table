@@ -98,199 +98,192 @@ class BackendTester:
             return {}
         return {"Authorization": f"Bearer {self.session_token}"}
     
-    def test_saved_recipes_with_meal_types(self):
-        """Test Saved Recipes API with meal_types field"""
-        print("\n🍽️ Testing Saved Recipes API with meal_types field...")
+    def test_delete_family_member_api(self):
+        """Test the Delete Family Member API endpoint"""
+        print("\n🧪 Testing Delete Family Member API...")
         
         if not self.session_token:
             print("❌ No session token available for testing")
             return False
         
-        # Test data as specified in the review request
-        test_recipes = [
-            {
-                "name": "Gordon Ramsay's Scrambled Eggs",
-                "description": "Perfect fluffy scrambled eggs",
-                "youtube_url": "https://www.youtube.com/watch?v=PUP7U5vTMM0",
-                "thumbnail": "https://img.youtube.com/vi/PUP7U5vTMM0/hqdefault.jpg",
-                "source": "youtube",
-                "meal_types": ["breakfast"]
-            },
-            {
-                "name": "Chicken Stir Fry",
-                "description": "Quick and healthy",
-                "youtube_url": "https://www.youtube.com/watch?v=test123",
-                "source": "youtube",
-                "meal_types": ["lunch", "dinner"]
-            },
-            {
-                "name": "Midnight Snack",
-                "description": "Simple late night treat",
-                "youtube_url": "https://www.youtube.com/watch?v=snack456",
-                "source": "youtube",
-                "meal_types": []  # Test empty array
-            }
-        ]
-        
-        created_recipe_ids = []
-        
-        # Test 1: POST /api/saved-recipes with single meal type
-        print("   📝 Test 1: POST /api/saved-recipes (single meal type)")
-        try:
-            response = requests.post(
-                f"{BACKEND_URL}/saved-recipes",
-                headers=self.get_auth_headers(),
-                json=test_recipes[0],
-                timeout=10
-            )
-            
-            print(f"   Status Code: {response.status_code}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                print("   ✅ Recipe created successfully")
-                print(f"      Recipe ID: {data.get('recipe_id')}")
-                print(f"      Name: {data.get('name')}")
-                print(f"      Meal Types: {data.get('meal_types')}")
-                
-                # Verify meal_types field is present and correct
-                if data.get('meal_types') == ["breakfast"]:
-                    print("   ✅ meal_types field correctly saved")
-                    created_recipe_ids.append(data.get('recipe_id'))
-                else:
-                    print(f"   ❌ meal_types field incorrect. Expected: ['breakfast'], Got: {data.get('meal_types')}")
-                    return False
-            else:
-                print(f"   ❌ Failed to create recipe. Status: {response.status_code}")
-                print(f"      Response: {response.text}")
-                return False
-                
-        except Exception as e:
-            print(f"   ❌ Error in Test 1: {str(e)}")
-            return False
-        
-        # Test 2: POST /api/saved-recipes with multiple meal types
-        print("   📝 Test 2: POST /api/saved-recipes (multiple meal types)")
-        try:
-            response = requests.post(
-                f"{BACKEND_URL}/saved-recipes",
-                headers=self.get_auth_headers(),
-                json=test_recipes[1],
-                timeout=10
-            )
-            
-            print(f"   Status Code: {response.status_code}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                print("   ✅ Recipe created successfully")
-                print(f"      Recipe ID: {data.get('recipe_id')}")
-                print(f"      Name: {data.get('name')}")
-                print(f"      Meal Types: {data.get('meal_types')}")
-                
-                # Verify meal_types field is present and correct
-                if data.get('meal_types') == ["lunch", "dinner"]:
-                    print("   ✅ meal_types field correctly saved")
-                    created_recipe_ids.append(data.get('recipe_id'))
-                else:
-                    print(f"   ❌ meal_types field incorrect. Expected: ['lunch', 'dinner'], Got: {data.get('meal_types')}")
-                    return False
-            else:
-                print(f"   ❌ Failed to create recipe. Status: {response.status_code}")
-                print(f"      Response: {response.text}")
-                return False
-                
-        except Exception as e:
-            print(f"   ❌ Error in Test 2: {str(e)}")
-            return False
-        
-        # Test 3: POST /api/saved-recipes with empty meal_types array
-        print("   📝 Test 3: POST /api/saved-recipes (empty meal_types)")
-        try:
-            response = requests.post(
-                f"{BACKEND_URL}/saved-recipes",
-                headers=self.get_auth_headers(),
-                json=test_recipes[2],
-                timeout=10
-            )
-            
-            print(f"   Status Code: {response.status_code}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                print("   ✅ Recipe created successfully")
-                print(f"      Recipe ID: {data.get('recipe_id')}")
-                print(f"      Name: {data.get('name')}")
-                print(f"      Meal Types: {data.get('meal_types')}")
-                
-                # Verify meal_types field is present and correct (empty array)
-                if data.get('meal_types') == []:
-                    print("   ✅ Empty meal_types array correctly saved")
-                    created_recipe_ids.append(data.get('recipe_id'))
-                else:
-                    print(f"   ❌ meal_types field incorrect. Expected: [], Got: {data.get('meal_types')}")
-                    return False
-            else:
-                print(f"   ❌ Failed to create recipe. Status: {response.status_code}")
-                print(f"      Response: {response.text}")
-                return False
-                
-        except Exception as e:
-            print(f"   ❌ Error in Test 3: {str(e)}")
-            return False
-        
-        # Test 4: GET /api/saved-recipes - Verify meal_types is returned
-        print("   📝 Test 4: GET /api/saved-recipes (verify meal_types in response)")
+        # Step 1: Get existing family members
+        print("   📋 Step 1: Getting existing family members...")
         try:
             response = requests.get(
-                f"{BACKEND_URL}/saved-recipes",
+                f"{BACKEND_URL}/family",
                 headers=self.get_auth_headers(),
                 timeout=10
             )
             
             print(f"   Status Code: {response.status_code}")
             
-            if response.status_code == 200:
-                data = response.json()
-                print(f"   ✅ Retrieved {len(data)} saved recipes")
-                
-                # Find our created recipes and verify meal_types
-                found_recipes = 0
-                for recipe in data:
-                    if recipe.get('recipe_id') in created_recipe_ids:
-                        found_recipes += 1
-                        print(f"      Found recipe: {recipe.get('name')}")
-                        print(f"        Meal Types: {recipe.get('meal_types')}")
-                        
-                        # Verify meal_types field exists
-                        if 'meal_types' not in recipe:
-                            print(f"      ❌ meal_types field missing in GET response for {recipe.get('name')}")
-                            return False
-                        
-                        # Verify meal_types is a list
-                        if not isinstance(recipe.get('meal_types'), list):
-                            print(f"      ❌ meal_types should be a list, got {type(recipe.get('meal_types'))}")
-                            return False
-                
-                if found_recipes == len(created_recipe_ids):
-                    print("   ✅ All created recipes found in GET response with meal_types field")
-                else:
-                    print(f"   ❌ Only found {found_recipes} out of {len(created_recipe_ids)} created recipes")
-                    return False
-            else:
-                print(f"   ❌ Failed to get recipes. Status: {response.status_code}")
-                print(f"      Response: {response.text}")
+            if response.status_code == 401:
+                print("   ❌ Authentication failed - need valid session token")
                 return False
+            elif response.status_code != 200:
+                print(f"   ❌ Failed to get family members: {response.text}")
+                return False
+            
+            family_members = response.json()
+            print(f"   ✅ Found {len(family_members)} existing family members")
+            
+            # Display current family members
+            if family_members:
+                print("   Current family members:")
+                for member in family_members:
+                    print(f"     - {member['name']} (ID: {member['member_id']}, Email: {member.get('email', 'N/A')})")
+            
+            # If no members exist, create one for testing
+            if not family_members:
+                print("   ℹ️ No existing family members found. Creating one for testing...")
+                test_member = {
+                    "name": "Test Family Member for Deletion",
+                    "age": 28,
+                    "email": "test.delete@example.com",
+                    "relationship": "sibling",
+                    "dietary_restrictions": ["vegetarian"],
+                    "allergies": ["nuts"],
+                    "preferences": ["italian", "mexican"]
+                }
                 
+                create_response = requests.post(
+                    f"{BACKEND_URL}/family",
+                    headers=self.get_auth_headers(),
+                    json=test_member,
+                    timeout=10
+                )
+                
+                if create_response.status_code == 200:
+                    created_member = create_response.json()
+                    family_members = [created_member]
+                    print(f"   ✅ Created test member: {created_member['name']} (ID: {created_member['member_id']})")
+                else:
+                    print(f"   ❌ Failed to create test member: {create_response.text}")
+                    return False
+                    
+        except requests.exceptions.RequestException as e:
+            print(f"   ❌ Network error getting family members: {e}")
+            return False
         except Exception as e:
-            print(f"   ❌ Error in Test 4: {str(e)}")
+            print(f"   ❌ Error getting family members: {e}")
             return False
         
-        # Store recipe IDs for cleanup
-        self.test_recipe_ids = created_recipe_ids
+        # Step 2: Delete a family member
+        if family_members:
+            member_to_delete = family_members[0]
+            member_id = member_to_delete['member_id']
+            member_name = member_to_delete['name']
+            
+            print(f"\n   🗑️ Step 2: Deleting family member: {member_name} (ID: {member_id})")
+            try:
+                delete_response = requests.delete(
+                    f"{BACKEND_URL}/family/{member_id}",
+                    headers=self.get_auth_headers(),
+                    timeout=10
+                )
+                
+                print(f"   Status Code: {delete_response.status_code}")
+                
+                if delete_response.status_code == 200:
+                    result = delete_response.json()
+                    print(f"   ✅ Delete successful: {result.get('message', 'Member deleted')}")
+                elif delete_response.status_code == 404:
+                    print("   ❌ Family member not found")
+                    return False
+                elif delete_response.status_code == 401:
+                    print("   ❌ Authentication failed")
+                    return False
+                else:
+                    print(f"   ❌ Delete failed: {delete_response.text}")
+                    return False
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"   ❌ Network error deleting member: {e}")
+                return False
+            except Exception as e:
+                print(f"   ❌ Error deleting member: {e}")
+                return False
         
-        print("   🎉 All Saved Recipes API tests with meal_types passed!")
-        return True
+        # Step 3: Verify deletion by fetching the list again
+        print(f"\n   ✅ Step 3: Verifying deletion...")
+        try:
+            verify_response = requests.get(
+                f"{BACKEND_URL}/family",
+                headers=self.get_auth_headers(),
+                timeout=10
+            )
+            
+            print(f"   Status Code: {verify_response.status_code}")
+            
+            if verify_response.status_code == 200:
+                updated_members = verify_response.json()
+                print(f"   ✅ Now have {len(updated_members)} family members")
+                
+                # Check if the deleted member is still in the list
+                deleted_member_found = any(m['member_id'] == member_id for m in updated_members)
+                
+                if deleted_member_found:
+                    print(f"   ❌ FAILED: Member {member_name} still exists after deletion!")
+                    return False
+                else:
+                    print(f"   ✅ SUCCESS: Member {member_name} successfully deleted!")
+                    
+                    # Display remaining members
+                    if updated_members:
+                        print("   Remaining family members:")
+                        for member in updated_members:
+                            print(f"     - {member['name']} (ID: {member['member_id']})")
+                    else:
+                        print("   No family members remaining.")
+                    
+                    return True
+            else:
+                print(f"   ❌ Failed to verify deletion: {verify_response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            print(f"   ❌ Network error verifying deletion: {e}")
+            return False
+        except Exception as e:
+            print(f"   ❌ Error verifying deletion: {e}")
+            return False
+    
+    def test_delete_nonexistent_member(self):
+        """Test deleting a non-existent family member"""
+        print("\n🧪 Testing Delete Non-existent Family Member...")
+        
+        if not self.session_token:
+            print("❌ No session token available for testing")
+            return False
+        
+        fake_member_id = "member_nonexistent123"
+        print(f"   Attempting to delete non-existent member ID: {fake_member_id}")
+        
+        try:
+            response = requests.delete(
+                f"{BACKEND_URL}/family/{fake_member_id}",
+                headers=self.get_auth_headers(),
+                timeout=10
+            )
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 404:
+                print("   ✅ Correctly returned 404 for non-existent member")
+                return True
+            elif response.status_code == 401:
+                print("   ❌ Authentication failed")
+                return False
+            else:
+                print(f"   ❌ Unexpected response: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            print(f"   ❌ Network error: {e}")
+            return False
+        except Exception as e:
+            print(f"   ❌ Error: {e}")
+            return False
     
     def test_health_check(self):
         """Test basic API health"""
