@@ -582,6 +582,116 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Cuisine Essentials - Quick Stock */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionTitleRow}>
+              <Ionicons name="restaurant" size={22} color="#22c55e" />
+              <Text style={styles.sectionTitle}>Quick Stock</Text>
+            </View>
+            <TouchableOpacity onPress={selectAllCuisineItems}>
+              <Text style={styles.seeAllText}>
+                {selectedItems.size === CUISINE_ESSENTIALS[selectedCuisine].items.length ? 'Clear All' : 'Select All'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.cuisineSubtitle}>Top 20 essentials for your favorite cuisine</Text>
+          
+          {/* Cuisine Tabs */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.cuisineTabs}
+          >
+            {cuisineList.map((cuisine) => {
+              const data = CUISINE_ESSENTIALS[cuisine];
+              const isSelected = selectedCuisine === cuisine;
+              return (
+                <TouchableOpacity
+                  key={cuisine}
+                  style={[styles.cuisineTab, isSelected && { backgroundColor: data.color[0] }]}
+                  onPress={() => {
+                    setSelectedCuisine(cuisine);
+                    setSelectedItems(new Set());
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cuisineTabEmoji}>{data.emoji}</Text>
+                  <Text style={[styles.cuisineTabText, isSelected && styles.cuisineTabTextActive]}>
+                    {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+          
+          {/* Items Grid */}
+          <View style={styles.essentialsGrid}>
+            {CUISINE_ESSENTIALS[selectedCuisine].items.map((item, idx) => {
+              const isItemSelected = selectedItems.has(item.name);
+              const inPantry = pantryItems.some((p: any) => p.name.toLowerCase() === item.name.toLowerCase());
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.essentialItem,
+                    isItemSelected && styles.essentialItemSelected,
+                    inPantry && styles.essentialItemInPantry,
+                  ]}
+                  onPress={() => !inPantry && toggleEssentialItem(item.name)}
+                  activeOpacity={inPantry ? 1 : 0.7}
+                  disabled={inPantry}
+                >
+                  {isItemSelected && !inPantry && (
+                    <View style={styles.essentialCheckmark}>
+                      <Ionicons name="checkmark" size={10} color="white" />
+                    </View>
+                  )}
+                  {inPantry && (
+                    <View style={[styles.essentialCheckmark, { backgroundColor: '#22c55e' }]}>
+                      <Ionicons name="checkmark" size={10} color="white" />
+                    </View>
+                  )}
+                  <Text style={styles.essentialEmoji}>{item.emoji}</Text>
+                  <Text style={[
+                    styles.essentialName,
+                    isItemSelected && styles.essentialNameSelected,
+                    inPantry && styles.essentialNameInPantry,
+                  ]} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          
+          {/* Add to Pantry Button */}
+          {selectedItems.size > 0 && (
+            <TouchableOpacity
+              style={styles.addToPantryBtn}
+              onPress={addSelectedToPantry}
+              disabled={addingToPantry}
+              activeOpacity={0.9}
+            >
+              <LinearGradient 
+                colors={CUISINE_ESSENTIALS[selectedCuisine].color} 
+                style={styles.addToPantryGradient}
+              >
+                {addingToPantry ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="add-circle" size={20} color="white" />
+                    <Text style={styles.addToPantryText}>
+                      Add {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} to Pantry
+                    </Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Trending Worldwide */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
