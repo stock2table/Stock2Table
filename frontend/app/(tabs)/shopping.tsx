@@ -13,6 +13,27 @@ import * as Sharing from 'expo-sharing';
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
+// Common units for shopping items
+const UNITS = [
+  { value: 'pieces', label: 'Pieces' },
+  { value: 'kg', label: 'kg' },
+  { value: 'g', label: 'grams' },
+  { value: 'lb', label: 'pounds' },
+  { value: 'oz', label: 'ounces' },
+  { value: 'L', label: 'liters' },
+  { value: 'ml', label: 'ml' },
+  { value: 'cups', label: 'cups' },
+  { value: 'tbsp', label: 'tablespoons' },
+  { value: 'tsp', label: 'teaspoons' },
+  { value: 'bunch', label: 'bunch' },
+  { value: 'pack', label: 'pack' },
+  { value: 'can', label: 'can' },
+  { value: 'bottle', label: 'bottle' },
+  { value: 'box', label: 'box' },
+  { value: 'bag', label: 'bag' },
+  { value: 'dozen', label: 'dozen' },
+];
+
 // Comprehensive grocery apps by region with deep links
 const GROCERY_APPS: Record<string, { name: string; logo: string; color: string; searchUrl: string; appScheme?: string }[]> = {
   US: [
