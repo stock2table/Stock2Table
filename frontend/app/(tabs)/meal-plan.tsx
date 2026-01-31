@@ -1248,6 +1248,91 @@ export default function MealPlanScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Pre-Generate Confirmation Modal */}
+      <Modal
+        visible={showPreGenerateModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowPreGenerateModal(false)}
+      >
+        <View style={styles.preGenModalOverlay}>
+          <View style={styles.preGenModalContent}>
+            <View style={styles.preGenModalHeader}>
+              <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.preGenModalIcon}>
+                <Ionicons name="basket" size={32} color="white" />
+              </LinearGradient>
+              <Text style={styles.preGenModalTitle}>Before We Generate...</Text>
+              <Text style={styles.preGenModalSubtitle}>
+                Your meal plan is based on your pantry items. Would you like to update your pantry first?
+              </Text>
+            </View>
+
+            <View style={styles.preGenPantryInfo}>
+              <View style={styles.preGenPantryCount}>
+                <Text style={styles.preGenPantryNumber}>{pantryItems.length}</Text>
+                <Text style={styles.preGenPantryLabel}>items in pantry</Text>
+              </View>
+              <View style={styles.preGenPantryPreview}>
+                {pantryItems.slice(0, 5).map((item: any, idx: number) => (
+                  <View key={idx} style={styles.preGenPantryItem}>
+                    <Ionicons name="checkmark-circle" size={14} color="#22c55e" />
+                    <Text style={styles.preGenPantryItemText} numberOfLines={1}>{item.name}</Text>
+                  </View>
+                ))}
+                {pantryItems.length > 5 && (
+                  <Text style={styles.preGenPantryMore}>+{pantryItems.length - 5} more items</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.preGenModalActions}>
+              <TouchableOpacity
+                style={styles.preGenUpdateBtn}
+                onPress={goToPantryAndReturn}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="create-outline" size={20} color="#22c55e" />
+                <Text style={styles.preGenUpdateBtnText}>Update Pantry</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.preGenRefreshBtn}
+                onPress={refreshPantryAndGenerate}
+                disabled={refreshingPantry}
+                activeOpacity={0.8}
+              >
+                {refreshingPantry ? (
+                  <ActivityIndicator color="#6b7280" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="refresh" size={20} color="#6b7280" />
+                    <Text style={styles.preGenRefreshBtnText}>Refresh & Generate</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.preGenSkipBtn}
+                onPress={skipRefreshAndGenerate}
+                activeOpacity={0.9}
+              >
+                <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.preGenSkipGradient}>
+                  <Ionicons name="sparkles" size={20} color="white" />
+                  <Text style={styles.preGenSkipBtnText}>Generate Now</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.preGenCloseBtn}
+              onPress={() => setShowPreGenerateModal(false)}
+            >
+              <Text style={styles.preGenCloseBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
