@@ -210,6 +210,18 @@ backend:
         agent: "testing"
         comment: "Comprehensive testing completed. POST /api/family and GET /api/family endpoints working correctly. All fields including email and relationship are properly saved and retrieved. Tested with various payloads including edge cases and validation scenarios. API handles authentication, data persistence, and field validation appropriately."
 
+  - task: "Saved Recipes API with meal_types"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive testing completed for Saved Recipes API with meal_types field. Tested POST /api/saved-recipes and GET /api/saved-recipes endpoints with: 1) Single meal type ['breakfast'], 2) Multiple meal types ['lunch', 'dinner'], 3) Empty meal_types array []. All tests passed successfully. The meal_types field is correctly saved and retrieved in all scenarios. API handles authentication, data persistence, and field validation properly. Created 3 test recipes and verified all were returned with correct meal_types in GET response."
+
 frontend:
   - task: "Login Screen"
     implemented: true
