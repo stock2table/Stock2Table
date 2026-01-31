@@ -896,6 +896,7 @@ const styles = StyleSheet.create({
   generateButton: { flex: 1, borderRadius: 14, overflow: 'hidden', elevation: 4 },
   generateGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
   generateText: { fontSize: 14, fontWeight: '700', color: 'white' },
+  printButton: { width: 52, height: 52, borderRadius: 14, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#3b82f6' },
   addButton: { width: 52, height: 52, borderRadius: 14, backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#22c55e' },
   
   groceryAppsSection: { padding: 16, paddingTop: 20 },
