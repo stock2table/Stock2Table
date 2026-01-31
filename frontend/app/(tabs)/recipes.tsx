@@ -95,6 +95,84 @@ export default function RecipesScreen() {
     }
   };
 
+  // Extract YouTube video ID from URL
+  const extractYouTubeId = (url: string) => {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : null;
+  };
+
+  // Get YouTube thumbnail
+  const getYouTubeThumbnail = (url: string) => {
+    const videoId = extractYouTubeId(url);
+    if (videoId) {
+      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    }
+    return 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&q=80';
+  };
+
+  // Save YouTube recipe
+  const saveYouTubeRecipe = async () => {
+    if (!youtubeName.trim()) {
+      Alert.alert('Error', 'Please enter a recipe name');
+      return;
+    }
+    if (!youtubeUrl.trim()) {
+      Alert.alert('Error', 'Please enter a YouTube URL');
+      return;
+    }
+
+    try {
+      setSavingYoutube(true);
+      const thumbnail = getYouTubeThumbnail(youtubeUrl);
+      
+      const response = await axios.post(`${BACKEND_URL}/api/saved-recipes`, {
+        name: youtubeName.trim(),
+        description: youtubeDescription.trim() || `Recipe from YouTube`,
+        youtube_url: youtubeUrl.trim(),
+        thumbnail: thumbnail,
+        source: 'youtube'
+      }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+
+      setSavedRecipes([response.data, ...savedRecipes]);
+      setShowAddYouTubeModal(false);
+      setYoutubeName('');
+      setYoutubeUrl('');
+      setYoutubeDescription('');
+      Alert.alert('Success', 'Recipe saved! It will be considered when generating your meal plan.');
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      Alert.alert('Error', 'Failed to save recipe. Please try again.');
+    } finally {
+      setSavingYoutube(false);
+    }
+  };
+
+  // Delete saved recipe
+  const deleteSavedRecipe = async (recipeId: string) => {
+    Alert.alert(
+      'Delete Recipe',
+      'Are you sure you want to remove this saved recipe?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${BACKEND_URL}/api/saved-recipes/${recipeId}`, {
+                headers: { Authorization: `Bearer ${sessionToken}` }
+              });
+              setSavedRecipes(savedRecipes.filter(r => r.recipe_id !== recipeId));
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete recipe');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const openYouTubeVideo = (recipe: any) => {
     trackActivity('video_view', recipe.recipe_id || recipe.id, recipe.name);
     const query = encodeURIComponent(`${recipe.name} recipe tutorial`);
