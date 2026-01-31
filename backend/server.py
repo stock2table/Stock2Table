@@ -908,6 +908,42 @@ async def add_meal_to_plan(plan_id: str, request: AddMealRequest, current_user: 
         logger.error(f"Add meal error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to add meal: {str(e)}")
 
+# ==================== SAVED RECIPES ENDPOINTS ====================
+
+@api_router.get("/saved-recipes", response_model=List[SavedRecipe])
+async def get_saved_recipes(current_user: User = Depends(require_auth)):
+    """Get all saved recipes for the user"""
+    recipes = await db.saved_recipes.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(100)
+    return [SavedRecipe(**r) for r in recipes]
+
+@api_router.post("/saved-recipes", response_model=SavedRecipe)
+async def create_saved_recipe(recipe: SavedRecipeCreate, current_user: User = Depends(require_auth)):
+    """Save a new recipe (e.g., from YouTube)"""
+    new_recipe = SavedRecipe(
+        user_id=current_user.user_id,
+        **recipe.dict()
+    )
+    await db.saved_recipes.insert_one(new_recipe.dict())
+    
+    # Track activity
+    await db.activity_logs.insert_one({
+        "user_id": current_user.user_id,
+        "activity_type": "recipe_saved",
+        "item_name": recipe.name,
+        "details": {"source": recipe.source, "youtube_url": recipe.youtube_url},
+        "timestamp": datetime.utcnow().isoformat()
+    })
+    
+    return new_recipe
+
+@api_router.delete("/saved-recipes/{recipe_id}")
+async def delete_saved_recipe(recipe_id: str, current_user: User = Depends(require_auth)):
+    """Delete a saved recipe"""
+    result = await db.saved_recipes.delete_one({"recipe_id": recipe_id, "user_id": current_user.user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return {"status": "deleted"}
+
 # ==================== SHOPPING LIST ENDPOINTS ====================
 
 @api_router.get("/shopping-lists", response_model=List[ShoppingList])
