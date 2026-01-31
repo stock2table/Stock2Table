@@ -372,8 +372,30 @@ export default function HomeScreen() {
   const [selectedCuisine, setSelectedCuisine] = useState('indian');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [addingToPantry, setAddingToPantry] = useState(false);
+  const [showCuisineModal, setShowCuisineModal] = useState(false);
+  const [enabledCuisines, setEnabledCuisines] = useState<Set<string>>(new Set(['indian', 'italian', 'mexican', 'chinese']));
 
-  const cuisineList = Object.keys(CUISINE_ESSENTIALS);
+  const allCuisines = Object.keys(CUISINE_ESSENTIALS);
+  const cuisineList = allCuisines.filter(c => enabledCuisines.has(c));
+
+  const toggleCuisineEnabled = (cuisine: string) => {
+    setEnabledCuisines(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cuisine)) {
+        if (newSet.size > 1) { // Keep at least one cuisine
+          newSet.delete(cuisine);
+          // If we're disabling the currently selected cuisine, switch to another one
+          if (selectedCuisine === cuisine) {
+            const remaining = Array.from(newSet);
+            setSelectedCuisine(remaining[0]);
+          }
+        }
+      } else {
+        newSet.add(cuisine);
+      }
+      return newSet;
+    });
+  };
 
   const toggleEssentialItem = (itemName: string) => {
     setSelectedItems(prev => {
