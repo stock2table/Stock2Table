@@ -137,6 +137,9 @@ backend:
       - working: true
         agent: "main"
         comment: "GET, POST, PUT, DELETE endpoints working"
+      - working: true
+        agent: "testing"
+        comment: "Pantry DELETE API endpoint testing completed successfully as requested. Comprehensive testing performed: 1) GET /api/pantry to retrieve existing items (returned 200 with 0 items), 2) Created test item 'Test Tomato for Delete' for deletion testing (POST returned 200), 3) DELETE /api/pantry/{item_id} returned 200 with success message 'Item deleted successfully', 4) Verified deletion by confirming item no longer exists in subsequent GET request (0 items remaining), 5) Tested edge case DELETE with non-existent item_id (correctly returned 404). All 4/4 test scenarios passed. Authentication with Bearer token working properly. The DELETE endpoint correctly removes pantry items from MongoDB and handles error cases appropriately. Backend logs confirm: DELETE /api/pantry/item_08a163086246 returned 200 OK, DELETE /api/pantry/item_nonexistent123 returned 404 Not Found."
   
   - task: "AI Ingredient Scanner API"
     implemented: true
