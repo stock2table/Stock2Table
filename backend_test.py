@@ -98,19 +98,19 @@ class BackendTester:
             return {}
         return {"Authorization": f"Bearer {self.session_token}"}
     
-    def test_delete_family_member_api(self):
-        """Test the Delete Family Member API endpoint"""
-        print("\n🧪 Testing Delete Family Member API...")
+    def test_pantry_delete_api(self):
+        """Test the Pantry Delete API endpoint as requested"""
+        print("\n🧪 Testing Pantry Delete API...")
         
         if not self.session_token:
             print("❌ No session token available for testing")
             return False
         
-        # Step 1: Get existing family members
-        print("   📋 Step 1: Getting existing family members...")
+        # Step 1: Get existing pantry items
+        print("   📋 Step 1: Getting existing pantry items...")
         try:
             response = requests.get(
-                f"{BACKEND_URL}/family",
+                f"{BACKEND_URL}/pantry",
                 headers=self.get_auth_headers(),
                 timeout=10
             )
@@ -121,63 +121,61 @@ class BackendTester:
                 print("   ❌ Authentication failed - need valid session token")
                 return False
             elif response.status_code != 200:
-                print(f"   ❌ Failed to get family members: {response.text}")
+                print(f"   ❌ Failed to get pantry items: {response.text}")
                 return False
             
-            family_members = response.json()
-            print(f"   ✅ Found {len(family_members)} existing family members")
+            pantry_items = response.json()
+            print(f"   ✅ Found {len(pantry_items)} existing pantry items")
             
-            # Display current family members
-            if family_members:
-                print("   Current family members:")
-                for member in family_members:
-                    print(f"     - {member['name']} (ID: {member['member_id']}, Email: {member.get('email', 'N/A')})")
+            # Display current pantry items
+            if pantry_items:
+                print("   Current pantry items:")
+                for item in pantry_items[:3]:  # Show first 3 items
+                    print(f"     - {item['name']} (ID: {item['item_id']}, Qty: {item['quantity']} {item['unit']})")
             
-            # If no members exist, create one for testing
-            if not family_members:
-                print("   ℹ️ No existing family members found. Creating one for testing...")
-                test_member = {
-                    "name": "Test Family Member for Deletion",
-                    "age": 28,
-                    "email": "test.delete@example.com",
-                    "relationship": "sibling",
-                    "dietary_restrictions": ["vegetarian"],
-                    "allergies": ["nuts"],
-                    "preferences": ["italian", "mexican"]
+            # If no items exist, create one for testing
+            if not pantry_items:
+                print("   ℹ️ No existing pantry items found. Creating one for testing...")
+                test_item = {
+                    "name": "Test Tomato for Delete",
+                    "quantity": 2.0,
+                    "unit": "pieces",
+                    "category": "vegetables",
+                    "expiry_date": "2024-12-31"
                 }
                 
                 create_response = requests.post(
-                    f"{BACKEND_URL}/family",
+                    f"{BACKEND_URL}/pantry",
                     headers=self.get_auth_headers(),
-                    json=test_member,
+                    json=test_item,
                     timeout=10
                 )
                 
                 if create_response.status_code == 200:
-                    created_member = create_response.json()
-                    family_members = [created_member]
-                    print(f"   ✅ Created test member: {created_member['name']} (ID: {created_member['member_id']})")
+                    created_item = create_response.json()
+                    pantry_items = [created_item]
+                    print(f"   ✅ Created test item: {created_item['name']} (ID: {created_item['item_id']})")
                 else:
-                    print(f"   ❌ Failed to create test member: {create_response.text}")
+                    print(f"   ❌ Failed to create test item: {create_response.text}")
                     return False
                     
         except requests.exceptions.RequestException as e:
-            print(f"   ❌ Network error getting family members: {e}")
+            print(f"   ❌ Network error getting pantry items: {e}")
             return False
         except Exception as e:
-            print(f"   ❌ Error getting family members: {e}")
+            print(f"   ❌ Error getting pantry items: {e}")
             return False
         
-        # Step 2: Delete a family member
-        if family_members:
-            member_to_delete = family_members[0]
-            member_id = member_to_delete['member_id']
-            member_name = member_to_delete['name']
+        # Step 2: Delete a pantry item
+        if pantry_items:
+            item_to_delete = pantry_items[0]
+            item_id = item_to_delete['item_id']
+            item_name = item_to_delete['name']
             
-            print(f"\n   🗑️ Step 2: Deleting family member: {member_name} (ID: {member_id})")
+            print(f"\n   🗑️ Step 2: Deleting pantry item: {item_name} (ID: {item_id})")
             try:
                 delete_response = requests.delete(
-                    f"{BACKEND_URL}/family/{member_id}",
+                    f"{BACKEND_URL}/pantry/{item_id}",
                     headers=self.get_auth_headers(),
                     timeout=10
                 )
@@ -186,9 +184,9 @@ class BackendTester:
                 
                 if delete_response.status_code == 200:
                     result = delete_response.json()
-                    print(f"   ✅ Delete successful: {result.get('message', 'Member deleted')}")
+                    print(f"   ✅ Delete successful: {result.get('message', 'Item deleted')}")
                 elif delete_response.status_code == 404:
-                    print("   ❌ Family member not found")
+                    print("   ❌ Pantry item not found")
                     return False
                 elif delete_response.status_code == 401:
                     print("   ❌ Authentication failed")
@@ -198,17 +196,17 @@ class BackendTester:
                     return False
                     
             except requests.exceptions.RequestException as e:
-                print(f"   ❌ Network error deleting member: {e}")
+                print(f"   ❌ Network error deleting item: {e}")
                 return False
             except Exception as e:
-                print(f"   ❌ Error deleting member: {e}")
+                print(f"   ❌ Error deleting item: {e}")
                 return False
         
         # Step 3: Verify deletion by fetching the list again
         print(f"\n   ✅ Step 3: Verifying deletion...")
         try:
             verify_response = requests.get(
-                f"{BACKEND_URL}/family",
+                f"{BACKEND_URL}/pantry",
                 headers=self.get_auth_headers(),
                 timeout=10
             )
@@ -216,25 +214,25 @@ class BackendTester:
             print(f"   Status Code: {verify_response.status_code}")
             
             if verify_response.status_code == 200:
-                updated_members = verify_response.json()
-                print(f"   ✅ Now have {len(updated_members)} family members")
+                updated_items = verify_response.json()
+                print(f"   ✅ Now have {len(updated_items)} pantry items")
                 
-                # Check if the deleted member is still in the list
-                deleted_member_found = any(m['member_id'] == member_id for m in updated_members)
+                # Check if the deleted item is still in the list
+                deleted_item_found = any(item['item_id'] == item_id for item in updated_items)
                 
-                if deleted_member_found:
-                    print(f"   ❌ FAILED: Member {member_name} still exists after deletion!")
+                if deleted_item_found:
+                    print(f"   ❌ FAILED: Item {item_name} still exists after deletion!")
                     return False
                 else:
-                    print(f"   ✅ SUCCESS: Member {member_name} successfully deleted!")
+                    print(f"   ✅ SUCCESS: Item {item_name} successfully deleted!")
                     
-                    # Display remaining members
-                    if updated_members:
-                        print("   Remaining family members:")
-                        for member in updated_members:
-                            print(f"     - {member['name']} (ID: {member['member_id']})")
+                    # Display remaining items
+                    if updated_items:
+                        print("   Remaining pantry items:")
+                        for item in updated_items[:3]:  # Show first 3 items
+                            print(f"     - {item['name']} (ID: {item['item_id']})")
                     else:
-                        print("   No family members remaining.")
+                        print("   No pantry items remaining.")
                     
                     return True
             else:
@@ -248,20 +246,20 @@ class BackendTester:
             print(f"   ❌ Error verifying deletion: {e}")
             return False
     
-    def test_delete_nonexistent_member(self):
-        """Test deleting a non-existent family member"""
-        print("\n🧪 Testing Delete Non-existent Family Member...")
+    def test_delete_nonexistent_item(self):
+        """Test deleting a non-existent pantry item"""
+        print("\n🧪 Testing Delete Non-existent Pantry Item...")
         
         if not self.session_token:
             print("❌ No session token available for testing")
             return False
         
-        fake_member_id = "member_nonexistent123"
-        print(f"   Attempting to delete non-existent member ID: {fake_member_id}")
+        fake_item_id = "item_nonexistent123"
+        print(f"   Attempting to delete non-existent item ID: {fake_item_id}")
         
         try:
             response = requests.delete(
-                f"{BACKEND_URL}/family/{fake_member_id}",
+                f"{BACKEND_URL}/pantry/{fake_item_id}",
                 headers=self.get_auth_headers(),
                 timeout=10
             )
@@ -269,7 +267,7 @@ class BackendTester:
             print(f"   Status Code: {response.status_code}")
             
             if response.status_code == 404:
-                print("   ✅ Correctly returned 404 for non-existent member")
+                print("   ✅ Correctly returned 404 for non-existent item")
                 return True
             elif response.status_code == 401:
                 print("   ❌ Authentication failed")
