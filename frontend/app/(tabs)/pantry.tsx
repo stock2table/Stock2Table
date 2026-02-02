@@ -473,14 +473,14 @@ const styles = StyleSheet.create({
   categoryBadgeText: { fontSize: 13, fontWeight: '700', color: 'white' },
   
   itemsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  itemCard: { width: (width - 50) / 2, flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 14, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, position: 'relative', overflow: 'hidden' },
-  itemTouchable: { flex: 1, flexDirection: 'row', alignItems: 'center', padding: 12, paddingRight: 36 },
+  itemCard: { width: (width - 50) / 2, flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 14, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
+  itemTouchable: { flex: 1, flexDirection: 'row', alignItems: 'center', padding: 12, paddingRight: 8 },
   itemColor: { width: 4, height: 36, borderRadius: 2, marginRight: 10 },
   itemContent: { flex: 1 },
   itemName: { fontSize: 14, fontWeight: '600', color: '#1f2937', textTransform: 'capitalize' },
   itemQty: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  expiryTag: { position: 'absolute', top: 8, right: 36, width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff7ed', justifyContent: 'center', alignItems: 'center' },
-  itemDeleteBtn: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 36, backgroundColor: '#fef2f2', justifyContent: 'center', alignItems: 'center', borderLeftWidth: 1, borderLeftColor: '#fee2e2' },
+  expiryTag: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff7ed', justifyContent: 'center', alignItems: 'center', marginRight: 4 },
+  itemDeleteBtn: { width: 40, height: '100%', backgroundColor: '#fef2f2', justifyContent: 'center', alignItems: 'center', borderTopRightRadius: 14, borderBottomRightRadius: 14 },
   
   fab: { position: 'absolute', bottom: 90, right: 20, borderRadius: 28, overflow: 'hidden', elevation: 8, shadowColor: '#22c55e', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10 },
   fabGradient: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center' },
