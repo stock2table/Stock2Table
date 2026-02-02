@@ -314,23 +314,31 @@ export default function PantryScreen() {
                 {/* Items Grid */}
                 <View style={styles.itemsGrid}>
                   {items.map((item: any) => (
-                    <TouchableOpacity 
-                      key={item.item_id}
-                      style={styles.itemCard}
-                      onPress={() => openEditModal(item)}
-                      activeOpacity={0.8}
-                    >
-                      <View style={[styles.itemColor, { backgroundColor: data.color }]} />
-                      <View style={styles.itemContent}>
-                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                        <Text style={styles.itemQty}>{item.quantity} {item.unit}</Text>
-                      </View>
-                      {item.expiry_date && (
-                        <View style={styles.expiryTag}>
-                          <Ionicons name="time" size={10} color="#f97316" />
+                    <View key={item.item_id} style={styles.itemCard}>
+                      <TouchableOpacity 
+                        style={styles.itemTouchable}
+                        onPress={() => openEditModal(item)}
+                        activeOpacity={0.8}
+                      >
+                        <View style={[styles.itemColor, { backgroundColor: data.color }]} />
+                        <View style={styles.itemContent}>
+                          <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                          <Text style={styles.itemQty}>{item.quantity} {item.unit}</Text>
                         </View>
-                      )}
-                    </TouchableOpacity>
+                        {item.expiry_date && (
+                          <View style={styles.expiryTag}>
+                            <Ionicons name="time" size={10} color="#f97316" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={styles.itemDeleteBtn}
+                        onPress={() => handleQuickDelete(item)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
                   ))}
                 </View>
               </View>
