@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing Script for Stock2Table
-Testing Delete Family Member API endpoint
+Testing Pantry Delete API endpoint as requested
 """
 
 import requests
