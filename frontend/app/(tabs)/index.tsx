@@ -1209,6 +1209,16 @@ const styles = StyleSheet.create({
   aiTitle: { fontSize: 16, fontWeight: '700', color: 'white' },
   aiSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   aiArrow: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+
+  // Guide Card
+  guideCard: { borderRadius: 18, overflow: 'hidden' },
+  guideGradient: { padding: 18 },
+  guideContent: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  guideIconContainer: { width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  guideTextContent: { flex: 1 },
+  guideTitle: { fontSize: 17, fontWeight: '700', color: 'white' },
+  guideSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.9)', marginTop: 3 },
+  guideArrow: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   
   recCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', padding: 12, borderRadius: 16, marginBottom: 10, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
   recImage: { width: 70, height: 70, borderRadius: 12, marginRight: 12, backgroundColor: '#f3f4f6' },
