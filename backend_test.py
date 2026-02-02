@@ -300,33 +300,33 @@ class BackendTester:
             return False
     def cleanup_test_data(self):
         """Clean up test data"""
-        # Clean up any remaining family member test data
-        if hasattr(self, 'test_member_id') and self.test_member_id:
-            print(f"\n🧹 Cleaning up family member test data...")
+        # Clean up any remaining pantry item test data
+        if hasattr(self, 'test_item_id') and self.test_item_id:
+            print(f"\n🧹 Cleaning up pantry item test data...")
             try:
                 response = requests.delete(
-                    f"{BACKEND_URL}/family/{self.test_member_id}",
+                    f"{BACKEND_URL}/pantry/{self.test_item_id}",
                     headers=self.get_auth_headers(),
                     timeout=10
                 )
                 if response.status_code == 200:
-                    print("✅ Family member test data cleaned up successfully")
+                    print("✅ Pantry item test data cleaned up successfully")
                 else:
-                    print(f"⚠️  Failed to clean up family member test data: {response.status_code}")
+                    print(f"⚠️  Failed to clean up pantry item test data: {response.status_code}")
             except Exception as e:
-                print(f"⚠️  Family member cleanup error: {str(e)}")
+                print(f"⚠️  Pantry item cleanup error: {str(e)}")
     
     def run_all_tests(self):
         """Run all API tests"""
         print("=" * 60)
-        print("🧪 DELETE FAMILY MEMBER API TESTS")
+        print("🧪 PANTRY DELETE API TESTS")
         print("=" * 60)
         
         results = {
             'health_check': False,
             'auth_session': False,
-            'delete_family_member': False,
-            'delete_nonexistent_member': False
+            'delete_pantry_item': False,
+            'delete_nonexistent_item': False
         }
         
         # Test 1: Health check
@@ -335,13 +335,13 @@ class BackendTester:
         # Test 2: Authentication
         results['auth_session'] = self.test_auth_session()
         
-        # Test 3: Delete Family Member (only if auth works)
+        # Test 3: Delete Pantry Item (only if auth works)
         if results['auth_session']:
-            results['delete_family_member'] = self.test_delete_family_member_api()
+            results['delete_pantry_item'] = self.test_pantry_delete_api()
         
-        # Test 4: Delete Non-existent Member (only if auth works)
+        # Test 4: Delete Non-existent Item (only if auth works)
         if results['auth_session']:
-            results['delete_nonexistent_member'] = self.test_delete_nonexistent_member()
+            results['delete_nonexistent_item'] = self.test_delete_nonexistent_item()
         
         # Cleanup
         self.cleanup_test_data()
