@@ -143,6 +143,31 @@ export default function PantryScreen() {
       .catch(() => Alert.alert('Error', 'Failed to delete'));
   };
 
+  // Direct delete from list (with confirmation)
+  const handleQuickDelete = (item: any) => {
+    Alert.alert(
+      'Delete Item',
+      `Remove "${item.name}" from your pantry?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${BACKEND_URL}/api/pantry/${item.item_id}`, {
+                headers: { Authorization: `Bearer ${sessionToken}` }
+              });
+              await fetchPantry(sessionToken!);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete item');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const categorizedItems = pantryItems.reduce((acc: Record<string, any[]>, item) => {
     if (!acc[item.category]) acc[item.category] = [];
     acc[item.category].push(item);
