@@ -134,13 +134,38 @@ export default function PantryScreen() {
     }
   };
 
-  const handleDeleteItem = () => {
+  const handleDeleteItem = async () => {
     if (!editingItem) return;
-    const itemId = editingItem.item_id;
-    setShowAddModal(false);
-    axios.delete(`${BACKEND_URL}/api/pantry/${itemId}`, { headers: { Authorization: `Bearer ${sessionToken}` } })
-      .then(() => fetchPantry(sessionToken!))
-      .catch(() => Alert.alert('Error', 'Failed to delete'));
+    
+    const confirmDelete = Platform.OS === 'web'
+      ? window.confirm(`Delete "${editingItem.name}" from your pantry?`)
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Delete Item',
+            `Delete "${editingItem.name}" from your pantry?`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) }
+            ]
+          );
+        });
+
+    if (confirmDelete) {
+      const itemId = editingItem.item_id;
+      setShowAddModal(false);
+      try {
+        await axios.delete(`${BACKEND_URL}/api/pantry/${itemId}`, { 
+          headers: { Authorization: `Bearer ${sessionToken}` } 
+        });
+        await fetchPantry(sessionToken!);
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          window.alert('Failed to delete item');
+        } else {
+          Alert.alert('Error', 'Failed to delete');
+        }
+      }
+    }
   };
 
   // Direct delete from list (with confirmation)
