@@ -823,7 +823,19 @@ export default function HomeScreen() {
                 )}
                 
                 <View style={styles.heroActions}>
-                  <TouchableOpacity style={styles.cookNowBtn}>
+                  <TouchableOpacity 
+                    style={styles.cookNowBtn}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      router.push({
+                        pathname: '/ai-recipe',
+                        params: {
+                          recipeName: todaySuggestion.name,
+                          recipeDescription: todaySuggestion.description || '',
+                        }
+                      });
+                    }}
+                  >
                     <Text style={styles.cookNowText}>Start Cooking</Text>
                     <Ionicons name="arrow-forward" size={16} color="white" />
                   </TouchableOpacity>
