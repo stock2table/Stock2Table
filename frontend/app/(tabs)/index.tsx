@@ -132,19 +132,6 @@ const FALLBACK_TRENDING = [
   { id: '6', name: 'Pad Thai', cuisine: 'Thai', time: 30, calories: 520, rating: 4.8, image_url: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&q=80', video_url: 'https://www.youtube.com/results?search_query=pad+thai+recipe' },
 ];
 
-const FALLBACK_SUGGESTION = {
-  name: 'Honey Garlic Salmon',
-  description: 'A perfectly glazed salmon with sweet honey and aromatic garlic. Quick to make, impressive to serve.',
-  cuisine: 'American',
-  prep_time: 10,
-  cook_time: 20,
-  calories: 420,
-  rating: 4.9,
-  image_url: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80',
-  video_url: 'https://www.youtube.com/results?search_query=honey+garlic+salmon+recipe',
-  reason: 'Quick and nutritious - perfect for a busy weeknight',
-};
-
 const FALLBACK_VIDEOS = [
   { id: '1', title: 'Knife Skills Masterclass', duration: '12:45', thumbnail_url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80', video_url: 'https://www.youtube.com/results?search_query=knife+skills+cooking', estimated_views: '2.1M' },
   { id: '2', title: 'Perfect Eggs 5 Ways', duration: '8:30', thumbnail_url: 'https://images.unsplash.com/photo-1582169296194-e4d644c48063?w=400&q=80', video_url: 'https://www.youtube.com/results?search_query=how+to+cook+eggs', estimated_views: '1.8M' },
