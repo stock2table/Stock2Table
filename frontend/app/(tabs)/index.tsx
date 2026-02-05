@@ -1252,6 +1252,81 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Welcome Modal for New Users */}
+      <Modal
+        visible={showWelcomeModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => dismissWelcome(false)}
+      >
+        <View style={styles.welcomeModalOverlay}>
+          <View style={styles.welcomeModalContent}>
+            {/* Celebration Header */}
+            <View style={styles.welcomeHeader}>
+              <Text style={styles.welcomeEmoji}>🎉</Text>
+              <Text style={styles.welcomeTitle}>Welcome to Stock2Table!</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Your journey to effortless meal planning starts here
+              </Text>
+            </View>
+
+            {/* Benefits Preview */}
+            <View style={styles.welcomeBenefits}>
+              <View style={styles.welcomeBenefitItem}>
+                <View style={[styles.welcomeBenefitIcon, { backgroundColor: '#dcfce7' }]}>
+                  <Ionicons name="time" size={20} color="#22c55e" />
+                </View>
+                <Text style={styles.welcomeBenefitText}>Save 7+ hours every week</Text>
+              </View>
+              <View style={styles.welcomeBenefitItem}>
+                <View style={[styles.welcomeBenefitIcon, { backgroundColor: '#fef3c7' }]}>
+                  <Ionicons name="cash" size={20} color="#f59e0b" />
+                </View>
+                <Text style={styles.welcomeBenefitText}>Save $100+ on groceries</Text>
+              </View>
+              <View style={styles.welcomeBenefitItem}>
+                <View style={[styles.welcomeBenefitIcon, { backgroundColor: '#fce7f3' }]}>
+                  <Ionicons name="heart" size={20} color="#ec4899" />
+                </View>
+                <Text style={styles.welcomeBenefitText}>Eat healthier with ease</Text>
+              </View>
+            </View>
+
+            {/* Guide Promo */}
+            <View style={styles.welcomeGuidePromo}>
+              <LinearGradient colors={['#8b5cf6', '#7c3aed']} style={styles.welcomeGuideGradient}>
+                <Ionicons name="book" size={32} color="white" />
+                <View style={styles.welcomeGuideText}>
+                  <Text style={styles.welcomeGuideTitle}>Start with Our Guide</Text>
+                  <Text style={styles.welcomeGuideDesc}>6 easy steps to master meal planning</Text>
+                </View>
+              </LinearGradient>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.welcomeActions}>
+              <TouchableOpacity
+                style={styles.welcomeGuideBtn}
+                onPress={() => dismissWelcome(true)}
+                activeOpacity={0.9}
+              >
+                <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.welcomeGuideBtnGradient}>
+                  <Text style={styles.welcomeGuideBtnText}>Open Meal Planning Guide</Text>
+                  <Ionicons name="arrow-forward" size={18} color="white" />
+                </LinearGradient>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.welcomeSkipBtn}
+                onPress={() => dismissWelcome(false)}
+              >
+                <Text style={styles.welcomeSkipBtnText}>I'll explore on my own</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
