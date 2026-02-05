@@ -144,28 +144,37 @@ export default function PantryScreen() {
   };
 
   // Direct delete from list (with confirmation)
-  const handleQuickDelete = (item: any) => {
-    Alert.alert(
-      'Delete Item',
-      `Remove "${item.name}" from your pantry?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await axios.delete(`${BACKEND_URL}/api/pantry/${item.item_id}`, {
-                headers: { Authorization: `Bearer ${sessionToken}` }
-              });
-              await fetchPantry(sessionToken!);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete item');
-            }
-          }
+  const handleQuickDelete = async (item: any) => {
+    const confirmDelete = Platform.OS === 'web'
+      ? window.confirm(`Remove "${item.name}" from your pantry?`)
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Delete Item',
+            `Remove "${item.name}" from your pantry?`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) }
+            ]
+          );
+        });
+
+    if (confirmDelete) {
+      try {
+        await axios.delete(`${BACKEND_URL}/api/pantry/${item.item_id}`, {
+          headers: { Authorization: `Bearer ${sessionToken}` }
+        });
+        await fetchPantry(sessionToken!);
+        if (Platform.OS === 'web') {
+          // Optional: show success message on web
         }
-      ]
-    );
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          window.alert('Failed to delete item');
+        } else {
+          Alert.alert('Error', 'Failed to delete item');
+        }
+      }
+    }
   };
 
   const categorizedItems = pantryItems.reduce((acc: Record<string, any[]>, item) => {
