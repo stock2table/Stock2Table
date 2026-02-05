@@ -454,6 +454,9 @@ export default function HomeScreen() {
   const allCuisines = Object.keys(CUISINE_ESSENTIALS);
   const cuisineList = allCuisines.filter(c => enabledCuisines.has(c));
 
+  // Welcome modal for new users
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
   const toggleCuisineEnabled = (cuisine: string) => {
     setEnabledCuisines(prev => {
       const newSet = new Set(prev);
