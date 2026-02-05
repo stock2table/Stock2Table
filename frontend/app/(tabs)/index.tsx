@@ -541,6 +541,9 @@ export default function HomeScreen() {
   const loadAllContent = async () => {
     setLoadingContent(true);
     try {
+      // First load user preferences
+      await loadUserPreferences();
+      
       await Promise.all([
         fetchPantry(sessionToken!),
         fetchRecipes(),
@@ -555,6 +558,34 @@ export default function HomeScreen() {
     }
   };
 
+  // Load user dietary preferences
+  const loadUserPreferences = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/preferences`, {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+        timeout: 10000
+      });
+      if (response.data.dietary_restrictions) {
+        setUserDietaryPrefs(response.data.dietary_restrictions);
+      }
+    } catch (error) {
+      console.log('Could not load preferences, using defaults');
+    }
+  };
+
+  // Get preference-based fallback suggestion
+  const getPreferenceBasedSuggestion = () => {
+    // Priority order for dietary preferences
+    const priorityPrefs = ['vegan', 'vegetarian', 'keto', 'gluten-free', 'dairy-free', 'low-carb'];
+    
+    for (const pref of priorityPrefs) {
+      if (userDietaryPrefs.includes(pref) && PREFERENCE_SUGGESTIONS[pref]) {
+        return PREFERENCE_SUGGESTIONS[pref];
+      }
+    }
+    return PREFERENCE_SUGGESTIONS.default;
+  };
+
   const loadDailySuggestion = async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/discover/suggestion`, {
@@ -564,11 +595,11 @@ export default function HomeScreen() {
       if (response.data.suggestion) {
         setTodaySuggestion(response.data.suggestion);
       } else {
-        setTodaySuggestion(FALLBACK_SUGGESTION);
+        setTodaySuggestion(getPreferenceBasedSuggestion());
       }
     } catch (error) {
       console.error('Error loading suggestion:', error);
-      setTodaySuggestion(FALLBACK_SUGGESTION);
+      setTodaySuggestion(getPreferenceBasedSuggestion());
     }
   };
 
