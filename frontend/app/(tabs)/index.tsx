@@ -574,20 +574,43 @@ export default function HomeScreen() {
   };
 
   // Get preference-based fallback suggestion
-  const getPreferenceBasedSuggestion = () => {
+  const getPreferenceBasedSuggestion = (prefs: string[]) => {
     // Priority order for dietary preferences
     const priorityPrefs = ['vegan', 'vegetarian', 'keto', 'gluten-free', 'dairy-free', 'low-carb'];
     
     for (const pref of priorityPrefs) {
-      if (userDietaryPrefs.includes(pref) && PREFERENCE_SUGGESTIONS[pref]) {
+      if (prefs.includes(pref) && PREFERENCE_SUGGESTIONS[pref]) {
         return PREFERENCE_SUGGESTIONS[pref];
       }
     }
-    return PREFERENCE_SUGGESTIONS.default;
+    return null; // Return null if no dietary preference matches
   };
 
   const loadDailySuggestion = async () => {
     try {
+      // First check if user has dietary preferences
+      let dietaryPrefs: string[] = [];
+      try {
+        const prefsResponse = await axios.get(`${BACKEND_URL}/api/preferences`, {
+          headers: { Authorization: `Bearer ${sessionToken}` },
+          timeout: 10000
+        });
+        if (prefsResponse.data.dietary_restrictions) {
+          dietaryPrefs = prefsResponse.data.dietary_restrictions;
+          setUserDietaryPrefs(dietaryPrefs);
+        }
+      } catch (e) {
+        console.log('Could not load preferences');
+      }
+
+      // If user has dietary preferences, use preference-based suggestion
+      const preferenceSuggestion = getPreferenceBasedSuggestion(dietaryPrefs);
+      if (preferenceSuggestion) {
+        setTodaySuggestion(preferenceSuggestion);
+        return;
+      }
+
+      // Otherwise, get suggestion from API
       const response = await axios.get(`${BACKEND_URL}/api/discover/suggestion`, {
         headers: { Authorization: `Bearer ${sessionToken}` },
         timeout: 15000
@@ -595,11 +618,11 @@ export default function HomeScreen() {
       if (response.data.suggestion) {
         setTodaySuggestion(response.data.suggestion);
       } else {
-        setTodaySuggestion(getPreferenceBasedSuggestion());
+        setTodaySuggestion(PREFERENCE_SUGGESTIONS.default);
       }
     } catch (error) {
       console.error('Error loading suggestion:', error);
-      setTodaySuggestion(getPreferenceBasedSuggestion());
+      setTodaySuggestion(PREFERENCE_SUGGESTIONS.default);
     }
   };
 
