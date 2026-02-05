@@ -221,24 +221,6 @@ export default function ProfileScreen() {
           </LinearGradient>
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{pantryItems.length}</Text>
-            <Text style={styles.statLabel}>Pantry Items</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{recipes.length}</Text>
-            <Text style={styles.statLabel}>Recipes</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{mealPlans.length}</Text>
-            <Text style={styles.statLabel}>Meal Plans</Text>
-          </View>
-        </View>
-
         {/* Family Members */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
