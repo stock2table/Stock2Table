@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store/appStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const { width } = Dimensions.get('window');
