@@ -442,6 +442,7 @@ export default function HomeScreen() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingContent, setLoadingContent] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [userDietaryPrefs, setUserDietaryPrefs] = useState<string[]>([]);
   
   // Cuisine essentials state
   const [selectedCuisine, setSelectedCuisine] = useState('indian');
