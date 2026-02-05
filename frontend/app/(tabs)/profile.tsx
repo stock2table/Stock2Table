@@ -143,21 +143,36 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { 
-        text: 'Logout', 
-        style: 'destructive', 
-        onPress: async () => { 
-          try {
-            await logout(); 
-            router.replace('/login'); 
-          } catch (error) {
-            router.replace('/login');
-          }
-        } 
+    // On web, Alert might not work well, so we'll use confirm dialog
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to logout?');
+      if (confirmed) {
+        try {
+          await logout();
+        } catch (error) {
+          console.error('Logout error:', error);
+        } finally {
+          router.replace('/login');
+        }
       }
-    ]);
+    } else {
+      Alert.alert('Logout', 'Are you sure you want to logout?', [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive', 
+          onPress: async () => { 
+            try {
+              await logout(); 
+            } catch (error) {
+              console.error('Logout error:', error);
+            } finally {
+              router.replace('/login'); 
+            }
+          } 
+        }
+      ]);
+    }
   };
 
   const toggleDietaryPref = (key: keyof typeof dietaryPrefs) => {
