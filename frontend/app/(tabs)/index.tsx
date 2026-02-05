@@ -541,9 +541,6 @@ export default function HomeScreen() {
   const loadAllContent = async () => {
     setLoadingContent(true);
     try {
-      // First load user preferences
-      await loadUserPreferences();
-      
       await Promise.all([
         fetchPantry(sessionToken!),
         fetchRecipes(),
@@ -555,21 +552,6 @@ export default function HomeScreen() {
       console.error('Error loading content:', error);
     } finally {
       setLoadingContent(false);
-    }
-  };
-
-  // Load user dietary preferences
-  const loadUserPreferences = async () => {
-    try {
-      const response = await axios.get(`${BACKEND_URL}/api/preferences`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-        timeout: 10000
-      });
-      if (response.data.dietary_restrictions) {
-        setUserDietaryPrefs(response.data.dietary_restrictions);
-      }
-    } catch (error) {
-      console.log('Could not load preferences, using defaults');
     }
   };
 
