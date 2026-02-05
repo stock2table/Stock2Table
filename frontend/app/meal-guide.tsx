@@ -329,14 +329,12 @@ const styles = StyleSheet.create({
   heroTitle: { fontSize: 24, fontWeight: '800', color: 'white', textAlign: 'center' },
   heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginTop: 8, lineHeight: 20 },
 
-  // Benefits
+  // Benefits - Compact Row
   benefitsSection: { paddingHorizontal: 16, marginBottom: 8 },
-  benefitsTitle: { fontSize: 18, fontWeight: '700', color: '#1f2937', marginBottom: 12 },
-  benefitsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  benefitCard: { width: '48%', backgroundColor: 'white', borderRadius: 16, padding: 16, alignItems: 'center' },
-  benefitIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  benefitValue: { fontSize: 24, fontWeight: '800' },
-  benefitLabel: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  benefitsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  benefitPill: { flex: 1, backgroundColor: 'white', borderRadius: 12, padding: 10, alignItems: 'center' },
+  benefitPillValue: { fontSize: 16, fontWeight: '800', marginTop: 4 },
+  benefitPillLabel: { fontSize: 9, color: '#6b7280', marginTop: 2 },
 
   // Steps
   stepsSection: { padding: 16 },
