@@ -536,9 +536,37 @@ export default function HomeScreen() {
     }
   };
 
+  // Check if user is new (first time)
+  const checkNewUser = async () => {
+    try {
+      const hasSeenWelcome = await AsyncStorage.getItem('hasSeenWelcome');
+      if (!hasSeenWelcome) {
+        // Small delay to let the home screen load first
+        setTimeout(() => {
+          setShowWelcomeModal(true);
+        }, 1500);
+      }
+    } catch (error) {
+      console.log('Error checking new user status');
+    }
+  };
+
+  const dismissWelcome = async (openGuide: boolean = false) => {
+    try {
+      await AsyncStorage.setItem('hasSeenWelcome', 'true');
+      setShowWelcomeModal(false);
+      if (openGuide) {
+        router.push('/meal-guide');
+      }
+    } catch (error) {
+      console.log('Error saving welcome status');
+    }
+  };
+
   useEffect(() => {
     if (sessionToken) {
       loadAllContent();
+      checkNewUser();
     }
   }, [sessionToken]);
 
