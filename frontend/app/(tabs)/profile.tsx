@@ -262,30 +262,40 @@ export default function ProfileScreen() {
                 <View key={member.member_id} style={styles.familyCard}>
                   <TouchableOpacity
                     style={styles.familyDeleteBtn}
-                    onPress={() => {
-                      Alert.alert(
-                        'Remove Family Member',
-                        `Remove ${member.name} from your family?`,
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { 
-                            text: 'Remove', 
-                            style: 'destructive',
-                            onPress: async () => {
-                              try {
-                                await axios.delete(`${BACKEND_URL}/api/family/${member.member_id}`, {
-                                  headers: { Authorization: `Bearer ${sessionToken}` }
-                                });
-                                fetchFamilyMembers(sessionToken!);
-                                Alert.alert('Removed', `${member.name} has been removed.`);
-                              } catch (error) {
-                                console.error('Delete error:', error);
-                                Alert.alert('Error', 'Failed to remove family member');
-                              }
-                            }
+                    onPress={async () => {
+                      const confirmDelete = Platform.OS === 'web' 
+                        ? window.confirm(`Remove ${member.name} from your family?`)
+                        : await new Promise<boolean>((resolve) => {
+                            Alert.alert(
+                              'Remove Family Member',
+                              `Remove ${member.name} from your family?`,
+                              [
+                                { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+                                { text: 'Remove', style: 'destructive', onPress: () => resolve(true) }
+                              ]
+                            );
+                          });
+                      
+                      if (confirmDelete) {
+                        try {
+                          await axios.delete(`${BACKEND_URL}/api/family/${member.member_id}`, {
+                            headers: { Authorization: `Bearer ${sessionToken}` }
+                          });
+                          await fetchFamilyMembers(sessionToken!);
+                          if (Platform.OS === 'web') {
+                            window.alert(`${member.name} has been removed.`);
+                          } else {
+                            Alert.alert('Removed', `${member.name} has been removed.`);
                           }
-                        ]
-                      );
+                        } catch (error) {
+                          console.error('Delete error:', error);
+                          if (Platform.OS === 'web') {
+                            window.alert('Failed to remove family member');
+                          } else {
+                            Alert.alert('Error', 'Failed to remove family member');
+                          }
+                        }
+                      }
                     }}
                   >
                     <Ionicons name="close-circle" size={22} color="#ef4444" />
