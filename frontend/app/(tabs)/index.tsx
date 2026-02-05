@@ -856,11 +856,6 @@ export default function HomeScreen() {
               <Ionicons name="basket" size={24} color="white" />
             </LinearGradient>
             <Text style={styles.quickActionText}>Pantry</Text>
-            {pantryItems.length > 0 && (
-              <View style={styles.quickActionBadge}>
-                <Text style={styles.quickActionBadgeText}>{pantryItems.length}</Text>
-              </View>
-            )}
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(tabs)/meal-plan')} activeOpacity={0.9}>
