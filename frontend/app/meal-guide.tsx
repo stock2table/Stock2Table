@@ -171,17 +171,14 @@ export default function MealPlanGuide() {
           </LinearGradient>
         </View>
 
-        {/* Weekly Benefits */}
+        {/* Weekly Benefits - Compact Row */}
         <View style={styles.benefitsSection}>
-          <Text style={styles.benefitsTitle}>What You'll Gain</Text>
-          <View style={styles.benefitsGrid}>
+          <View style={styles.benefitsRow}>
             {WEEKLY_BENEFITS.map((benefit, idx) => (
-              <View key={idx} style={styles.benefitCard}>
-                <View style={[styles.benefitIcon, { backgroundColor: `${benefit.color}15` }]}>
-                  <Ionicons name={benefit.icon as any} size={24} color={benefit.color} />
-                </View>
-                <Text style={[styles.benefitValue, { color: benefit.color }]}>{benefit.value}</Text>
-                <Text style={styles.benefitLabel}>{benefit.label}</Text>
+              <View key={idx} style={styles.benefitPill}>
+                <Ionicons name={benefit.icon as any} size={16} color={benefit.color} />
+                <Text style={[styles.benefitPillValue, { color: benefit.color }]}>{benefit.value}</Text>
+                <Text style={styles.benefitPillLabel}>{benefit.label}</Text>
               </View>
             ))}
           </View>
