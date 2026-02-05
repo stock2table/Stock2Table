@@ -1088,32 +1088,6 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* Meal Planning Guide Card */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.guideCard}
-            onPress={() => router.push('/meal-guide')}
-            activeOpacity={0.95}
-          >
-            <LinearGradient colors={['#8b5cf6', '#7c3aed']} style={styles.guideGradient}>
-              <View style={styles.guideContent}>
-                <View style={styles.guideIconContainer}>
-                  <Ionicons name="book" size={28} color="white" />
-                </View>
-                <View style={styles.guideTextContent}>
-                  <Text style={styles.guideTitle}>Meal Planning Guide</Text>
-                  <Text style={styles.guideSubtitle}>
-                    6 steps to save time, money & eat healthier
-                  </Text>
-                </View>
-                <View style={styles.guideArrow}>
-                  <Ionicons name="arrow-forward" size={22} color="white" />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
         {/* AI Recipe Assistant */}
         <View style={styles.section}>
           <TouchableOpacity
