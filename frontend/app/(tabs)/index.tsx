@@ -846,14 +846,14 @@ export default function HomeScreen() {
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/scan')} activeOpacity={0.9}>
             <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.quickActionGradient}>
-              <Ionicons name="camera" size={26} color="white" />
+              <Ionicons name="camera" size={24} color="white" />
             </LinearGradient>
             <Text style={styles.quickActionText}>Scan</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(tabs)/pantry')} activeOpacity={0.9}>
             <LinearGradient colors={['#f97316', '#ea580c']} style={styles.quickActionGradient}>
-              <Ionicons name="basket" size={26} color="white" />
+              <Ionicons name="basket" size={24} color="white" />
             </LinearGradient>
             <Text style={styles.quickActionText}>Pantry</Text>
             {pantryItems.length > 0 && (
@@ -865,16 +865,23 @@ export default function HomeScreen() {
           
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(tabs)/meal-plan')} activeOpacity={0.9}>
             <LinearGradient colors={['#8b5cf6', '#7c3aed']} style={styles.quickActionGradient}>
-              <Ionicons name="calendar" size={26} color="white" />
+              <Ionicons name="calendar" size={24} color="white" />
             </LinearGradient>
             <Text style={styles.quickActionText}>Plan</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(tabs)/shopping')} activeOpacity={0.9}>
             <LinearGradient colors={['#3b82f6', '#2563eb']} style={styles.quickActionGradient}>
-              <Ionicons name="cart" size={26} color="white" />
+              <Ionicons name="cart" size={24} color="white" />
             </LinearGradient>
             <Text style={styles.quickActionText}>Shop</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/meal-guide')} activeOpacity={0.9}>
+            <LinearGradient colors={['#ec4899', '#db2777']} style={styles.quickActionGradient}>
+              <Ionicons name="book" size={24} color="white" />
+            </LinearGradient>
+            <Text style={styles.quickActionText}>Guide</Text>
           </TouchableOpacity>
         </View>
 
