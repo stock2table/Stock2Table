@@ -1,0 +1,8 @@
+{
+  "appId": "com.EverydayIdeas.Stock2Table",
+  "appName": "Stock2Table Planner",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  }
+}
